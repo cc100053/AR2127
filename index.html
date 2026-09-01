@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2127 形態推演</title>
+<style>
+:root{
+  --a:#00f0ff; --b:#ff00a0;
+  --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#03050a;color:var(--a);font-family:var(--mono);overflow:hidden;
+     height:100vh;display:grid;place-items:center;cursor:none}
+
+#stage{position:relative;width:min(100vw,calc(100vh*var(--ar,1.777)));
+       aspect-ratio:var(--ar,1.777);overflow:hidden;background:#03050a}
+#stage>.layer{position:absolute;inset:0;width:100%;height:100%}
+video{object-fit:fill;display:block}
+
+/* ── A：背景消融 —— 綠幕反過來也去掉，物體漂在 2127 虛空裡 ────── */
+#void{z-index:0}
+#feedWrap{z-index:1;transition:filter .9s}
+#feedWrap.on{filter:drop-shadow(0 0 10px var(--a))}
+#feed{position:absolute;inset:0;width:100%;height:100%;transition:opacity .5s,filter .9s}
+#feed.holo {filter:grayscale(1) contrast(1.45) brightness(.92)}
+#feed.split{filter:url(#rgbsplit) grayscale(1) contrast(1.45) brightness(.92)}
+
+/* ── B：泛光 —— 外層 filter 看到的是已裁切的內層，光才會溢出輪廓 ── */
+#tint{z-index:3;background:linear-gradient(160deg,var(--a),var(--b));mix-blend-mode:color;
+      opacity:0;transition:opacity .9s ease}
+#scanlines{z-index:5;background:repeating-linear-gradient(0deg,#0000 0 2px,var(--a) 2px 3px);
+           opacity:0;mix-blend-mode:overlay;transition:opacity .9s ease}
+.on{opacity:1 !important}
+#tint.on{opacity:.92} #scanlines.on{opacity:.15}
+
+#ov{z-index:6;overflow:visible;pointer-events:none;
+    filter:drop-shadow(0 0 2px var(--a)) drop-shadow(0 0 7px var(--a))}
+#ovBack{z-index:0}
+#shell{fill:url(#shellGrad);opacity:0;transition:opacity 1.1s ease}
+#futureEdge{fill:none;stroke:var(--b);stroke-width:1.6;opacity:0;
+            filter:drop-shadow(0 0 6px var(--b));transition:opacity .9s}
+.tie{stroke:var(--b);stroke-width:.7;opacity:0;transition:opacity .9s}
+/* 形變之後，2026 原型退成虛線；2127 形態接手 */
+.morphed #shell{opacity:1} .morphed #futureEdge{opacity:.95} .morphed .tie{opacity:.30}
+.morphed #edge{opacity:.35;stroke-dasharray:4 5}
+.morphed #glow1,.morphed #glow2,.morphed #glow3{opacity:.03}
+#glow1,#glow2,#glow3,#edge{fill:none;stroke:var(--a)}
+#glow1{stroke-width:10;opacity:.05;filter:blur(5px)}
+#glow2{stroke-width:4;opacity:.12;filter:blur(1.5px)}
+#glow3{stroke-width:2.5;opacity:.38}
+#edge{stroke-width:1.2;opacity:1}
+.node{fill:none;stroke:var(--b);stroke-width:1.2;opacity:0;transition:opacity .3s}
+/* ── 2127 改造模組 ─────────────────────────────────────── */
+.part{opacity:0;transition:opacity .45s}
+.greeble{fill:none;stroke:var(--b);stroke-width:1.1}
+.chipFill{fill:#000a;stroke:var(--b);stroke-width:1.1}
+.tether{stroke:var(--a);stroke-width:.8;opacity:.45}
+.screen{fill:#000c;stroke:var(--a);stroke-width:1}
+.bars{fill:none;stroke:var(--a);stroke-width:1.6;opacity:.85}
+.monLabel{fill:var(--a);font:6px var(--mono);letter-spacing:.18em;opacity:.7}
+.conduit{fill:none;stroke:var(--a);stroke-width:1.4;stroke-dasharray:3 9;
+         animation:flow 1.4s linear infinite}          /* 流動光點：純 CSS，零 JS */
+.conduitGlow{fill:none;stroke:var(--a);stroke-width:5;opacity:.10;filter:blur(2px)}
+@keyframes flow{to{stroke-dashoffset:-24}}
+#reticle{fill:none;stroke:var(--a);stroke-width:1;opacity:.45;stroke-dasharray:5 11}
+#axis{stroke:var(--b);stroke-width:1;opacity:.5;stroke-dasharray:2 6}
+.leader{stroke:var(--a);stroke-width:1;opacity:.3}
+#sweep{fill:var(--a);opacity:0;filter:blur(4px)}
+
+/* ── HUD ─────────────────────────────────────────────────── */
+.panel,#notes,#status{z-index:7;text-shadow:0 0 8px currentColor}
+.panel{position:absolute;border:1px solid var(--a);background:#000a;padding:10px 14px;
+       backdrop-filter:blur(4px);opacity:0;transform:translateY(10px);
+       transition:opacity .5s,transform .5s cubic-bezier(.2,.9,.3,1)}
+.panel.on{opacity:1;transform:none}
+#pName{top:8%;left:5%;max-width:36%} #pStat{bottom:10%;right:5%;text-align:right;min-width:190px}
+.k{font-size:9px;letter-spacing:.28em;opacity:.5}
+.v{font-size:19px;letter-spacing:.04em;margin-top:3px}
+#gen{font-size:40px;line-height:1;color:var(--b);letter-spacing:.02em}
+#notes{position:absolute;bottom:8%;left:5%;max-width:42%;font-size:11px;line-height:1.9;
+       opacity:0;transition:opacity .6s;border-left:2px solid var(--b);padding-left:10px;min-height:4em}
+#lineage{opacity:.6;letter-spacing:.04em}
+#kept{margin-top:8px;font-size:13px;color:var(--b);letter-spacing:.02em}
+#notes.on{opacity:.85}
+#status{position:absolute;top:6%;right:5%;font-size:10px;letter-spacing:.28em;text-align:right;
+        line-height:2;opacity:.7}
+#status b{color:var(--b);font-weight:400}
+
+/* ── 啟動幕（同時解鎖 AudioContext）───────────────────────── */
+#veil{z-index:9;background:#03050a;display:grid;place-items:center;cursor:pointer;
+      transition:opacity .8s;text-align:center;letter-spacing:.4em;font-size:12px}
+#veil.gone{opacity:0;pointer-events:none}
+#veil small{display:block;margin-top:14px;letter-spacing:.1em;opacity:.4;font-size:10px;line-height:2}
+#err{position:fixed;inset:0;z-index:99;background:#300;color:#fbb;display:none;
+     place-items:center;text-align:center;padding:40px;font-size:13px;line-height:2}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="void" class="layer"></canvas>
+  <svg id="ovBack" class="layer">
+    <defs><radialGradient id="shellGrad">
+      <stop offset="55%" stop-color="var(--a)" stop-opacity="0"/>
+      <stop offset="88%" stop-color="var(--a)" stop-opacity=".30"/>
+      <stop offset="100%" stop-color="var(--b)" stop-opacity=".55"/>
+    </radialGradient></defs>
+    <path id="shell"/>
+  </svg>
+  <div id="feedWrap" class="layer"><video id="feed" autoplay muted playsinline loop></video></div>
+  <div id="tint" class="layer"></div>
+  <div id="scanlines" class="layer"></div>
+
+  <svg id="ov" class="layer">
+    <defs><!-- 色差：原生 SVG filter，唔使多開 video 層 -->
+      <filter id="rgbsplit" x="-8%" y="-8%" width="116%" height="116%">
+        <feOffset in="SourceGraphic" dx="-5" result="ro"/>
+        <feColorMatrix in="ro" type="matrix" result="r"
+          values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+        <feOffset in="SourceGraphic" dx="5" result="bo"/>
+        <feColorMatrix in="bo" type="matrix" result="b"
+          values="0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+        <feBlend in="r" in2="b" mode="screen"/>
+      </filter>
+    </defs>
+    <rect id="sweep" x="0" y="0" width="0" height="0"/>
+    <g id="ties"></g>
+    <path id="glow1"/><path id="glow2"/><path id="glow3"/><path id="edge"/>
+    <path id="futureEdge"/>
+    <circle id="reticle" r="0"/><line id="axis"/>
+    <g id="nodes"></g>
+    <g id="parts"></g>
+    <line class="leader" id="l1"/><line class="leader" id="l2"/>
+  </svg>
+
+  <div class="panel" id="pName">
+    <div class="k">2127 形態</div><div class="v" id="future">—</div>
+    <div class="k" style="margin-top:9px">現行型 · 2026</div>
+    <div class="v" id="nowName" style="font-size:12px;opacity:.55">—</div>
+  </div>
+  <div class="panel" id="pStat">
+    <div class="k">世代</div><div id="gen">GEN —</div>
+    <div class="k" style="margin-top:9px">形態類別</div><div class="v" id="form" style="font-size:12px">—</div>
+    <div class="k" style="margin-top:9px">形變量</div><div class="v" id="morph" style="font-size:12px">0.0%</div>
+  </div>
+  <div id="notes"><div id="lineage"></div><div id="kept"></div></div>
+  <div id="status">2026 ──▶ 2127<br>STATE <b id="st">IDLE</b><br>THEME <b id="th">—</b><br>AXIS <b id="ang">—</b></div>
+
+  <div id="veil" class="layer">放上物件 · 推演佢嘅 2127 形態
+    <small>?cam=1 真實攝影機 ｜ ?synth=1 合成物件 ｜ ?src=xx.mp4<br>
+           ?test=1 自我檢查 ｜ R 重掃 ｜ 也可直接把影片拖進來</small></div>
+</div>
+<div id="err"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// 設定 —— 展場現調的旋鈕都在這裡
+// ══════════════════════════════════════════════════════════════
+const CFG = {
+  W:160, H:120,
+  keyHue:120, tol:42,      // 台座色鍵（demo.mp4 實測 hue 120.2 / sat .99）
+  minSat:0.20,             // 低於此飽和度一律視為前景
+  minArea:60,
+  rays:64, nodes:12,
+  ema:0.5,                 // 平滑。調高會延遲，延遲看起來像「壞掉」
+  rpm:20,                  // 一圈 3s ≈ Gemini 中位延遲
+  detectFrames:5,
+  goneFrames:20,          // 連續幾格偵測唔到先當拎走（~0.3s）
+  minEcc:0.10,             // 低於此離心率 = 圓形，主軸無定義
+};
+const Q = new URLSearchParams(location.search);
+let smooth=null;   // 輪廓 EMA 緩衝（fitTracker 會清掉）
+
+const THEMES = {
+  CRYSTALLINE:{a:'#7df9ff',b:'#c77dff'}, BIOMECH:{a:'#7dffb0',b:'#ff7d9c'},
+  PLASMA     :{a:'#ffd166',b:'#ff4d6d'}, ARCHIVE:{a:'#00f0ff',b:'#ff00a0'},
+  WEAPON     :{a:'#ff9f1c',b:'#ff2e63'}, UNKNOWN:{a:'#9aa5b1',b:'#e0e6ed'},
+};
+
+// ══════════════════════════════════════════════════════════════
+// 追蹤
+// ══════════════════════════════════════════════════════════════
+const tc = document.createElement('canvas'); tc.width=CFG.W; tc.height=CFG.H;
+const tx = tc.getContext('2d',{willReadFrequently:true});
+// 追蹤畫布的長寬比必須等於來源，否則物體被壓扁 ——
+// 圓球會量出離心率 0.28、細長物的主軸角會被系統性扭曲。
+function fitTracker(video){
+  if(!video.videoWidth) return;
+  const h = Math.max(2, Math.round(CFG.W * video.videoHeight / video.videoWidth));
+  if(h===CFG.H) return;
+  CFG.H = tc.height = h;
+  smooth = null;
+}
+
+function hueDist(r,g,b,h0){
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn;
+  if(mx===0 || d/mx < CFG.minSat) return 999;    // 低飽和 → 物體，不是台座
+  let h = mx===r ? 60*(((g-b)/d)%6) : mx===g ? 60*(((b-r)/d)+2) : 60*(((r-g)/d)+4);
+  if(h<0) h+=360;
+  const dh=Math.abs(h-h0);
+  return dh>180 ? 360-dh : dh;
+}
+
+/** 純函式，吃 ImageData buffer。自我檢查用同一支。 */
+function analyze(data,W,H){
+  const mask=new Uint8Array(W*H);
+  let m00=0,m10=0,m01=0,m20=0,m02=0,m11=0, x0=W,y0=H,x1=0,y1=0;
+  for(let i=0,p=0;p<data.length;p+=4,i++){
+    if(hueDist(data[p],data[p+1],data[p+2],CFG.keyHue) < CFG.tol) continue;
+    const px=i%W, py=(i/W)|0;
+    mask[i]=1;
+    m00++; m10+=px; m01+=py; m20+=px*px; m02+=py*py; m11+=px*py;
+    if(px<x0)x0=px; if(px>x1)x1=px; if(py<y0)y0=py; if(py>y1)y1=py;
+  }
+  if(m00 < CFG.minArea) return null;
+  const cx=m10/m00, cy=m01/m00;
+  const a=m20/m00-cx*cx, b=m11/m00-cx*cy, c=m02/m00-cy*cy;
+  // 離心率：0 = 完美圓形（籃球！），1 = 直線
+  const ecc = (a+c) > 0 ? Math.hypot(a-c, 2*b)/(a+c) : 0;
+  return {
+    cx, cy, bbox:[x0,y0,x1,y1], area:m00/(W*H), ecc, mask,
+    // 圓形物體沒有主軸 —— 給 null，不要讓 atan2 噴雜訊
+    angle: ecc < CFG.minEcc ? null : 0.5*Math.atan2(2*b, a-c),
+  };
+}
+
+let tainted=false;
+function track(video){
+  if(!video.videoWidth || tainted) return null;
+  tx.drawImage(video,0,0,CFG.W,CFG.H);
+  try { return analyze(tx.getImageData(0,0,CFG.W,CFG.H).data, CFG.W, CFG.H); }
+  catch(e){
+    tainted=true;
+    const el=document.getElementById('err');
+    el.style.display='grid';
+    el.innerHTML='CANVAS 被跨來源污染，讀不到畫素。<br><br>'+
+      '用 file:// 開啟時 Chrome 會把每個檔案視為獨立來源。<br>請改用本機伺服器：<br><br>'+
+      '<code style="color:#fff">cd ~/item2127 &amp;&amp; python3 -m http.server 8127</code><br><br>'+
+      '然後開 <code style="color:#fff">http://localhost:8127</code>';
+    return null;
+  }
+}
+
+// 輪廓：從質心放射取樣。
+// ponytail: 星形近似，凹陷會被橋接（帶孔的鑰匙圈畫不出孔）。
+//           升級路徑 Moore 邊界追蹤。展場物件夠緊緻，先不用。
+function radialContour(mask,cx,cy,W,H,n){
+  const out=new Float32Array(n*2), maxR=Math.hypot(W,H);
+  for(let i=0;i<n;i++){
+    const a=i/n*Math.PI*2, dx=Math.cos(a), dy=Math.sin(a);
+    let hit=1;
+    for(let r=1;r<maxR;r++){
+      const px=(cx+dx*r)|0, py=(cy+dy*r)|0;
+      if(px<0||py<0||px>=W||py>=H) break;
+      if(mask[py*W+px]) hit=r;
+    }
+    out[i*2]=cx+dx*hit; out[i*2+1]=cy+dy*hit;
+  }
+  return out;
+}
+const toPath=(p,sx,sy)=>{let d='M';for(let i=0;i<p.length;i+=2)
+  d+=(i?'L':'')+(p[i]*sx).toFixed(1)+','+(p[i+1]*sy).toFixed(1);return d+'Z';};
+
+// ══════════════════════════════════════════════════════════════
+// D：音效 —— 純振盪器，零音檔。展場裡聲音是三十公尺外的人流磁鐵。
+// ══════════════════════════════════════════════════════════════
+const SFX = { ctx:null, hum:null };
+function ac(){ return SFX.ctx ||= new (window.AudioContext||window.webkitAudioContext)(); }
+function tone(f0,f1,dur,type='sine',peak=.12){
+  const c=ac(), t=c.currentTime, o=c.createOscillator(), g=c.createGain();
+  o.type=type; o.frequency.setValueAtTime(f0,t);
+  o.frequency.exponentialRampToValueAtTime(Math.max(f1,1),t+dur);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(peak,t+.012);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+.05);
+}
+const chirp = ()=> tone(900,2400,.10,'sine',.10);
+const tick  = ()=> tone(1800,1600,.02,'square',.03);
+function boom(){
+  const c=ac(), t=c.currentTime, n=c.sampleRate*1.6;
+  const buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.2);
+  const s=c.createBufferSource(); s.buffer=buf;
+  const f=c.createBiquadFilter(); f.type='lowpass';
+  f.frequency.setValueAtTime(3000,t); f.frequency.exponentialRampToValueAtTime(120,t+1.5);
+  const g=c.createGain(); g.gain.value=.35;
+  s.connect(f).connect(g).connect(c.destination); s.start(t);
+  tone(160,40,1.4,'sawtooth',.14);
+}
+function humOn(){
+  if(SFX.hum) return;
+  const c=ac(), g=c.createGain(), f=c.createBiquadFilter();
+  f.type='lowpass'; f.frequency.value=420;
+  g.gain.setValueAtTime(0,c.currentTime);
+  g.gain.linearRampToValueAtTime(.09,c.currentTime+.4);
+  const os=[55,55.6,110].map(hz=>{const o=c.createOscillator();
+    o.type='sawtooth'; o.frequency.value=hz; o.connect(f); o.start(); return o;});
+  f.connect(g).connect(c.destination);
+  SFX.hum={g,os};
+}
+function humOff(){
+  if(!SFX.hum) return;
+  const {g,os}=SFX.hum, c=ac();
+  g.gain.cancelScheduledValues(c.currentTime);
+  g.gain.setValueAtTime(g.gain.value,c.currentTime);
+  g.gain.linearRampToValueAtTime(0,c.currentTime+.5);
+  os.forEach(o=>o.stop(c.currentTime+.6));
+  SFX.hum=null;
+}
+
+// ══════════════════════════════════════════════════════════════
+// C：文字生命 —— 靜態文字看起來永遠像網頁
+// ══════════════════════════════════════════════════════════════
+const GLYPHS='アイウエオカキクケコサシスセソタチツテト0123456789#$%&*+=<>/\\|';
+function scramble(el,text,ms=900){
+  clearInterval(el._t); const t0=performance.now(), n=text.length;
+  el._t=setInterval(()=>{
+    const p=Math.min(1,(performance.now()-t0)/ms), lock=Math.floor(p*n);
+    let s='';
+    for(let i=0;i<n;i++) s += i<lock ? text[i]
+      : (text[i]===' ' ? ' ' : GLYPHS[Math.random()*GLYPHS.length|0]);
+    el.textContent=s;
+    if(p>=1){ clearInterval(el._t); el.textContent=text; }
+  },33);
+}
+function typewrite(el,text,ms=2200){
+  clearInterval(el._t); const t0=performance.now(), n=text.length;
+  el._t=setInterval(()=>{
+    const k=Math.min(n,Math.floor((performance.now()-t0)/ms*n));
+    el.textContent=text.slice(0,k)+(k<n?'▍':'');
+    if(k>=n) clearInterval(el._t);
+  },30);
+}
+
+// ══════════════════════════════════════════════════════════════
+// 2127 改造模組 —— 程序生成，掛喺輪廓上跟住轉
+//
+// 三層變化互相獨立：
+//   Gemini modules → 邊幾種零件（語意）
+//   seed           → 幾多顆／擺邊／幾大（排列）
+//   visualTheme    → 顏色（配色）
+// 同一條鎖匙，seed 唔同就永遠唔會出到一樣嘅嘢。
+// ══════════════════════════════════════════════════════════════
+const rng = seed => () => {                    // mulberry32，5 行，可重現
+  seed = seed + 0x6D2B79F5 | 0;
+  let t = Math.imul(seed ^ seed>>>15, 1|seed);
+  t = t + Math.imul(t ^ t>>>7, 61|t) ^ t;
+  return ((t ^ t>>>14) >>> 0) / 4294967296;
+};
+const SVGNS='http://www.w3.org/2000/svg';
+const mk=(n,a={})=>{const e=document.createElementNS(SVGNS,n);
+  for(const k in a) e.setAttribute(k,a[k]); return e;};
+
+let parts=[];
+
+// Gemini 嘅位置提示 at:[x,y]（0~1000 影像空間）→ 由質心出發嘅射線索引。
+// ponytail: 掃描嗰格先有效。之後物體轉，模組留喺同一個角度（見 30-decisions D4 天花板）。
+function anchorToIndex(at,cx,cy){
+  if(!Array.isArray(at)||at.length!==2) return null;
+  const px=at[0]/1000*CFG.W, py=at[1]/1000*CFG.H;
+  const a=Math.atan2(py-cy, px-cx);
+  return ((Math.round(a/(Math.PI*2)*CFG.rays))%CFG.rays+CFG.rays)%CFG.rays;
+}
+
+// 只存輪廓索引，唔存座標 —— 咁零件先會黐住剪影一齊轉
+function buildParts(mods,seed,cx,cy){
+  const R=rng(seed), g=el('parts');
+  g.innerHTML=''; parts=[];
+  const used=[], cd=(a,b)=>{const d=Math.abs(a-b)%CFG.rays; return Math.min(d,CFG.rays-d);};
+  const pick=(gap=7)=>{
+    for(let k=0;k<30;k++){ const i=(R()*CFG.rays)|0;
+      if(used.every(u=>cd(i,u)>=gap)){ used.push(i); return i; } }
+    const i=(R()*CFG.rays)|0; used.push(i); return i;
+  };
+  // 有位置提示就用佢；撞到別人就沿輪廓向兩邊推開，唔會亂飛去第二邊
+  const place=(want,gap=6)=>{
+    if(want==null) return pick(gap);
+    for(let d=0;d<CFG.rays;d++) for(const sg of (d?[1,-1]:[1])){
+      const i=((want+d*sg)%CFG.rays+CFG.rays)%CFG.rays;
+      if(used.every(u=>cd(i,u)>=gap)){ used.push(i); return i; }
+    }
+    used.push(want); return want;
+  };
+
+  const makeChip=(want)=>{
+    const w=15+R()*16, h=11+R()*9, e=mk('g',{class:'part'});
+    let d='', cols=2+((R()*3)|0), pins=3+((R()*3)|0);
+    for(let i=1;i<cols;i++) d+=`M${-w/2+i*w/cols},${-h/2}v${h}`;          // 內部走線
+    for(let i=0;i<pins;i++) d+=`M${-w/2+(i+.5)*w/pins},${h/2}v${2+R()*3}`; // 針腳
+    e.append(mk('rect',{x:-w/2,y:-h/2,width:w,height:h,class:'chipFill'}),
+             mk('path',{d,class:'greeble'}));
+    return {kind:'CHIP', i:place(want), out:4+R()*9, wt:1.0, e};
+  };
+
+  const makeMonitor=(want,label)=>{
+    const w=62+R()*40, h=34+R()*20, e=mk('g',{class:'part'});
+    const tether=mk('line',{class:'tether'}), mon=mk('g'), bars=mk('path',{class:'bars'});
+    const lbl=mk('text',{x:2,y:-4,class:'monLabel'});
+    lbl.textContent = label || (['FLUX','SYNC','RES','CORE','ΔE'][(R()*5)|0]+'·'+((R()*90+10)|0));
+    mon.append(mk('rect',{x:0,y:0,width:w,height:h,class:'screen'}),bars,lbl);
+    e.append(tether,mon);
+    let i;
+    if(want!=null) i=place(want,9);                            // 有提示就聽 Gemini
+    else { i=pick(9);                                          // 冇就偏向左右，避開上下 HUD
+      for(let k=0;k<12;k++){ if(Math.abs(Math.cos(i/CFG.rays*Math.PI*2))>0.55) break;
+        used.pop(); i=pick(9); } }
+    return {kind:'MONITOR', i, out:40+R()*46, w, h, nb:5+((R()*4)|0), wt:0.4, e, tether, mon, bars};
+  };
+
+  // 導管接返上一個實體模組 —— 讀落係「模組之間嘅接線」，唔係亂畫一條
+  const makeConduit=(want,linkTo)=>{
+    const e=mk('g',{class:'part'});
+    const glow=mk('path',{class:'conduitGlow'}), line=mk('path',{class:'conduit'});
+    e.append(glow,line);
+    return {kind:'CONDUIT', i:place(want,4), j:linkTo!=null?linkTo:pick(6),
+            bulge:12+R()*28, wt:0.3, e, glow, line};
+  };
+
+  // ponytail: 只實作三種，其餘 enum 值先當 CHIP 處理。
+  //           HEATSINK / PORT / ANTENNA / CORE / VENT 之後再補生成器。
+  const MAKE={CHIP:makeChip, MONITOR:makeMonitor, CONDUIT:makeConduit};
+  // 收字串（舊格式／退路）或 {type, at:[x,y], label}
+  const list=(mods&&mods.length?mods:['CHIP','MONITOR','CONDUIT'])
+    .map(m=>typeof m==='string'?{type:m}:(m||{}))
+    .map(m=>({...m, type:MAKE[m.type]?m.type:'CHIP'}));
+
+  let lastSolid=null;
+  for(const m of list){
+    const want=anchorToIndex(m.at,cx,cy);       // 冇提示 → null → 落亂數
+    const p = m.type==='MONITOR' ? makeMonitor(want,m.label)
+            : m.type==='CONDUIT' ? makeConduit(want,lastSolid)
+            : makeChip(want);
+    if(p.kind!=='CONDUIT') lastSolid=p.i;
+    parts.push(p); g.appendChild(p.e);
+  }
+  return parts;
+}
+
+// ── 由真實輪廓推演 2127 形態 ────────────────────────────────
+// 呢個係整件事嘅主旨：唔係框住件物件，係畀人睇到佢一百年後變成點。
+// 三步：吸收細節（更流線）→ 喺模組位置長出隆起 → 整體外擴一圈。
+// 每格都用同一個 seed 重跑，所以 2127 形態會跟住實體一齊轉。
+function projectFuture(base,cx,cy,seed,anchors){
+  const n=CFG.rays, R=rng(seed), rad=new Float32Array(n);
+  for(let i=0;i<n;i++) rad[i]=Math.hypot(base[i*2]-cx, base[i*2+1]-cy);
+
+  const sm=new Float32Array(n);                       // 1. 低通：細節被吸收入一個整體外殼
+  for(let i=0;i<n;i++){ let acc=0;
+    for(let k=-3;k<=3;k++) acc+=rad[(i+k+n)%n];
+    sm[i]=acc/7; }
+  const out=new Float32Array(n);
+  for(let i=0;i<n;i++) out[i]=rad[i]*.35+sm[i]*.65;
+
+  for(const a of anchors){                            // 2. 模組位置長出嘢
+    const j=a.i??a, wt=a.w??1;                        // 收 {i,w} 或純索引
+    const amp=(.10+R()*.30)*wt, w=3+R()*5;
+    for(let i=0;i<n;i++){
+      const d0=Math.abs(i-j), d=Math.min(d0,n-d0);
+      out[i]+=sm[j]*amp*Math.exp(-(d*d)/(2*w*w));
+    }
+  }
+  const grow=1.06+R()*.10;                            // 3. 2127 形態比原型大一圈
+  const pts=new Float32Array(n*2);
+  let dsum=0, rsum=0;
+  for(let i=0;i<n;i++){
+    const r=out[i]*grow, a=i/n*Math.PI*2;
+    pts[i*2]=cx+Math.cos(a)*r; pts[i*2+1]=cy+Math.sin(a)*r;
+    dsum+=Math.abs(r-rad[i]); rsum+=rad[i];
+  }
+  pts.morph = rsum ? dsum/rsum : 0;                   // 形變量：真實可量嘅數
+  return pts;
+}
+
+// 每格重新投影 —— 位置由當下輪廓決定，所以零件跟住實體轉
+// ponytail: 錨點係「射線索引」＝ 固定角度，唔係物體表面上嘅實體點。
+//           所以模組係停喺物體某一側，唔會隨物體自轉繞到背面。
+//           要真正黐死實體點就要做特徵追蹤 + 遮擋，剪影系統做唔到。
+//           升級路徑：按轉盤 RPM 推進 anchor 索引，令模組沿輪廓環繞。
+function layoutParts(sx,sy,now,cxp,cyp){
+  if(!parts.length || !smooth) return;
+  const ang = i => i/CFG.rays*Math.PI*2;
+  let rad=0;
+  for(let i=0;i<CFG.rays;i++) rad+=Math.hypot(smooth[i*2]*sx-cxp, smooth[i*2+1]*sy-cyp);
+  const k = Math.max(.6, Math.min(3.2, rad/CFG.rays/110));   // 110px 為基準半徑
+  for(const p of parts){
+    const px=smooth[p.i*2]*sx, py=smooth[p.i*2+1]*sy;
+    const a=ang(p.i), nx=Math.cos(a), ny=Math.sin(a);   // 放射取樣送嘅法線，免費
+    if(p.kind==='CHIP'){
+      p.e.setAttribute('transform',
+        `translate(${px+nx*p.out*k},${py+ny*p.out*k}) rotate(${a*180/Math.PI+90}) scale(${k})`);
+    } else if(p.kind==='MONITOR'){
+      const mx=px+nx*p.out*k, my=py+ny*p.out*k;
+      p.tether.setAttribute('x1',px); p.tether.setAttribute('y1',py);
+      p.tether.setAttribute('x2',mx); p.tether.setAttribute('y2',my);
+      p.mon.setAttribute('transform',
+        `translate(${mx-(nx<0?p.w*k:0)},${my-p.h*k/2}) scale(${k})`);
+      if(now-(p.tb||0)>110){ p.tb=now;                 // 長條圖跳動
+        let d='';
+        for(let k=0;k<p.nb;k++) d+=`M${4+k*(p.w-8)/p.nb},${p.h-4}v${-(3+Math.random()*(p.h-10))}`;
+        p.bars.setAttribute('d',d);
+      }
+    } else {
+      const qx=smooth[p.j*2]*sx, qy=smooth[p.j*2+1]*sy, b=ang(p.j);
+      const cx2=(px+qx)/2, cy2=(py+qy)/2;
+      let ux=(nx+Math.cos(b))/2, uy=(ny+Math.sin(b))/2;
+      const L=Math.hypot(ux,uy)||1;
+      const d=`M${px},${py}Q${cx2+ux/L*p.bulge*k},${cy2+uy/L*p.bulge*k} ${qx},${qy}`;
+      p.line.setAttribute('d',d); p.glow.setAttribute('d',d);
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// A：2127 虛空 —— 綠幕拿掉之後，背後總得有東西
+// ══════════════════════════════════════════════════════════════
+const vc=document.getElementById('void'), vx=vc.getContext('2d');
+const specks=[...Array(90)].map(()=>({x:Math.random(),y:Math.random(),
+  z:.25+Math.random()*.75, s:Math.random()*2+.4}));
+function drawVoid(t,w,h,accent){
+  if(vc.width!==w){ vc.width=w; vc.height=h; }
+  vx.clearRect(0,0,w,h);
+  const g=vx.createRadialGradient(w/2,h*.55,0,w/2,h*.55,w*.72);
+  g.addColorStop(0,'#0a1420'); g.addColorStop(1,'#03050a');
+  vx.fillStyle=g; vx.fillRect(0,0,w,h);
+  // 透視地平網格
+  vx.strokeStyle=accent; vx.globalAlpha=.07; vx.lineWidth=1;
+  const hz=h*.62;
+  for(let i=1;i<16;i++){
+    const y=hz+Math.pow(i/16,2.6)*(h-hz);
+    vx.beginPath(); vx.moveTo(0,y); vx.lineTo(w,y); vx.stroke();
+  }
+  for(let i=-10;i<=10;i++){
+    vx.beginPath(); vx.moveTo(w/2+i*w*.06,hz); vx.lineTo(w/2+i*w*.5,h); vx.stroke();
+  }
+  // 漂浮塵埃
+  for(const s of specks){
+    const y=(s.y + t*0.00002*s.z) % 1;
+    vx.globalAlpha=.10+s.z*.30;
+    vx.fillStyle=accent;
+    vx.fillRect(s.x*w, y*h, s.s*s.z, s.s*s.z);
+  }
+  vx.globalAlpha=1;
+}
+
+// ══════════════════════════════════════════════════════════════
+// 合成來源（?synth=1）—— 沒有 demo.mp4 時的退路
+// ══════════════════════════════════════════════════════════════
+function synthStream(){
+  const c=document.createElement('canvas'); c.width=1280; c.height=720;
+  const g=c.getContext('2d'); let t=0;
+  (function draw(){
+    t += (CFG.rpm/60)*(Math.PI*2)/60;
+    g.fillStyle='#02f303'; g.fillRect(0,0,1280,720);
+    g.save(); g.translate(640,380); g.rotate(t*.35);
+    g.scale(.30+.70*Math.abs(Math.cos(t)),1);       // 假 45° 視角
+    g.fillStyle='#2b2b30';
+    g.beginPath(); g.arc(-150,0,86,0,7); g.fill();
+    g.globalCompositeOperation='destination-out';
+    g.beginPath(); g.arc(-150,0,34,0,7); g.fill();
+    g.globalCompositeOperation='source-over';
+    g.fillRect(-90,-22,300,44);
+    for(let i=0;i<4;i++) g.fillRect(120+i*36,-56,20,36);
+    g.restore(); requestAnimationFrame(draw);
+  })();
+  return c.captureStream(30);
+}
+
+// ══════════════════════════════════════════════════════════════
+// 假 Gemini —— 延遲 2~6s，跟真的一樣不可預測
+// ══════════════════════════════════════════════════════════════
+const MOCK_DB=[
+  {now:'橡膠籃球', futureName:'動能球體', gen:9, form:'自修復慣性體',
+   lineage:'2041 自修復表層 → 2073 內置慣性補償 → 2110 無氣結構',
+   kept:'一百年之後，佢仲係要你用隻手掟出去。', visualTheme:'PLASMA',
+   modules:[{type:'CORE',at:[500,500],label:'慣性核'},
+            {type:'CHIP',at:[760,330]},
+            {type:'CONDUIT',at:[520,820]},
+            {type:'MONITOR',at:[210,540],label:'自修復'}]},
+  {now:'黃銅家門鑰匙', futureName:'持有權密鑰', gen:7, form:'生體共生型',
+   lineage:'2038 無線化 → 2064 生體綁定 → 2099 量子簽章',
+   kept:'仲係要揸喺手，仲係會唔見。', visualTheme:'ARCHIVE',
+   modules:[{type:'CHIP',at:[790,470],label:'密鑰陣列'},   // 齒紋端
+            {type:'PORT',at:[250,500]},                    // 握把端
+            {type:'CONDUIT',at:[520,430]},
+            {type:'MONITOR',at:[300,760],label:'持有權'}]},
+  {now:'護唇膏', futureName:'表皮維持棒', gen:4, form:'活性膜載體',
+   lineage:'2044 溫感釋放 → 2081 菌群共生配方 → 2116 自量給',
+   kept:'仲係要你自己搽。', visualTheme:'BIOMECH',
+   modules:[{type:'VENT',at:[500,180]},                    // 出口端
+            {type:'MONITOR',at:[700,560],label:'菌群'}]},
+  {now:'交通儲值卡', futureName:'通行權載體', gen:11, form:'光學薄片',
+   lineage:'2033 全面無實體 → 2058 實體卡回歸 → 2104 光學層壓',
+   kept:'仲係一拍就過。', visualTheme:'CRYSTALLINE',
+   modules:[{type:'CHIP',at:[640,520],label:'光學層'},
+            {type:'CONDUIT',at:[500,760]},
+            {type:'MONITOR',at:[250,400],label:'通行權'}]},
+];
+let mockIdx=0;
+const mockScan = () => new Promise(r =>
+  setTimeout(()=>r(MOCK_DB[mockIdx++ % MOCK_DB.length]), 2000+Math.random()*4000));
+// 真接時 → fetch('/api/scan',{method:'POST',body:JSON.stringify({frames})}).then(r=>r.json())
+
+// ══════════════════════════════════════════════════════════════
+// 狀態機 —— 七節拍。轉一圈 = 進度條
+// ══════════════════════════════════════════════════════════════
+const REV=60000/CFG.rpm, el=id=>document.getElementById(id);
+const $={feed:el('feed'),feedWrap:el('feedWrap'),tint:el('tint'),ties:el('ties'),
+         scan:el('scanlines'),ov:el('ov'),sweep:el('sweep'),
+         nodes:el('nodes'),reticle:el('reticle'),axis:el('axis'),l1:el('l1'),l2:el('l2'),stage:el('stage')};
+let state='IDLE', tEnter=performance.now(), fresh=true, present=0, absent=0;
+let data=null, prevArea=0, flux=0, lastTick=0;
+let futureSeed=0, anchors=[], lastT=null;
+
+const go=s=>{ state=s; tEnter=performance.now(); fresh=true; el('st').textContent=s; };
+const onEnter=()=>{ const f=fresh; fresh=false; return f; };   // 只在進入該節拍的第一格為 true
+const since=()=>performance.now()-tEnter;
+
+function applyTheme(n){
+  const t=THEMES[n]||THEMES.UNKNOWN;
+  document.documentElement.style.setProperty('--a',t.a);
+  document.documentElement.style.setProperty('--b',t.b);
+  el('th').textContent=n;
+}
+
+function reveal(d){
+  applyTheme(d.visualTheme); boom();
+  scramble(el('future'),d.futureName,1000);
+  scramble(el('nowName'),d.now,700);
+  scramble(el('form'),d.form,900);
+  el('gen').textContent='GEN '+String(d.gen).padStart(2,'0');
+  typewrite(el('lineage'),d.lineage,1900);
+  setTimeout(()=>typewrite(el('kept'),d.kept,1500),1400);   // 最尾先出：呢句係整件事嘅重點
+  $.feed.classList.add('holo'); $.feedWrap.classList.add('on');
+  $.tint.classList.add('on'); $.scan.classList.add('on');
+  el('pName').classList.add('on'); el('pStat').classList.add('on'); el('notes').classList.add('on');
+  [...$.nodes.children].forEach((n,i)=>setTimeout(()=>{n.style.opacity=.75;chirp();}, 120+i*55));
+  // 每次掃描新 seed → 同一件物件都唔會出到一樣嘅佈局
+  const ps=buildParts(d.modules, Date.now(), lastT?lastT.cx:CFG.W/2, lastT?lastT.cy:CFG.H/2);
+  ps.forEach((p,i)=>setTimeout(()=>{ p.e.style.opacity=1; tick(); }, 320+i*90));
+  // 2127 形態由模組位置長出來 —— 同一個 seed，每格重跑，跟住實體轉
+  futureSeed=Date.now(); anchors=ps.map(p=>({i:p.i, w:p.wt??1}));
+  $.stage.classList.add('morphed');
+  // materialize 那一瞬的色差抖動
+  $.feed.classList.add('split');
+  setTimeout(()=>$.feed.classList.remove('split'), 420);
+}
+
+function resetView(){
+  data=null; humOff();
+  $.feed.classList.remove('holo','split'); $.feedWrap.classList.remove('on');
+  [$.tint,$.scan].forEach(n=>n.classList.remove('on'));
+  ['pName','pStat','notes'].forEach(i=>el(i).classList.remove('on'));
+  [...$.nodes.children].forEach(n=>n.style.opacity=0);
+  el('parts').innerHTML=''; parts=[];
+  anchors=[]; futureSeed=0; $.stage.classList.remove('morphed');
+  applyTheme('ARCHIVE');
+  el('future').textContent=el('nowName').textContent=el('form').textContent='—';
+  el('gen').textContent='GEN —';
+  el('lineage').textContent=''; el('kept').textContent='';
+}
+
+function loop(now){
+  requestAnimationFrame(loop);
+  const box=$.stage.getBoundingClientRect();
+  const sx=box.width/CFG.W, sy=box.height/CFG.H;
+  const vb=`0 0 ${box.width} ${box.height}`;              // 舞台尺寸會變，viewBox 得跟著
+  if($.ov.getAttribute('viewBox')!==vb){ $.ov.setAttribute('viewBox',vb); el('ovBack').setAttribute('viewBox',vb); }
+  const accent=getComputedStyle(document.documentElement).getPropertyValue('--a').trim();
+  drawVoid(now,Math.round(box.width),Math.round(box.height),accent);
+
+  const t=track($.feed);
+  if(t) lastT=t;
+  if(t){ present++; absent=0; } else { absent++; present=0; }
+  const here = present>CFG.detectFrames;
+  // 單格偵測唔到唔代表物件拎走咗（影片 loop、手掃過、對焦一下都會掉格）
+  const gone = absent>CFG.goneFrames;
+
+  if(t){
+    const raw=radialContour(t.mask,t.cx,t.cy,CFG.W,CFG.H,CFG.rays);
+    if(!smooth || smooth.length!==raw.length) smooth=raw.slice();
+    else for(let i=0;i<raw.length;i++) smooth[i]+=(raw[i]-smooth[i])*CFG.ema;
+
+    const d=toPath(smooth,sx,sy);
+    ['glow1','glow2','glow3','edge'].forEach(i=>el(i).setAttribute('d',d));
+
+    // 2127 形態：同一個 seed 每格重推，所以佢跟住實體轉
+    if(futureSeed){
+      const fut=projectFuture(smooth,t.cx,t.cy,futureSeed,anchors);
+      const fd=toPath(fut,sx,sy);
+      el('futureEdge').setAttribute('d',fd); el('shell').setAttribute('d',fd);
+      el('morph').textContent=(fut.morph*100).toFixed(1)+'%';
+      if($.ties.children.length!==CFG.nodes){
+        $.ties.innerHTML='';
+        for(let i=0;i<CFG.nodes;i++) $.ties.appendChild(mk('line',{class:'tie'}));
+      }
+      const st2=(CFG.rays/CFG.nodes)|0;                 // 原型 ↔ 2127 形態嘅對應連線
+      [...$.ties.children].forEach((ln,i)=>{ const k=i*st2*2;
+        ln.setAttribute('x1',smooth[k]*sx); ln.setAttribute('y1',smooth[k+1]*sy);
+        ln.setAttribute('x2',fut[k]*sx);    ln.setAttribute('y2',fut[k+1]*sy); });
+    }
+    // A：同一條路徑裁切所有影像層 → 綠幕消失，物體漂在虛空裡
+    const clip=`path('${d}')`;
+    [$.feed,$.tint,$.scan].forEach(n=>n.style.clipPath=clip);
+    $.feed.style.opacity=1;
+
+    const cx=t.cx*sx, cy=t.cy*sy;
+    const r=Math.max(t.bbox[2]-t.bbox[0],t.bbox[3]-t.bbox[1])*sx*.78;
+    $.reticle.setAttribute('cx',cx); $.reticle.setAttribute('cy',cy); $.reticle.setAttribute('r',r);
+    $.reticle.style.transformOrigin=`${cx}px ${cy}px`;
+    $.reticle.style.transform=`rotate(${now/22}deg)`;
+
+    // 主軸：圓形物體（籃球）沒有主軸 —— 藏起來，不要讓 atan2 噴雜訊
+    if(t.angle===null){
+      $.axis.style.opacity=0; el('ang').textContent='RADIAL SYM';
+    }else{
+      $.axis.style.opacity=.5;
+      const ax=Math.cos(t.angle)*r, ay=Math.sin(t.angle)*r;
+      $.axis.setAttribute('x1',cx-ax); $.axis.setAttribute('y1',cy-ay);
+      $.axis.setAttribute('x2',cx+ax); $.axis.setAttribute('y2',cy+ay);
+      el('ang').textContent=t.angle.toFixed(2)+' rad';
+    }
+
+    if($.nodes.children.length!==CFG.nodes){
+      $.nodes.innerHTML='';
+      for(let i=0;i<CFG.nodes;i++){
+        const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+        p.setAttribute('class','node'); $.nodes.appendChild(p);
+      }
+    }
+    const step=(CFG.rays/CFG.nodes)|0;
+    [...$.nodes.children].forEach((n,i)=>{
+      const k=i*step*2, x=smooth[k]*sx, y=smooth[k+1]*sy;
+      n.setAttribute('d',`M${x-5},${y-5}h-3v3 M${x+5},${y-5}h3v3 M${x-5},${y+5}h-3v-3 M${x+5},${y+5}h3v-3`);
+    });
+
+    layoutParts(sx,sy,now,cx,cy);
+
+    $.l1.setAttribute('x1',box.width*.05+40); $.l1.setAttribute('y1',box.height*.17);
+    $.l1.setAttribute('x2',cx); $.l1.setAttribute('y2',cy);
+    $.l2.setAttribute('x1',box.width*.95-40); $.l2.setAttribute('y1',box.height*.78);
+    $.l2.setAttribute('x2',cx); $.l2.setAttribute('y2',cy);
+
+
+  } else {
+    $.feed.style.clipPath='none'; $.feed.style.opacity=.10;   // 沒東西時留個微弱畫面，不要看起來像壞了
+  }
+
+  switch(state){
+    case 'IDLE': if(here) { go('DETECT'); chirp(); } break;
+
+    case 'DETECT':
+      if(since()>300){ humOn(); mockScan().then(d=>data=d); go('PROJECT'); }
+      break;
+
+    case 'PROJECT': {
+      const p=(since()%REV)/REV;
+      $.sweep.setAttribute('x',0); $.sweep.setAttribute('width',box.width);
+      $.sweep.setAttribute('y',p*box.height); $.sweep.setAttribute('height',7);
+      $.sweep.style.opacity=.3;
+      if(now-lastTick>140){ lastTick=now; tick(); }
+      // 資料早到 → 等這圈轉完；晚到 → 多轉一圈。永遠對齊實體節奏。
+      if(data && since()>=REV*Math.ceil(since()/REV-.001)-18){ $.sweep.style.opacity=0; humOff(); go('MORPH'); }
+      if(since()>12000){ data={now:'?',futureName:'推演失敗',gen:0,form:'ANOMALOUS',
+        lineage:'時間線分歧過多，無法收斂。',kept:'呢件物件拒絕畀人知佢會變成點。',
+        visualTheme:'UNKNOWN',modules:[{type:'CHIP'}]};
+        $.sweep.style.opacity=0; humOff(); go('MORPH'); }
+      if(gone) { humOff(); go('RESET'); }
+      break;
+    }
+
+    case 'MORPH':
+      if(onEnter()) reveal(data);
+      if(since()>1100) go('REVEAL');
+      if(gone) go('RESET');
+      break;
+
+    case 'REVEAL':
+      if(since()>10000) go('PRINT');
+      if(gone) go('RESET');
+      break;
+
+    case 'PRINT':
+      if(onEnter()){ console.log('[PRINT]',data); tone(1400,300,.5,'square',.09); }
+      if(since()>4000 || gone) go('RESET');
+      break;
+
+    case 'RESET':
+      if(since()>600){ resetView(); go('IDLE'); }
+      break;
+  }
+  if(absent>60 && state!=='IDLE' && state!=='RESET') go('RESET');
+}
+
+// ══════════════════════════════════════════════════════════════
+// 啟動 —— 來源可插拔
+// ══════════════════════════════════════════════════════════════
+const VIDS=[$.feed];   // 一個就夠：全息化直接套喺佢身上
+function setAR(){
+  if(!$.feed.videoWidth) return;
+  fitTracker($.feed);
+  document.documentElement.style.setProperty('--ar',$.feed.videoWidth/$.feed.videoHeight);
+  const b=$.stage.getBoundingClientRect();
+  $.ov.setAttribute('viewBox',`0 0 ${b.width} ${b.height}`);
+}
+// play() 可能因為自動播放政策或解碼失敗而 reject —— 絕不能讓它擋住主迴圈
+const playAll = () => { VIDS.forEach(v=>v.play().catch(e=>console.warn('play:',e.name))); };  // 唔 await：載唔到時 promise 可以永遠唔 settle
+function useStream(s){ VIDS.forEach(v=>{v.srcObject=s; v.removeAttribute('src');}); playAll(); }
+function useFile(url){ VIDS.forEach(v=>{v.srcObject=null; v.src=url;}); playAll(); }
+
+async function boot(){
+  try{
+  if(Q.get('cam')==='1')       useStream(await navigator.mediaDevices.getUserMedia({video:{width:1280,height:720}}));
+  else if(Q.get('synth')==='1')useStream(synthStream());
+  else                         useFile(Q.get('src') || 'demo.mp4');
+  setAR(); addEventListener('resize',setAR);
+  $.feed.addEventListener('loadedmetadata',setAR);
+  $.feed.addEventListener('error',()=>{
+    const e=el('err'); e.style.display='grid';
+    e.innerHTML='影片解不開。<br><br>YouTube 預設下載可能是 AV1，部分環境不支援。<br>轉成 H.264：<br><br>'+
+      '<code style="color:#fff">ffmpeg -i in.mp4 -c:v libx264 -pix_fmt yuv420p -an demo.mp4</code>';
+  });
+  applyTheme('ARCHIVE');
+  }catch(e){ console.error('boot:',e); }
+  requestAnimationFrame(loop);          // 來源失敗也要跑迴圈，畫面才不會整片死黑
+}
+
+// 啟動幕：解鎖 AudioContext，並在使用者手勢裡重新 play()
+// （自動播放政策會 reject 掉 boot 裡的 play()，手勢是唯一可靠的時機）
+function start(){
+  if(start.done) return; start.done=true;
+  ac().resume(); playAll(); chirp();
+  el('veil').classList.add('gone');
+}
+['pointerdown','click','keydown'].forEach(e=>addEventListener(e,start));
+
+addEventListener('keydown',e=>{ if(e.key.toLowerCase()==='r'){ resetView(); go('IDLE'); }});
+// 影片跑到底 loop 回頭時偶爾會 pause —— 補一腳
+setInterval(()=>{ if(start.done) VIDS.forEach(v=>v.paused&&v.play().catch(()=>{})); },1000);
+// 拖進任何影片檔就換來源
+addEventListener('dragover',e=>e.preventDefault());
+addEventListener('drop',e=>{ e.preventDefault();
+  const f=e.dataTransfer.files[0]; if(f){ useFile(URL.createObjectURL(f)); setAR(); } });
+
+// ══════════════════════════════════════════════════════════════
+// 自我檢查：?test=1
+// ══════════════════════════════════════════════════════════════
+function selfTest(){
+  const W=160,H=120,out=[];
+  const T=(n,ok,v='')=>out.push((ok?'PASS ':'FAIL ')+n+'  '+v);
+  const frame=(fill)=>{ const d=new Uint8ClampedArray(W*H*4);
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){ const i=(y*W+x)*4;
+      const c=fill(x+.5,y+.5)?[238,238,238]:[2,243,3];
+      d[i]=c[0];d[i+1]=c[1];d[i+2]=c[2];d[i+3]=255; } return d; };
+
+  // 1. 轉 30° 的細長矩形 → 主軸應為 0.5236
+  const th=30*Math.PI/180,cs=Math.cos(th),sn=Math.sin(th);
+  const r1=analyze(frame((x,y)=>{const dx=x-80,dy=y-60;
+    return Math.abs(dx*cs+dy*sn)<=40 && Math.abs(-dx*sn+dy*cs)<=8;}),W,H);
+  T('偵測到物體',!!r1);
+  T('cx≈80',Math.abs(r1.cx-80)<3,r1.cx.toFixed(2));
+  T('cy≈60',Math.abs(r1.cy-60)<3,r1.cy.toFixed(2));
+  T('主軸≈0.5236',Math.abs(r1.angle-0.5236)<0.12,r1.angle.toFixed(4));
+  T('離心率高（細長）',r1.ecc>0.7,r1.ecc.toFixed(3));
+  T('輪廓點數=128',radialContour(r1.mask,r1.cx,r1.cy,W,H,CFG.rays).length===128);
+
+  // 2. 圓形（籃球）→ 主軸必須是 null，不能噴雜訊
+  const r2=analyze(frame((x,y)=>Math.hypot(x-80,y-60)<=30),W,H);
+  T('圓形離心率≈0',r2.ecc<CFG.minEcc,r2.ecc.toFixed(3));
+  T('圓形主軸 = null（不噴雜訊）',r2.angle===null,String(r2.angle));
+
+  // 3. 純綠幕 → 必須回 null
+  T('空台座回 null', analyze(frame(()=>false),W,H)===null);
+
+  // 4. 改造模組：可重現性 + 錨定 + 縮放
+  const R0=30, syn=new Float32Array(CFG.rays*2);
+  for(let i=0;i<CFG.rays;i++){ const a=i/CFG.rays*Math.PI*2;
+    syn[i*2]=80+Math.cos(a)*R0; syn[i*2+1]=45+Math.sin(a)*R0; }
+  const sxT=8, syT=8, cxT=80*sxT, cyT=45*syT;
+  const snap=seed=>{ smooth=syn; buildParts(['CHIP','MONITOR','CONDUIT'],seed);
+    layoutParts(sxT,syT,0,cxT,cyT);
+    return parts.map(p=>p.kind==='CONDUIT'?p.line.getAttribute('d')
+      :p.kind==='MONITOR'?p.i+'|'+p.tether.getAttribute('x1')+'|'+p.mon.getAttribute('transform')
+      :p.i+'|'+p.e.getAttribute('transform')).join(';'); };
+  const A=snap(12345), Bs=snap(12345), C=snap(999);
+  T('模組：三種都有', new Set(parts.map(p=>p.kind)).size===3);
+  T('模組：同 seed 可重現', A===Bs);
+  T('模組：異 seed 有變化', A!==C);
+  snap(12345);
+  T('模組：MONITOR 引線錨喺輪廓上', parts.filter(p=>p.kind==='MONITOR').every(p=>
+      Math.abs(+p.tether.getAttribute('x1')-syn[p.i*2]*sxT)<1e-6));
+  T('模組：CONDUIT 兩端錨喺輪廓上', parts.filter(p=>p.kind==='CONDUIT').every(p=>{
+      const m=p.line.getAttribute('d').match(/^M([\d.-]+),/);
+      return m && Math.abs(+m[1]-syn[p.i*2]*sxT)<1e-3; }));
+  // 5. 2127 形態推演
+  const anch=[8,30,50], CX=80, CY=45;
+  const bse=new Float32Array(CFG.rays*2);
+  for(let i=0;i<CFG.rays;i++){ const a=i/CFG.rays*Math.PI*2;
+    bse[i*2]=CX+Math.cos(a)*30; bse[i*2+1]=CY+Math.sin(a)*30; }
+  const F1=projectFuture(bse,CX,CY,42,anch), F2=projectFuture(bse,CX,CY,42,anch),
+        F3=projectFuture(bse,CX,CY,77,anch);
+  const rF=[...Array(CFG.rays)].map((_,i)=>Math.hypot(F1[i*2]-CX,F1[i*2+1]-CY));
+  const mn=Math.min(...rF), avg=rF.reduce((a,b)=>a+b,0)/rF.length;
+  T('形態：2127 比原型大', avg>30, avg.toFixed(1)+' vs 30');
+  T('形態：同 seed 可重現', String(F1)===String(F2));
+  T('形態：異 seed 唔同',   String(F1)!==String(F3));
+  T('形態：模組位置長咗出嚟', anch.every(j=>rF[j]>mn*1.03),
+    anch.map(j=>rF[j].toFixed(1)).join('/')+' vs 基準 '+mn.toFixed(1));
+  T('形變量合理', F1.morph>.03&&F1.morph<.8, (F1.morph*100).toFixed(1)+'%');
+
+  // 6. 位置提示 at:[x,y] → 射線索引（0°=+x，順時針）
+  const CXa=CFG.W/2, CYa=CFG.H/2, q=CFG.rays/4;
+  T('位置：右 → 索引 0',      anchorToIndex([1000,500],CXa,CYa)===0);
+  T('位置：下 → 索引 rays/4', anchorToIndex([500,1000],CXa,CYa)===q);
+  T('位置：左 → 索引 rays/2', anchorToIndex([0,500],CXa,CYa)===q*2);
+  T('位置：上 → 索引 3rays/4',anchorToIndex([500,0],CXa,CYa)===q*3);
+  T('位置：冇提示回 null',    anchorToIndex(undefined,CXa,CYa)===null
+                              && anchorToIndex([1,2,3],CXa,CYa)===null);
+
+  const withAt=buildParts([{type:'CHIP',at:[1000,500]},{type:'MONITOR',at:[0,500],label:'測試'},
+                           {type:'CONDUIT',at:[500,1000]}], 5, CXa, CYa);
+  const near=(i,j)=>{const d=Math.abs(i-j)%CFG.rays; return Math.min(d,CFG.rays-d);};
+  T('位置：模組真係擺到指定方位',
+    near(withAt[0].i,0)<=2 && near(withAt[1].i,q*2)<=2, withAt.map(p=>p.i).join('/'));
+  T('位置：MONITOR 用返 Gemini 畀嘅 label',
+    withAt[1].mon.querySelector('text').textContent==='測試');
+  T('位置：CONDUIT 接返上一個實體模組', withAt[2].j===withAt[1].i);
+  const clash=buildParts([{type:'CHIP',at:[1000,500]},{type:'CHIP',at:[1000,500]}],5,CXa,CYa);
+  T('位置：撞位會推開，唔會重疊', clash[0].i!==clash[1].i, clash.map(p=>p.i).join('/'));
+  T('位置：舊格式（純字串）仍然行得', buildParts(['CHIP','MONITOR'],5,CXa,CYa).length===2);
+
+  el('parts').innerHTML=''; parts=[]; smooth=null;
+
+  document.body.innerHTML='<pre style="color:#0f0;font:14px/2.2 monospace;padding:30px">'
+    +out.join('\n')+'\n\n'+(out.every(s=>s.startsWith('PASS'))?'全部通過':'有失敗')+'</pre>';
+}
+
+Q.get('test')==='1' ? selfTest() : boot();
+</script>
+</body>
+</html>
