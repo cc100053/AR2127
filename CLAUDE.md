@@ -19,7 +19,7 @@
 ```bash
 python3 -m http.server 8127        # 一定要 HTTP，file:// 會令 canvas 跨來源污染
 open http://localhost:8127         # demo.mp4 綠幕籃球
-open http://localhost:8127/?test=1 # 19 項自我檢查
+open http://localhost:8127/?test=1 # 33 項自我檢查
 ```
 
 `?cam=1` 真攝影機 ｜ `?synth=1` 合成物件 ｜ `?src=xx.mp4` ｜ 影片可直接拖入頁面

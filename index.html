@@ -6,7 +6,7 @@
 <title>2127 形態推演</title>
 <style>
 :root{
-  --a:#00f0ff; --b:#ff00a0;
+  --a:#5ce1e6; --b:#b06cff;
   --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -29,15 +29,32 @@ video{object-fit:fill;display:block}
 /* ── B：泛光 —— 外層 filter 看到的是已裁切的內層，光才會溢出輪廓 ── */
 #tint{z-index:3;background:linear-gradient(160deg,var(--a),var(--b));mix-blend-mode:color;
       opacity:0;transition:opacity .9s ease}
-#scanlines{z-index:5;background:repeating-linear-gradient(0deg,#0000 0 2px,var(--a) 2px 3px);
-           opacity:0;mix-blend-mode:overlay;transition:opacity .9s ease}
+/* 掃描：靜態細線 + 一條慢慢掃落嚟嘅寬帶（投影緊重新算緊嗰種感覺）*/
+#scanlines{z-index:5;opacity:0;mix-blend-mode:overlay;transition:opacity .9s ease;
+           background:
+             linear-gradient(180deg,#0000 0%,var(--a) 45%,var(--a) 55%,#0000 100%),
+             repeating-linear-gradient(0deg,#0000 0 4px,var(--a) 4px 5px);
+           background-size:100% 26%,100% 100%;
+           background-repeat:no-repeat,repeat;
+           animation:holoSweep 3.4s linear infinite}
+@keyframes holoSweep{from{background-position:0 -30%,0 0}to{background-position:0 130%,0 0}}
 .on{opacity:1 !important}
-#tint.on{opacity:.92} #scanlines.on{opacity:.15}
+#tint.on{opacity:.62} #scanlines.on{opacity:.09}
 
 #ov{z-index:6;overflow:visible;pointer-events:none;
     filter:drop-shadow(0 0 2px var(--a)) drop-shadow(0 0 7px var(--a))}
 #ovBack{z-index:0}
 #shell{fill:url(#shellGrad);opacity:0;transition:opacity 1.1s ease}
+/* ── 體積：2127 形態疊成一疊剖面，唔再係一條單薄嘅線 ───────── */
+.slice{fill:none;stroke:var(--b);stroke-width:1;opacity:0;
+       transition:opacity .9s ease;filter:blur(.4px)}
+/* ── 外殼帶：2026 ↔ 2127 之間嗰浸空間變成一個面，唔係兩條線 ── */
+#band{fill:url(#bandGrad);opacity:0;transition:opacity 1.1s ease;mix-blend-mode:screen}
+/* ── 軌道環：全息物件浮喺空間入面最平嘅 3D 提示 ─────────────── */
+.orbit{fill:none;stroke:var(--a);stroke-width:1;opacity:0;transition:opacity 1.1s ease}
+#orbFront{opacity:0}
+.morphed .slice{opacity:1} .morphed #band{opacity:.34}
+.morphed .orbit{opacity:.30} .morphed #orbFront{opacity:.12}
 #futureEdge{fill:none;stroke:var(--b);stroke-width:1.6;opacity:0;
             filter:drop-shadow(0 0 6px var(--b));transition:opacity .9s}
 .tie{stroke:var(--b);stroke-width:.7;opacity:0;transition:opacity .9s}
@@ -63,7 +80,7 @@ video{object-fit:fill;display:block}
          animation:flow 1.4s linear infinite}          /* 流動光點：純 CSS，零 JS */
 .conduitGlow{fill:none;stroke:var(--a);stroke-width:5;opacity:.10;filter:blur(2px)}
 @keyframes flow{to{stroke-dashoffset:-24}}
-#reticle{fill:none;stroke:var(--a);stroke-width:1;opacity:.45;stroke-dasharray:5 11}
+#reticle{fill:none;stroke:var(--a);stroke-width:1.2;opacity:.5}
 #axis{stroke:var(--b);stroke-width:1;opacity:.5;stroke-dasharray:2 6}
 .leader{stroke:var(--a);stroke-width:1;opacity:.3}
 #sweep{fill:var(--a);opacity:0;filter:blur(4px)}
@@ -104,8 +121,17 @@ video{object-fit:fill;display:block}
       <stop offset="55%" stop-color="var(--a)" stop-opacity="0"/>
       <stop offset="88%" stop-color="var(--a)" stop-opacity=".30"/>
       <stop offset="100%" stop-color="var(--b)" stop-opacity=".55"/>
-    </radialGradient></defs>
+    </radialGradient>
+    <linearGradient id="bandGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="var(--b)" stop-opacity=".30"/>
+      <stop offset="55%"  stop-color="var(--a)" stop-opacity=".10"/>
+      <stop offset="100%" stop-color="var(--b)" stop-opacity=".22"/>
+    </linearGradient></defs>
+    <ellipse id="orbA" class="orbit"/>
+    <ellipse id="orbB" class="orbit" stroke-dasharray="6 10"/>
     <path id="shell"/>
+    <path id="band"/>
+    <g id="slices"></g>
   </svg>
   <div id="feedWrap" class="layer"><video id="feed" autoplay muted playsinline loop></video></div>
   <div id="tint" class="layer"></div>
@@ -127,7 +153,8 @@ video{object-fit:fill;display:block}
     <g id="ties"></g>
     <path id="glow1"/><path id="glow2"/><path id="glow3"/><path id="edge"/>
     <path id="futureEdge"/>
-    <circle id="reticle" r="0"/><line id="axis"/>
+    <path id="reticle"/><line id="axis"/>
+    <ellipse id="orbFront" class="orbit"/>
     <g id="nodes"></g>
     <g id="parts"></g>
     <line class="leader" id="l1"/><line class="leader" id="l2"/>
@@ -173,7 +200,7 @@ let smooth=null;   // 輪廓 EMA 緩衝（fitTracker 會清掉）
 
 const THEMES = {
   CRYSTALLINE:{a:'#7df9ff',b:'#c77dff'}, BIOMECH:{a:'#7dffb0',b:'#ff7d9c'},
-  PLASMA     :{a:'#ffd166',b:'#ff4d6d'}, ARCHIVE:{a:'#00f0ff',b:'#ff00a0'},
+  PLASMA     :{a:'#ffd166',b:'#ff4d6d'}, ARCHIVE:{a:'#5ce1e6',b:'#b06cff'},
   WEAPON     :{a:'#ff9f1c',b:'#ff2e63'}, UNKNOWN:{a:'#9aa5b1',b:'#e0e6ed'},
 };
 
@@ -260,6 +287,19 @@ function radialContour(mask,cx,cy,W,H,n){
 }
 const toPath=(p,sx,sy)=>{let d='M';for(let i=0;i<p.length;i+=2)
   d+=(i?'L':'')+(p[i]*sx).toFixed(1)+','+(p[i+1]*sy).toFixed(1);return d+'Z';};
+
+// 2026 輪廓 → 2127 輪廓之間嗰浸空間，變成一個封閉嘅面（唔再係兩條孤零零嘅線）
+const toBand=(base,fut,sx,sy)=>{
+  let d='M';
+  for(let i=0;i<fut.length;i+=2) d+=(i?'L':'')+(fut[i]*sx).toFixed(1)+','+(fut[i+1]*sy).toFixed(1);
+  d+='Z M';
+  for(let i=base.length-2;i>=0;i-=2)
+    d+=(i===base.length-2?'':'L')+(base[i]*sx).toFixed(1)+','+(base[i+1]*sy).toFixed(1);
+  return d+'Z';
+};
+// 一疊剖面：k 由 -1（底）到 +1（頂），中間最闊 → 讀落係一個有厚度嘅體
+const SLICES=9;
+const sliceScale = k => 1 - .13*Math.pow(Math.abs(k),1.7);
 
 // ══════════════════════════════════════════════════════════════
 // D：音效 —— 純振盪器，零音檔。展場裡聲音是三十公尺外的人流磁鐵。
@@ -514,28 +554,39 @@ function layoutParts(sx,sy,now,cxp,cyp){
 // A：2127 虛空 —— 綠幕拿掉之後，背後總得有東西
 // ══════════════════════════════════════════════════════════════
 const vc=document.getElementById('void'), vx=vc.getContext('2d');
-const specks=[...Array(90)].map(()=>({x:Math.random(),y:Math.random(),
-  z:.25+Math.random()*.75, s:Math.random()*2+.4}));
+// ponytail: 舊版係 TRON 透視地平網格 —— 太 1982，同「2127」講唔埋。
+//           改成一個有深度嘅空間：暗場 + 慢速深度環 + 三層視差塵埃 + 光柱。
+const specks=[...Array(160)].map(()=>({x:Math.random(),y:Math.random(),
+  z:.15+Math.random()*.85, s:Math.random()*1.8+.3}));
 function drawVoid(t,w,h,accent){
   if(vc.width!==w){ vc.width=w; vc.height=h; }
+  const cx=w/2, cy=h*.52;
   vx.clearRect(0,0,w,h);
-  const g=vx.createRadialGradient(w/2,h*.55,0,w/2,h*.55,w*.72);
-  g.addColorStop(0,'#0a1420'); g.addColorStop(1,'#03050a');
+  // 底：中間微亮，向外壓落純黑（Pepper's Ghost 要靠黑，見 README §1.8.1）
+  const g=vx.createRadialGradient(cx,cy,0,cx,cy,w*.62);
+  g.addColorStop(0,'#0b1622'); g.addColorStop(.55,'#060b13'); g.addColorStop(1,'#020408');
   vx.fillStyle=g; vx.fillRect(0,0,w,h);
-  // 透視地平網格
-  vx.strokeStyle=accent; vx.globalAlpha=.07; vx.lineWidth=1;
-  const hz=h*.62;
-  for(let i=1;i<16;i++){
-    const y=hz+Math.pow(i/16,2.6)*(h-hz);
-    vx.beginPath(); vx.moveTo(0,y); vx.lineTo(w,y); vx.stroke();
+
+  // 深度環：由中心一路向外推走 → 空間有縱深，而唔係一張牆紙
+  vx.strokeStyle=accent; vx.lineWidth=1;
+  const R0=Math.min(w,h)*.55;
+  for(let i=0;i<5;i++){
+    const k=((t/9000)+i/5)%1;                  // 0→1 由細推到大
+    const r=Math.pow(k,1.8)*R0;
+    vx.globalAlpha=.085*(1-k)*(1-k);
+    vx.beginPath(); vx.ellipse(cx,cy,r,r*.52,0,0,Math.PI*2); vx.stroke();
   }
-  for(let i=-10;i<=10;i++){
-    vx.beginPath(); vx.moveTo(w/2+i*w*.06,hz); vx.lineTo(w/2+i*w*.5,h); vx.stroke();
-  }
-  // 漂浮塵埃
+  // 光柱：由上方打落嚟，台座企喺光入面
+  const sh=vx.createLinearGradient(0,0,0,h);
+  sh.addColorStop(0,accent); sh.addColorStop(1,'transparent');
+  vx.globalAlpha=.05; vx.fillStyle=sh;
+  vx.beginPath(); vx.moveTo(cx-w*.07,0); vx.lineTo(cx+w*.07,0);
+  vx.lineTo(cx+w*.30,h); vx.lineTo(cx-w*.30,h); vx.closePath(); vx.fill();
+
+  // 三層視差塵埃：近嘅大、快、亮；遠嘅細、慢、暗
   for(const s of specks){
-    const y=(s.y + t*0.00002*s.z) % 1;
-    vx.globalAlpha=.10+s.z*.30;
+    const y=(s.y + t*0.000012*s.z) % 1;
+    vx.globalAlpha=.06+s.z*s.z*.34;
     vx.fillStyle=accent;
     vx.fillRect(s.x*w, y*h, s.s*s.z, s.s*s.z);
   }
@@ -689,6 +740,36 @@ function loop(now){
       const fd=toPath(fut,sx,sy);
       el('futureEdge').setAttribute('d',fd); el('shell').setAttribute('d',fd);
       el('morph').textContent=(fut.morph*100).toFixed(1)+'%';
+
+      // ── 體積：同一條 2127 輪廓疊 9 層，上下收窄 → 有厚度，唔再係一條平面線 ──
+      const cxp=t.cx*sx, cyp=t.cy*sy;
+      let rp=0;
+      for(let i=0;i<CFG.rays;i++) rp+=Math.hypot(fut[i*2]*sx-cxp, fut[i*2+1]*sy-cyp);
+      rp/=CFG.rays;
+      const sg=el('slices');
+      if(sg.children.length!==SLICES){ sg.innerHTML='';
+        for(let i=0;i<SLICES;i++) sg.appendChild(mk('path',{class:'slice'})); }
+      [...sg.children].forEach((pn,i)=>{
+        const k=(i/(SLICES-1))*2-1, sc=sliceScale(k);
+        const dy=k*rp*.24 + Math.sin(now/900+i*.55)*1.1;   // 輕微呼吸，唔好死實
+        pn.setAttribute('d',fd);
+        pn.setAttribute('transform',
+          `translate(${cxp},${cyp+dy}) scale(${sc}) translate(${-cxp},${-cyp})`);
+        pn.setAttribute('stroke-opacity',(.46-.34*Math.abs(k)).toFixed(3));  // 唔用 inline opacity：留返畀 .morphed 開關
+      });
+      // ── 外殼帶：2026 同 2127 之間變成一個面 ──
+      el('band').setAttribute('d',toBand(smooth,fut,sx,sy));
+      // ── 軌道環：ry 隨時間擺動 = 傾角變化。前後各一浸 → 環真係繞住件嘢 ──
+      const orb=(id,rx,phase,spin)=>{
+        const e=el(id);
+        e.setAttribute('cx',cxp); e.setAttribute('cy',cyp); e.setAttribute('rx',rx);
+        e.setAttribute('ry',Math.max(3,rx*(.07+.11*Math.abs(Math.sin(now/2600+phase)))));  // 壓扁 = 傾角
+        e.style.transformOrigin=`${cxp}px ${cyp}px`;
+        e.style.transform=`rotate(${now/spin}deg)`;
+      };
+      const rmax=Math.min(box.width,box.height)*.40;      // 唔好爆出畫面
+      orb('orbA',Math.min(rp*1.22,rmax),0,90); orb('orbB',Math.min(rp*1.45,rmax*1.18),1.1,-140);
+      orb('orbFront',Math.min(rp*1.22,rmax),0,90);   // 同一隻，喺物件前面淡淡走一浸 → 環真係繞住佢
       if($.ties.children.length!==CFG.nodes){
         $.ties.innerHTML='';
         for(let i=0;i<CFG.nodes;i++) $.ties.appendChild(mk('line',{class:'tie'}));
@@ -704,10 +785,18 @@ function loop(now){
     $.feed.style.opacity=1;
 
     const cx=t.cx*sx, cy=t.cy*sy;
-    const r=Math.max(t.bbox[2]-t.bbox[0],t.bbox[3]-t.bbox[1])*sx*.78;
-    $.reticle.setAttribute('cx',cx); $.reticle.setAttribute('cy',cy); $.reticle.setAttribute('r',r);
+    const r=Math.max(t.bbox[2]-t.bbox[0],t.bbox[3]-t.bbox[1])*sx*.58;
+    // 四隻角括號，唔係成個圈 —— 圈係量度工具，括號係儀器
+    let rd='';
+    for(let q=0;q<4;q++){
+      const a0=(q*90+28)*Math.PI/180, a1=(q*90+62)*Math.PI/180;
+      rd+=`M${(cx+Math.cos(a0)*r).toFixed(1)},${(cy+Math.sin(a0)*r).toFixed(1)}`
+        + `A${r.toFixed(1)},${r.toFixed(1)} 0 0 1 `
+        + `${(cx+Math.cos(a1)*r).toFixed(1)},${(cy+Math.sin(a1)*r).toFixed(1)}`;
+    }
+    $.reticle.setAttribute('d',rd);
     $.reticle.style.transformOrigin=`${cx}px ${cy}px`;
-    $.reticle.style.transform=`rotate(${now/22}deg)`;
+    $.reticle.style.transform=`rotate(${now/40}deg)`;
 
     // 主軸：圓形物體（籃球）沒有主軸 —— 藏起來，不要讓 atan2 噴雜訊
     if(t.angle===null){
@@ -906,6 +995,19 @@ function selfTest(){
   T('形態：模組位置長咗出嚟', anch.every(j=>rF[j]>mn*1.03),
     anch.map(j=>rF[j].toFixed(1)).join('/')+' vs 基準 '+mn.toFixed(1));
   T('形變量合理', F1.morph>.03&&F1.morph<.8, (F1.morph*100).toFixed(1)+'%');
+  // 6. 體積表現：切片堆疊 + 外殼帶
+  const ks=[-1,-.5,0,.5,1].map(sliceScale);
+  T('體積：切片中間最闊、兩端收窄',
+    ks[2]===1 && ks[1]<ks[2] && ks[3]<ks[2] && ks[0]<ks[1] && ks[4]<ks[3],
+    ks.map(v=>v.toFixed(3)).join('/'));
+  T('體積：切片對稱', Math.abs(ks[0]-ks[4])<1e-9 && Math.abs(ks[1]-ks[3])<1e-9);
+  const bd=toBand(bse,F1,1,1);
+  T('體積：外殼帶係兩個閉合子路徑（外圈 + 反向內圈）',
+    (bd.match(/Z/g)||[]).length===2 && (bd.match(/M/g)||[]).length===2);
+  T('體積：外殼帶內圈方向係反嘅', (()=>{
+      const inner=bd.split('M')[2].replace(/Z/,'').trim().split('L')[0].split(',');
+      return Math.abs(+inner[0]-bse[bse.length-2])<.1;   // toPath 只留一位小數
+    })());
 
   // 6. 位置提示 at:[x,y] → 射線索引（0°=+x，順時針）
   const CXa=CFG.W/2, CYa=CFG.H/2, q=CFG.rays/4;

@@ -50,7 +50,7 @@
 | 假資料 | `MOCK_DB` `mockScan` | **要換成 `/api/project`** |
 | 狀態機 | `loop` `go` `onEnter` `reveal` `resetView` | 七節拍 |
 | 啟動 | `boot` `start` `useFile` `useStream` `setAR` | 來源可插拔 |
-| 檢查 | `selfTest` | `?test=1`，19 項 |
+| 檢查 | `selfTest` | `?test=1`，33 項 |
 
 ## 七節拍
 
