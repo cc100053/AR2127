@@ -58,30 +58,34 @@ Gemini 的往返是 2~6 秒，不可能做逐格追蹤。
 ## 1.2 資料流
 
 ```
-                     [ 觀眾放上物品 ]
+                  [ 觀眾放上物品・電動轉盤 20 RPM ]
                             │
-                            ▼
-              [ USB 攝影機（固定俯拍）]
+                  [ USB 攝影機・約 45°（不是俯拍，見決策 D7）]
                             │
          ┌──────────────────┴──────────────────┐
          ▼                                     ▼
- ── 幾何層（本地・60fps）──          ── 語意層（Gemini・單次）──
+ ── 幾何層（本地・每格）──           ── 語意層（Gemini・單次）──
   色鍵去背 → 二值遮罩                 0° / 180° 兩格 JPEG
   影像矩 → 質心 / bbox / 主軸角        ↓
-  Marching Squares → 輪廓 path        itemName / futureName
-         │                            classification / powerLevel
-         │                            archaeologistNotes
-         │                            visualTheme (enum)
+  放射取樣 → 64 點輪廓（送法線）       now / futureName / gen / form
+  projectFuture() → 2127 形態輪廓      lineage / kept / visualTheme
+         │                            modules[{type, at, label}]
+         │                                     │
+         ▼                                     │
+ ── 捕捉環（PROJECT 那一圈）──                  │
+  影像入 sprite sheet + 逐格輪廓                │
+  接縫比對收口 → 一圈幾多格                     │
+  buildHull() → 真實 R(高度, 方位角)            │
          └──────────────────┬──────────────────┘
                             ▼
-              [ 合成層：SVG + CSS blend ]
-       clip-path → 物體全息化 ｜ 同一 path → 發光外框
-       主題查表 → 配色 / 粒子 / 字符組
+              [ 合成層：SVG + CSS blend + clip-path ]
+   MORPH 之後畫面播捕捉環，速度自訂，**與實體轉盤脫鈎**
+   2026 原型｜2127 形態外殼｜對應連線｜表面網格｜改造模組（貼在物體表面）
                             │
                             ▼
-        [ 本地 Node 服務 :7127 ]
-          /api/scan  → Gemini 代理（金鑰不進前端）
-          /api/print → ESC/POS 點陣圖出單
+        [ 本地 Node 服務 :7127 ]  ← 一行都還沒寫
+          /api/project → Gemini 代理（金鑰不進前端）
+          /api/print   → ESC/POS 點陣圖出單
 ```
 
 ---
@@ -92,11 +96,14 @@ Gemini 的往返是 2~6 秒，不可能做逐格追蹤。
 
 | 層 | 執行位置 | 頻率 | 決定 | 失效時 |
 |---|---|---|---|---|
-| **語意** | Gemini 2.5 Flash | 單次 | 它是什麼 / 2127 年誤以為它是什麼 | 罐頭「異常讀數」證書 |
-| **幾何** | 瀏覽器本地 | 每格 | 疊加物長在哪、什麼形式 | 置中固定尺寸準星 |
+| **語意** | Gemini 2.5 Flash | 單次 | 它現在是什麼 / 一百年後變成什麼 | 罐頭「推演失敗」世代卡 |
+| **幾何** | 瀏覽器本地 | 每格 | 形狀、2127 輪廓、模組長在物體哪一面 | 置中固定尺寸準星 |
 | **配色** | 硬編查表 | 單次 | palette / 粒子行為 / 字符組 | 預設 `UNKNOWN` 主題 |
 
 **Gemini 決定意義，幾何決定形式，查表決定配色。**
+
+> Persona 是**推演器**，不是考古學家。任何「2127 年的人誤讀了這件古物」的寫法都是
+> 已經發生過兩次的偏離，見 `memory-bank/00-intent.md`。
 
 ### 幾何層自己會判斷形式
 
@@ -128,9 +135,9 @@ complexity = perimeter² / area          （圓形 ≈ 12.6，越複雜越大）
 |---|---|---|---|
 | `IDLE` | — | 吸引迴圈、掃描網格 | `track()` 回 null |
 | `DETECT` | 0.3s | 輪廓瞬間吸附成青色 | 遮罩面積穩定 |
-| `PROJECT` | 1 圈 | 推演線由上而下掃過，輪廓逐段累積 | 送出 `/api/project` |
-| `MORPH` | 1s | 2127 形態外殼長出、對應連線亮起、模組 stagger 彈出 | Gemini 回應 |
-| `REVEAL` | 10s | HUD 看板飛入，powerLevel 數字滾動 | — |
+| `PROJECT` | 1 圈 | 推演線由上而下掃過。**同時是捕捉環：轉盤在這裡降格成掃描器** | 送出 `/api/project` |
+| `MORPH` | 1s | 環收口 → 畫面改播捕捉環（與實體脫鈎）。2127 外殼長出、表面網格亮起、模組 stagger 彈出 | Gemini 回應 |
+| `REVEAL` | 10s | HUD 看板飛入，世代 / 形變量滾動。**物體可以拿走了，畫面照播** | — |
 | `PRINT` | 4s | 出單 | 自動 |
 | `RESET` | — | 淡出回 IDLE | 物體移走或 15s 閒置 |
 
@@ -209,13 +216,16 @@ Prompt 必須明確：**絕不轉錄文件上的文字**、拒絕人物 / 身體
 
 高風險、長前置的項目排在最前面。原始企劃把硬體放在第 5~6 天，那是反的。
 
+> **前端已經跑完第 2、3、5 天的視覺工作**（假資料驅動，`?test=1` 67 項全綠）。
+> 剩下的全部是硬體與後端 —— 見 `memory-bank/20-status.md` 的「未做」。
+
 | 天 | 工作 | 完成標準 |
 |---|---|---|
 | **1** | 印表機：確認列舉方式，跑通一張收據（日文則走點陣圖）。Node 服務骨架。**同日決定收據 or 卡片（§1.8.4）。** | 手動觸發能印出一張 |
 | **2** | 相機 → 色鍵去背 → `track()` → 質心 / bbox / 角度以純文字上畫面。**不做視覺。** | 數字跟著物體轉動變化 |
-| **3** | Marching Squares → path。clip-path 變身 + 發光外框。轉盤裝好並定速。 | 輪廓跟著實體轉 |
+| **3** | 轉盤裝好並定速。**對著實物校 `CFG.spinDir` / `CFG.tilt`**（轉向反了會即刻穿崩）。確認捕捉環在真實攝影機下錄得滿（HUD 看 `RING n/cap fps`）。 | 貼片黏著實體轉，不是另一個 layer |
 | **4** | Gemini 接上（兩格 0°/180°）。七節拍狀態機。退化保護。 | 端到端跑一次 |
-| **5** | HUD 看板、GSAP、主題查表、音效（§1.8.3）、燈帶（§1.8.2）、稀有度（§1.8.5）。**這是安全區，可吸收落後。** | 好看 |
+| **5** | 音效素材（§1.8.3）、燈帶（§1.8.2）、稀有度（§1.8.5）、網格濃淡調校。**這是安全區，可吸收落後。** | 好看 |
 | **6** | 實體箱體、打光、對焦 / 白平衡鎖定、輪廓線稿出單、紙張後勤。**Pepper's Ghost 斜板對齊校正（§1.8.1）—— 一定要留半天，算不準的。** | 實體完成 |
 | **7** | 閒置迴圈、失效模式、**連續 50 次無人介入運轉測試**。 | 沒人顧也能活 |
 
@@ -342,9 +352,9 @@ rarity = f(morph, moduleCount)     // 例：morph 大 + 模組多 = 高稀有
 | 追蹤 | 自寫色鍵 + 影像矩（~40 行） | TF.js / MediaPipe：8MB 模型，只認 80 類，框會抖 |
 | 變身 | `clip-path: path()` + CSS filter / blend | per-pixel JS 在 720p 只有 ~50fps；CSS 全 GPU |
 | 外框 | SVG `<path>` + `feGaussianBlur` | — |
-| 動畫 | GSAP | — |
-| 3D | **不用 Three.js** | 所有元素都是螢幕空間 2D。唯一例外見下 |
-| 樣式 | Tailwind（CDN） | — |
+| 動畫 | 手寫 rAF + CSS transition | GSAP：為了幾個 stagger 拉一個依賴進單檔，不值 |
+| 3D 資訊 | **捕捉環 + shape-from-silhouette** | Three.js：我們要的是一個偏航角和一組半徑，不是一個場景 |
+| 樣式 | 純 CSS（單檔內） | Tailwind CDN：整份前端只有一頁，class 名比 CSS 還長 |
 | 後端 | 單一 Node 行程 :7127 | 同時解決金鑰外洩與印表機兩件事 |
 
 > **關於 Three.js**：唯一誠實的加入理由是**泛光（bloom）** —— `UnrealBloomPass`
@@ -354,11 +364,13 @@ rarity = f(morph, moduleCount)     // 例：morph 大 + 模組多 = 高稀有
 ## 2.2 追蹤核心
 
 ```js
-// track.js —— 色鍵去背 → 質心 / bbox / 主軸角。160x120，每格約 0.5ms。
-const W = 160, H = 120;
+// 色鍵去背 → 質心 / bbox / 主軸角。160×H，每格約 0.5ms。
+// ⚠ H 必須由來源長寬比算出（fitTracker），寫死 120 會把 16:9 影片壓扁 ——
+//   圓球會量出離心率 0.28、細長物主軸角系統性歪。這個 bug 靜到沒有聲音。
+const W = 160, H = Math.round(W * video.videoHeight / video.videoWidth);   // 目前 160×90
 const c = new OffscreenCanvas(W, H), x = c.getContext('2d', { willReadFrequently: true });
 
-function track(video, keyHue = 120, tol = 40) {          // 台座色相：綠色約 120°
+function track(video, keyHue = 120, tol = 42) {          // 台座色相：綠色約 120°
   x.drawImage(video, 0, 0, W, H);
   const d = x.getImageData(0, 0, W, H).data;
   const mask = new Uint8Array(W * H);
@@ -377,39 +389,61 @@ function track(video, keyHue = 120, tol = 40) {          // 台座色相：綠�
 
   const cx = m10/m00, cy = m01/m00;
   const a = m20/m00 - cx*cx, b = m11/m00 - cx*cy, cc = m02/m00 - cy*cy;
+  const ecc = (a+cc) > 0 ? Math.hypot(a-cc, 2*b)/(a+cc) : 0;
   return {
-    cx: cx/W, cy: cy/H,                       // 正規化，與 Gemini 回傳同一座標空間
-    bbox: [x0/W, y0/H, x1/W, y1/H],
-    angle: 0.5 * Math.atan2(2*b, a - cc),     // 主軸角 —— 這就是「旋轉」
+    cx, cy, bbox: [x0, y0, x1, y1],           // **追蹤空間**，不正規化
+    ecc,                                       // 0 = 完美圓形（籃球！）
+    angle: ecc < 0.10 ? null                   // 圓形物體沒有主軸 —— 給 null，別讓 atan2 噴雜訊
+                      : 0.5 * Math.atan2(2*b, a - cc),
     area: m00 / (W*H),
     mask,
   };
 }
 ```
 
+> `#stage` 的長寬比執行時對齊來源、`object-fit: fill` → 追蹤空間到顯示空間**只剩純縮放**，
+> 沒有 letterbox 位移。這個設計消滅了整整一類座標 bug。
+
 **平滑不要做過頭。** USB 攝影機本身已有 60~120ms 端到端延遲。
 只用輕度 EMA（α ≈ 0.5）。**延遲讀起來像「壞掉」，輕微抖動讀起來像「正在掃描」。**
 寧可偏向抖動。
 
-## 2.3 變身：一條路徑，兩個用途
+## 2.3 捕捉環、顯示路徑、變身
+
+### 轉盤是掃描器，不是即時追蹤的對象
+
+畫面**不需要**跟著實體轉盤轉。`PROJECT` 那一圈把影像錄進一張 sprite sheet、
+逐格存下輪廓，`MORPH` 收口之後畫面改播這個環，速度由 `CFG.playRpm` 決定。
+
+**所以我們永遠不需要知道真實 RPM，只需要知道格的次序。** 轉盤快了慢了、皮帶鬆了，
+播出來只是速度輕微不均，肉眼零感覺 —— 相位／轉速同步問題不是「要控制」，是根本不存在。
+
+```
+實效格率 = playRpm/60 × ringN          ← 播出來順不順就是這個數
+上限     = 攝影機 fps × 一圈秒數        ← 30fps × 3s = 90
+```
+
+第一版用 `48 × 12/60 = 9.6fps`，是幻燈片。`?test=1` 現在有一條硬檢查守住 ≥24fps。
+
+接縫（一圈到底幾多格）**不靠計時，靠半徑指紋比對**，而且是
+「nominal 做預設、比對明顯更好才修正」—— 純信相關性會給你一個 2/3 圈的答案，一 loop 就跳。
+
+### 一條路徑，三個用途
 
 ```js
-const path = contourToPath(t.mask, W, H);      // Marching Squares → "M12,4 L18,9 ..."
+const d = toPath(smooth, sx, sy);              // 放射取樣 64 點 → "M12,4 L18,9 ..."
 
-holo.style.clipPath = `path('${path}')`;       // 只有物體本體被未來化
-outline.setAttribute('d', path);               // 同一條線 → 發光外框
+disp.style.clipPath = `path('${d}')`;          // ① 影像被裁成物體形狀，綠幕消失
+edge.setAttribute('d', d);                     // ② 同一條線 → 發光外框
+latRing.style.clipPath = `path('${d}')`;       // ③ 表面網格只畫在物體身上
 ```
 
-```css
-/* #holo 是疊在 <video> 上的同一路影像，被 clip-path 裁成物體形狀 */
-#holo        { filter: grayscale(1) contrast(2.2) brightness(.75); mix-blend-mode: screen; }
-#holo::after { background: linear-gradient(160deg, var(--theme-a), var(--theme-b));
-               mix-blend-mode: color; }
-#scanlines   { background: repeating-linear-gradient(0deg, #0000 0 2px, var(--theme-a) 2px 4px);
-               opacity: .18; mix-blend-mode: overlay; }
-```
+`#disp` 是唯一的顯示畫布：live 影格和捕捉環都畫進它，
+所以 clip-path／全息化／泛光**不用分兩套**。`<video>` 退居成純解碼來源。
 
-`#holo` 的 `opacity` 由 0 → 1 補間，就是**實體 → 全息的 materialize 瞬間**。一行 GSAP。
+> 用的是**放射取樣**，不是 Marching Squares。放射取樣免費送一份大禮：
+> 第 i 點的法線就是第 i 條射線方向。代價是凹陷會被橋接（帶孔的鑰匙圈畫不出孔），
+> 展場物件夠緊緻，先不用升級。
 
 ### 從同一條輪廓再長出來的（全部免費）
 
@@ -422,8 +456,25 @@ outline.setAttribute('d', path);               // 同一條線 → 發光外框
 
 ## 2.4 2127 改造模組
 
-物體嘅「變身」唔係換走佢，係用佢自己嘅剪影做生成素材。零件**只存輪廓索引**，
-每格再由當下輪廓重新投影 —— 所以佢哋會黐住實體一齊轉。
+物體嘅「變身」唔係換走佢，係用佢自己嘅剪影做生成素材。
+零件**存嘅係物體自身坐標 `(方位角 θ, 高度 h)`**，唔係畫面座標、亦唔係輪廓索引。
+
+```
+θ' = θ + yaw          yaw = 捕捉環嘅格索引，唔係估出嚟
+x  = axisX + R(h,θ)·sin θ'
+y  = yBase + R(h,θ)·cos θ'·sin(tilt)     tilt = 相機仰角，CFG.tilt
+z  = cos θ'                              >0 面向觀眾，<0 喺背面
+橫向壓扁 = |z|                            轉到邊緣就得返一條豎線
+```
+
+因為影像同貼片共用同一個格索引，兩者係**數學上鎖實**，唔係「睇落似」。
+
+- `R(h,θ)` 由 `buildHull()` 出 —— 一圈剪影 → shape-from-silhouette → 真實半徑。
+  交通卡唔會被當成圓柱。冇環（LIVE 退路）先退返「剪影半闊」嘅旋轉體假設。
+- **轉軸 ≠ 質心。** 非對稱物體嘅剪影質心會繞住轉軸走，用逐格質心貼片會一齊擺；
+  轉軸取一圈平均（接縫收口令呢個平均有意義）。
+- **遮擋免費。** `z<0` 嘅零件搬去 `#ovBack`（喺影像層下面，而影像被剪影 clip 住）
+  → 唔使寫任何遮擋計算。
 
 ```
 Gemini modules  →  邊幾種零件（語意）
@@ -436,12 +487,17 @@ visualTheme     →  顏色（配色）
 
 | 零件 | 掛喺邊 | 狀態 |
 |---|---|---|
-| `CHIP` | 貼輪廓邊，順法線轉向 | ✅ |
-| `MONITOR` | 浮喺左右兩側，引線拉返物體，長條圖跳動 | ✅ |
-| `CONDUIT` | 兩個輪廓點之間，CSS `stroke-dashoffset` 做流光 | ✅ |
+| `CHIP` | **貼喺物體表面**，跟住轉、到邊緣壓扁、繞去背面被擋住 | ✅ |
+| `MONITOR` | 根部釘死喺表面錨點，面板保持浮空（要睇得清字），錨點轉到背面就淡出 | ✅ |
+| `CONDUIT` | 兩個表面錨點之間，CSS `stroke-dashoffset` 做流光 | ✅ |
 | `HEATSINK` / `PORT` / `ANTENNA` / `CORE` / `VENT` | — | 未做，暫時當 CHIP |
 
-> 放射取樣送咗一份大禮：**第 i 點嘅法線就係第 i 條射線方向**，唔使另外算。
+`at:[x,y]` 嘅語意：**物體中心 = 面向觀眾（θ=0）**，左右邊緣 = ±90°，上下只改高度。
+
+### 表面網格
+
+緯線（真橫切面，`--b` 粗）+ 正面經線（`--a` 幼），兩條都剪落剪影度。
+呢個係「物體本身變咗」嘅實證 —— 之前所有嘢都住喺物體外面。
 
 ## 2.5 API 契約
 
@@ -513,7 +569,7 @@ visualTheme     →  顏色（配色）
 cd ~/item2127
 python3 -m http.server 8127
 open http://localhost:8127          # demo.mp4 綠幕籃球
-open http://localhost:8127/?test=1  # 自我檢查（33 項）
+open http://localhost:8127/?test=1  # 自我檢查（67 項）
 ```
 
 | 參數 | 來源 |
@@ -547,7 +603,11 @@ npm run soak              # 第 7 天：連續 50 次循環，用假資料，不
 | 色鍵去背而非 ML 分割 | 透明 / 鏡面物體失敗 | 失敗率 >10% 時換 MediaPipe Selfie-Seg |
 | 逐格 CSS clip-path | 極複雜輪廓時路徑字串偏大 | 超過 ~500 點就先做 Douglas–Peucker 簡化 |
 | 圓形物體（球、硬幣）無主軸 | `ecc < 0.10` 時主軸給 null，顯示 RADIAL SYM | 需要球的轉動就得改追紋理，不是剪影 |
-| 模組錨在「射線索引」＝ 固定角度 | 模組停在物體某一側，不隨自轉繞到背面 | 按轉盤 RPM 推進 anchor 索引，讓模組沿輪廓環繞 |
-| `at` 位置提示只在掃描那一格有效 | 之後物體轉動，模組留在同一個角度 | 按轉盤 RPM 推進 anchor 索引（與上一行同一個修法） |
+| 外殼把薄物件當厚了 | 誤差 ≈ `半闊 × tan(180°/n)`；90 個視角 → 半厚 6 還原成 7.05 | 提高 `CFG.ringN`（同時改善播放順暢度） |
+| 外殼假設轉軸垂直 | 物件打橫躺著時橫切面變成很闊的扁圓盤 | 展場擺法讓物件立起來 |
+| 凹陷收不回來 | 剪影法定律；`radialContour` 本身也已橋接 | 體素雕刻 + Moore 邊界追蹤，展場物件不值 |
+| `SLICES` 九層仍是同一條 2127 路徑縮放 | 不是真橫切面 | 外殼已接得上，但要順著 `projectFuture` 的生長量一起算 |
+| `MONITOR` 仍是浮空面板 | 不是真的貼在表面 | 放棄細字、改用圖形讀數才做得到 |
+| `CFG.spinDir` / `CFG.tilt` 靠人手校 | 轉向反了會即刻穿崩 | 第 1 天裝好硬件對著實物校，`?spin=-1` |
 | 無 WebGL | 光暈偏平 | 展場投影機看起來不夠亮時加 UnrealBloomPass |
 | Gemini 單次呼叫 | 物體換了不會重新辨識 | 面積變化 >40% 時重掃 |

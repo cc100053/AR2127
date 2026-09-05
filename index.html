@@ -22,9 +22,12 @@ video{object-fit:fill;display:block}
 #void{z-index:0}
 #feedWrap{z-index:1;transition:filter .9s}
 #feedWrap.on{filter:drop-shadow(0 0 10px var(--a))}
-#feed{position:absolute;inset:0;width:100%;height:100%;transition:opacity .5s,filter .9s}
-#feed.holo {filter:grayscale(1) contrast(1.45) brightness(.92)}
-#feed.split{filter:url(#rgbsplit) grayscale(1) contrast(1.45) brightness(.92)}
+/* #feed 只做解碼來源；畫面一律由 #disp 出 —— live 同捕捉環共用同一條顯示路徑，
+   所以 clip-path／全息化／泛光全部唔使分兩套 */
+#feed{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none}
+#disp{position:absolute;inset:0;width:100%;height:100%;transition:opacity .5s,filter .9s}
+#disp.holo {filter:grayscale(1) contrast(1.45) brightness(.92)}
+#disp.split{filter:url(#rgbsplit) grayscale(1) contrast(1.45) brightness(.92)}
 
 /* ── B：泛光 —— 外層 filter 看到的是已裁切的內層，光才會溢出輪廓 ── */
 #tint{z-index:3;background:linear-gradient(160deg,var(--a),var(--b));mix-blend-mode:color;
@@ -55,6 +58,12 @@ video{object-fit:fill;display:block}
 #orbFront{opacity:0}
 .morphed .slice{opacity:1} .morphed #band{opacity:.34}
 .morphed .orbit{opacity:.30} .morphed #orbFront{opacity:.12}
+/* ── 表面網格：物體本身被重新分板造過 —— 之前所有嘢都住喺物體外面 ──
+   緯線（真橫切面）用 --b 粗啲，經線用 --a 幼啲 → 讀落係網格，唔係雜線。
+   掃描線係 z-index 5、#ov 係 6，所以網格永遠壓喺掃描線上面。*/
+#latRing{fill:none;stroke:var(--b);stroke-width:1.15;opacity:0;transition:opacity 1.2s ease}
+#latLong{fill:none;stroke:var(--a);stroke-width:.8;opacity:0;transition:opacity 1.2s ease}
+.morphed #latRing{opacity:.62} .morphed #latLong{opacity:.42}
 #futureEdge{fill:none;stroke:var(--b);stroke-width:1.6;opacity:0;
             filter:drop-shadow(0 0 6px var(--b));transition:opacity .9s}
 .tie{stroke:var(--b);stroke-width:.7;opacity:0;transition:opacity .9s}
@@ -132,8 +141,10 @@ video{object-fit:fill;display:block}
     <path id="shell"/>
     <path id="band"/>
     <g id="slices"></g>
+    <g id="partsBack"></g>
   </svg>
-  <div id="feedWrap" class="layer"><video id="feed" autoplay muted playsinline loop></video></div>
+  <div id="feedWrap" class="layer"><video id="feed" autoplay muted playsinline loop></video>
+    <canvas id="disp"></canvas></div>
   <div id="tint" class="layer"></div>
   <div id="scanlines" class="layer"></div>
 
@@ -150,6 +161,7 @@ video{object-fit:fill;display:block}
       </filter>
     </defs>
     <rect id="sweep" x="0" y="0" width="0" height="0"/>
+    <path id="latRing"/><path id="latLong"/>
     <g id="ties"></g>
     <path id="glow1"/><path id="glow2"/><path id="glow3"/><path id="edge"/>
     <path id="futureEdge"/>
@@ -171,7 +183,7 @@ video{object-fit:fill;display:block}
     <div class="k" style="margin-top:9px">形變量</div><div class="v" id="morph" style="font-size:12px">0.0%</div>
   </div>
   <div id="notes"><div id="lineage"></div><div id="kept"></div></div>
-  <div id="status">2026 ──▶ 2127<br>STATE <b id="st">IDLE</b><br>THEME <b id="th">—</b><br>AXIS <b id="ang">—</b></div>
+  <div id="status">2026 ──▶ 2127<br>STATE <b id="st">IDLE</b><br>THEME <b id="th">—</b><br>AXIS <b id="ang">—</b><br>RING <b id="ring">—</b></div>
 
   <div id="veil" class="layer">放上物件 · 推演佢嘅 2127 形態
     <small>?cam=1 真實攝影機 ｜ ?synth=1 合成物件 ｜ ?src=xx.mp4<br>
@@ -190,12 +202,32 @@ const CFG = {
   minArea:60,
   rays:64, nodes:12,
   ema:0.5,                 // 平滑。調高會延遲，延遲看起來像「壞掉」
-  rpm:20,                  // 一圈 3s ≈ Gemini 中位延遲
+  rpm:20,                  // 台座轉速：只用嚟定捕捉間隔同進度條，唔使準
+  // ── 捕捉環 ──
+  // **實效格率 = playRpm/60 × ringN。** 呢個數就係播出嚟順唔順，改任何一邊都要重算。
+  // 上限係來源本身：ringN 唔可能高過「攝影機 fps × 一圈秒數」（30fps × 3s = 90）。
+  ringN:90,                // 一圈錄幾多格 = 30fps 來源轉一圈嘅格數
+  ringMax:120,             // 最多錄幾多格（1.33 圈，畀接縫偵測有 slack）。sheet ≈ 63MB
+  ringCell:480,            // 每格影像闊度 px
+  playRpm:20,              // 畫面自轉速度（同實體轉盤無關）。90 格 × 20/60 = 30fps
+  minFps:12,               // 實效格率低過呢個 = 捕捉失敗 → 退返 live，唔好播幻燈片
+  seamTol:0.0015,          // 接縫比對要幾似先信（半徑相對誤差平方均值，≈3.9% RMS）
+  // ── 模組上身 ──
+  tilt:45,                 // 相機仰角（度）。D7：約 45°，唔係正俯拍
+  spinDir:1,               // 畫面轉向。**第 1 日對住實物校，唔啱就 -1**（?spin=-1）
+  // ── 真橫切面（shape-from-silhouette）──
+  hullH:9,                 // 幾多層高度
+  hullA:32,                // 每層幾多個方位角
+  hullSpan:0.9,            // 高度取樣範圍（±，唔好貼到兩極）
+  hullMinN:16,             // 環少過呢個格數就唔夠視角起外殼
+  latN:5, lonN:12,         // 表面網格：緯線／經線條數
   detectFrames:5,
   goneFrames:20,          // 連續幾格偵測唔到先當拎走（~0.3s）
   minEcc:0.10,             // 低於此離心率 = 圓形，主軸無定義
 };
 const Q = new URLSearchParams(location.search);
+if(Q.has('spin')) CFG.spinDir = +Q.get('spin') < 0 ? -1 : 1;   // 現場校轉向
+if(Q.has('tilt')) CFG.tilt = +Q.get('tilt');
 let smooth=null;   // 輪廓 EMA 緩衝（fitTracker 會清掉）
 
 const THEMES = {
@@ -393,19 +425,23 @@ const mk=(n,a={})=>{const e=document.createElementNS(SVGNS,n);
 
 let parts=[];
 
-// Gemini 嘅位置提示 at:[x,y]（0~1000 影像空間）→ 由質心出發嘅射線索引。
-// ponytail: 掃描嗰格先有效。之後物體轉，模組留喺同一個角度（見 30-decisions D4 天花板）。
-function anchorToIndex(at,cx,cy){
+// Gemini 嘅位置提示 at:[x,y]（0~1000 影像空間）→ **物體自身坐標**（方位角槽位 i, 高度 h）。
+// 物體中心 = 面向觀眾（θ=0）；左右邊緣 = ±90°；高度直接由 y 偏移換算。
+// 呢個係第 2 步嘅關鍵：錨點唔再係「畫面角度」，係「物體表面邊一點」。
+function anchorToBody(at,cx,cy,hw,hh){
   if(!Array.isArray(at)||at.length!==2) return null;
   const px=at[0]/1000*CFG.W, py=at[1]/1000*CFG.H;
-  const a=Math.atan2(py-cy, px-cx);
-  return ((Math.round(a/(Math.PI*2)*CFG.rays))%CFG.rays+CFG.rays)%CFG.rays;
+  const h=Math.max(-.85,Math.min(.85,(py-cy)/(hh||1)));
+  const R=(hw||1)*Math.sqrt(Math.max(.04,1-h*h));    // 建構嗰陣用橢球估腰身就夠
+  const th=Math.asin(Math.max(-1,Math.min(1,(px-cx)/R)));
+  return { i:((Math.round(th/(Math.PI*2)*CFG.rays))%CFG.rays+CFG.rays)%CFG.rays, h };
 }
 
-// 只存輪廓索引，唔存座標 —— 咁零件先會黐住剪影一齊轉
-function buildParts(mods,seed,cx,cy){
-  const R=rng(seed), g=el('parts');
-  g.innerHTML=''; parts=[];
+// 只存物體自身坐標，唔存畫面座標 —— 咁零件先會黐住實體表面轉，唔係跟住剪影漂
+function buildParts(mods,seed,cx,cy,hw,hh){
+  const R=rng(seed), g=el('parts'), gb=el('partsBack');
+  g.innerHTML=''; if(gb) gb.innerHTML=''; parts=[];
+  const hPick=()=>R()*1.5-.75;                       // 高度：唔好貼到兩極
   const used=[], cd=(a,b)=>{const d=Math.abs(a-b)%CFG.rays; return Math.min(d,CFG.rays-d);};
   const pick=(gap=7)=>{
     for(let k=0;k<30;k++){ const i=(R()*CFG.rays)|0;
@@ -429,7 +465,7 @@ function buildParts(mods,seed,cx,cy){
     for(let i=0;i<pins;i++) d+=`M${-w/2+(i+.5)*w/pins},${h/2}v${2+R()*3}`; // 針腳
     e.append(mk('rect',{x:-w/2,y:-h/2,width:w,height:h,class:'chipFill'}),
              mk('path',{d,class:'greeble'}));
-    return {kind:'CHIP', i:place(want), out:4+R()*9, wt:1.0, e};
+    return {kind:'CHIP', i:place(want?want.i:null), h:want?want.h:hPick(), wt:1.0, e};
   };
 
   const makeMonitor=(want,label)=>{
@@ -440,11 +476,12 @@ function buildParts(mods,seed,cx,cy){
     mon.append(mk('rect',{x:0,y:0,width:w,height:h,class:'screen'}),bars,lbl);
     e.append(tether,mon);
     let i;
-    if(want!=null) i=place(want,9);                            // 有提示就聽 Gemini
-    else { i=pick(9);                                          // 冇就偏向左右，避開上下 HUD
-      for(let k=0;k<12;k++){ if(Math.abs(Math.cos(i/CFG.rays*Math.PI*2))>0.55) break;
+    if(want!=null) i=place(want.i,9);                           // 有提示就聽 Gemini
+    else { i=pick(9);            // 冇提示就揀面向觀眾嗰邊 —— 側邊 z≈0，面板一出場就淡走
+      for(let k=0;k<12;k++){ if(Math.cos(i/CFG.rays*Math.PI*2)>0.55) break;
         used.pop(); i=pick(9); } }
-    return {kind:'MONITOR', i, out:40+R()*46, w, h, nb:5+((R()*4)|0), wt:0.4, e, tether, mon, bars};
+    return {kind:'MONITOR', i, h:want?want.h:hPick(), out:40+R()*46, w, h2:h,
+            nb:5+((R()*4)|0), wt:0.4, e, tether, mon, bars};
   };
 
   // 導管接返上一個實體模組 —— 讀落係「模組之間嘅接線」，唔係亂畫一條
@@ -452,7 +489,8 @@ function buildParts(mods,seed,cx,cy){
     const e=mk('g',{class:'part'});
     const glow=mk('path',{class:'conduitGlow'}), line=mk('path',{class:'conduit'});
     e.append(glow,line);
-    return {kind:'CONDUIT', i:place(want,4), j:linkTo!=null?linkTo:pick(6),
+    return {kind:'CONDUIT', i:place(want?want.i:null,4), h:want?want.h:hPick(),
+            j:linkTo?linkTo.i:pick(6), hj:linkTo?linkTo.h:hPick(),
             bulge:12+R()*28, wt:0.3, e, glow, line};
   };
 
@@ -466,11 +504,14 @@ function buildParts(mods,seed,cx,cy){
 
   let lastSolid=null;
   for(const m of list){
-    const want=anchorToIndex(m.at,cx,cy);       // 冇提示 → null → 落亂數
+    const want=anchorToBody(m.at,cx,cy,hw,hh);  // 冇提示 → null → 落亂數
     const p = m.type==='MONITOR' ? makeMonitor(want,m.label)
             : m.type==='CONDUIT' ? makeConduit(want,lastSolid)
             : makeChip(want);
-    if(p.kind!=='CONDUIT') lastSolid=p.i;
+    if(p.kind!=='CONDUIT') lastSolid={i:p.i, h:p.h};
+    p.th = p.i/CFG.rays*Math.PI*2;              // 槽位 → 方位角（弧度）
+    p.thj = p.j!=null ? p.j/CFG.rays*Math.PI*2 : 0;
+    p.front = null;                             // 未定；layoutParts 第一格會派層
     parts.push(p); g.appendChild(p.e);
   }
   return parts;
@@ -511,43 +552,203 @@ function projectFuture(base,cx,cy,seed,anchors){
   return pts;
 }
 
-// 每格重新投影 —— 位置由當下輪廓決定，所以零件跟住實體轉
-// ponytail: 錨點係「射線索引」＝ 固定角度，唔係物體表面上嘅實體點。
-//           所以模組係停喺物體某一側，唔會隨物體自轉繞到背面。
-//           要真正黐死實體點就要做特徵追蹤 + 遮擋，剪影系統做唔到。
-//           升級路徑：按轉盤 RPM 推進 anchor 索引，令模組沿輪廓環繞。
-function layoutParts(sx,sy,now,cxp,cyp){
-  if(!parts.length || !smooth) return;
-  const ang = i => i/CFG.rays*Math.PI*2;
+// ── 模組上身：物體自身坐標 → 畫面 ──────────────────────────
+// yaw 唔係估出嚟 —— **佢就係捕捉環嘅格索引**，所以影像同貼片係數學上鎖實，
+// 唔會出現「物體轉、貼片唔轉」。冇環（LIVE 退路）時 yaw 定住 0 = 舊行為。
+const ringYaw = () => RING.playing ? CFG.spinDir*RING.phase/RING.n*Math.PI*2 : 0;
+
+// 剪影喺畫面第 ty 行有幾闊（追蹤空間）。掃輪廓多邊形同呢一行嘅交點，
+// 唔使調 band，任何剪影都準。圓柱體（鎖匙、唇膏）呢個就係真半徑。
+// ponytail: 球體會高估約 8%（貼片微微凸出表面，讀落似裝上去，可接受）。
+//           要真半徑就要 shape-from-silhouette —— 第 3 步先做。
+function halfWidthAt(ty,cx,hh){
+  let w=0;
+  for(let i=0;i<CFG.rays;i++){
+    const j=(i+1)%CFG.rays, y0=smooth[i*2+1], y1=smooth[j*2+1];
+    if((y0-ty)*(y1-ty)>0) continue;                   // 呢條邊冇跨過呢一行
+    const t=(ty-y0)/((y1-y0)||1e-6);
+    w=Math.max(w, Math.abs(smooth[i*2]+(smooth[j*2]-smooth[i*2])*t-cx));
+  }
+  return w || Math.max(1,hh*.5);
+}
+
+// ── 真橫切面：由一圈剪影還原（shape-from-silhouette）──────────
+// 每格剪影喺某一層高度嘅左右外伸，就係嗰個橫切面喺對應方向嘅**支撐函數**。
+// 一圈收齊 → 半平面交集 → 凸多邊形：r(α) = min over ψ of support(ψ)/cos(α−ψ)。
+// 呢個係捕捉環白撿返嚟嘅：轉盤已經幫你影齊 360° 視角。
+// ponytail: 凹陷收唔返（剪影法嘅天花板，而且 radialContour 本身已經橋接咗）。
+//           要凹陷就要體素雕刻 + 真邊界追蹤，展場物件唔值。
+const HULL={ ready:false, axisX:0, refY:0, hh:1, r:null };
+
+// 剪影喺畫面第 ty 行、相對**轉軸**嘅左右外伸
+function edgesAt(c,ty,ax){
+  let L=0, Rt=0;
+  for(let i=0;i<CFG.rays;i++){
+    const j=(i+1)%CFG.rays, y0=c[i*2+1], y1=c[j*2+1];
+    if((y0-ty)*(y1-ty)>0) continue;
+    const t=(ty-y0)/((y1-y0)||1e-6);
+    const x=c[i*2]+(c[j*2]-c[i*2])*t-ax;
+    if(x>=0){ if(x>Rt) Rt=x; } else if(-x>L) L=-x;
+  }
+  return [L,Rt];
+}
+
+function buildHull(){
+  HULL.ready=false;
+  const n=RING.n;
+  if(!n || n<CFG.hullMinN || RING.frames.length<n) return false;
+  // 轉軸：唔對稱嘅物體，剪影質心會繞住轉軸走 —— 一圈平均返嚟就係轉軸。
+  // 用逐格質心會令外殼糊晒，呢個係接縫收口帶嚟嘅第二個好處。
+  let ax=0, ay=0, ah=0;
+  for(let k=0;k<n;k++){ const f=RING.frames[k];
+    ax+=f.cx; ay+=f.cy; ah+=(f.bbox[3]-f.bbox[1])/2; }
+  HULL.axisX=ax/n; HULL.refY=ay/n; HULL.hh=Math.max(2,ah/n);
+
+  const H=CFG.hullH, A=CFG.hullA, cf=Math.cos(CFG.tilt*Math.PI/180);
+  const sup=new Float32Array(2*n), psi=new Float32Array(2*n);
+  HULL.r=new Float32Array(H*A);
+  for(let k=0;k<n;k++){                               // 方位角同高度無關，行一次就夠
+    const yaw=CFG.spinDir*k/n*Math.PI*2;
+    psi[2*k]=Math.PI/2-yaw; psi[2*k+1]=-Math.PI/2-yaw;
+  }
+  for(let j=0;j<H;j++){
+    const h=-CFG.hullSpan + j*(2*CFG.hullSpan)/(H-1);
+    const ty=HULL.refY + h*HULL.hh*cf;
+    for(let k=0;k<n;k++){
+      const e=edgesAt(RING.frames[k].cont, ty, HULL.axisX);
+      sup[2*k]=e[1]; sup[2*k+1]=e[0];
+    }
+    for(let a=0;a<A;a++){
+      const al=a/A*Math.PI*2;
+      let r=Infinity;
+      for(let m=0;m<2*n;m++){
+        if(sup[m]<1e-3) continue;                     // 量唔到 = 冇資訊，唔好當零約束
+        const c=Math.cos(al-psi[m]);
+        if(c<=0.02) continue;
+        const v=sup[m]/c;
+        if(v<r) r=v;
+      }
+      HULL.r[j*A+a] = isFinite(r) ? r : 0;
+    }
+  }
+  HULL.ready=true;
+  return true;
+}
+
+// 雙線性查表（高度 × 方位角，方位角環繞）
+function hullR(h,ps){
+  const H=CFG.hullH, A=CFG.hullA;
+  const fj=Math.max(0,Math.min(H-1,(h+CFG.hullSpan)/(2*CFG.hullSpan)*(H-1)));
+  const j0=fj|0, j1=Math.min(H-1,j0+1), tj=fj-j0;
+  let fa=(ps/(Math.PI*2)*A)%A; if(fa<0) fa+=A;
+  const a0=fa|0, a1=(a0+1)%A, ta=fa-a0;
+  const g=(j,a)=>HULL.r[j*A+a];
+  return (g(j0,a0)*(1-ta)+g(j0,a1)*ta)*(1-tj) + (g(j1,a0)*(1-ta)+g(j1,a1)*ta)*tj;
+}
+
+// 相機仰角 φ：物體背面嘅點會向上走。z>0 = 面向觀眾。
+// 有外殼就用真半徑同轉軸（非對稱物體先會準）；冇就退返剪影半闊 + 逐格質心。
+function bodyPoint(th,h,cx,cy,hh,yaw){
+  const a=th+yaw, rad=CFG.tilt*Math.PI/180;
+  const ax=HULL.ready?HULL.axisX:cx, ry=HULL.ready?HULL.refY:cy,
+        hz=HULL.ready?HULL.hh:hh;
+  const yBase=ry+h*hz*Math.cos(rad);                  // 呢個高度嘅環喺畫面上嘅中心
+  const R=HULL.ready ? hullR(h,th) : halfWidthAt(yBase,ax,hz);
+  return { x:ax+R*Math.sin(a), y:yBase+R*Math.cos(a)*Math.sin(rad),
+           z:Math.cos(a), r:R };
+}
+
+// 表面網格：緯線係真橫切面，經線只畫面向觀眾嗰半。剪落剪影度 →
+// 讀落係「呢件嘢畀人重新分板造過」，而唔係「件嘢外面圍咗啲光」。
+function drawLattice(sx,sy,yaw,clip){
+  const gr=el('latRing'), gl=el('latLong');
+  if(!HULL.ready){ gr.setAttribute('d',''); gl.setAttribute('d',''); return; }
+  const rad=CFG.tilt*Math.PI/180, sf=Math.sin(rad), cf=Math.cos(rad), A=CFG.hullA;
+  const P=(h,ps)=>{ const r=hullR(h,ps), a=ps+yaw;
+    return ((HULL.axisX+r*Math.sin(a))*sx).toFixed(1)+','
+         + ((HULL.refY+h*HULL.hh*cf + r*Math.cos(a)*sf)*sy).toFixed(1); };
+  let dr='';
+  for(let i=0;i<CFG.latN;i++){                        // 緯線 = 真橫切面
+    const h=-CFG.hullSpan + (i+.5)*(2*CFG.hullSpan)/CFG.latN;
+    for(let a=0;a<=A;a++) dr+=(a?'L':'M')+P(h,a/A*Math.PI*2);
+    dr+='Z';
+  }
+  let dl='';
+  for(let i=0;i<CFG.lonN;i++){
+    const ps=i/CFG.lonN*Math.PI*2;
+    if(Math.cos(ps+yaw)<0.05) continue;               // 背面唔畫，唔好搞到好嘈
+    for(let j=0;j<=12;j++) dl+=(j?'L':'M')+P(-CFG.hullSpan + j*(2*CFG.hullSpan)/12, ps);
+  }
+  gr.setAttribute('d',dr); gl.setAttribute('d',dl);
+  gr.style.clipPath=clip; gl.style.clipPath=clip;
+}
+
+// 每格重新投影。背面（z<0）嘅零件搬去 #ovBack —— 佢喺影像下層，
+// 而影像又被剪影 clip 住，所以「畀物體擋住」係免費嘅，唔使做遮擋計算。
+function layoutParts(sx,sy,now,t){
+  if(!parts.length || !smooth || !t) return;
+  const cx=t.cx, cy=t.cy, cxp=cx*sx, cyp=cy*sy;
+  const hh=Math.max(2,(t.bbox[3]-t.bbox[1])/2);
+  const yaw=ringYaw();
+  const gF=el('parts'), gB=el('partsBack');
   let rad=0;
   for(let i=0;i<CFG.rays;i++) rad+=Math.hypot(smooth[i*2]*sx-cxp, smooth[i*2+1]*sy-cyp);
-  const k = Math.max(.6, Math.min(3.2, rad/CFG.rays/110));   // 110px 為基準半徑
-  for(const p of parts){
-    const px=smooth[p.i*2]*sx, py=smooth[p.i*2+1]*sy;
-    const a=ang(p.i), nx=Math.cos(a), ny=Math.sin(a);   // 放射取樣送嘅法線，免費
+  const k=Math.max(.6,Math.min(3.2, rad/CFG.rays/110));      // 110px 為基準半徑
+
+  for(let n=0;n<parts.length;n++){
+    const p=parts[n];
+    const P=bodyPoint(p.th,p.h,cx,cy,hh,yaw);
+    const px=P.x*sx, py=P.y*sy;
+
     if(p.kind==='CHIP'){
-      p.e.setAttribute('transform',
-        `translate(${px+nx*p.out*k},${py+ny*p.out*k}) rotate(${a*180/Math.PI+90}) scale(${k})`);
+      side(p, P.z>=0, gF, gB);
+      // 貼片係表面上嘅一塊嘢：轉到邊緣就橫向壓扁到得返一條邊
+      const sq=Math.max(.12,Math.abs(P.z));
+      p.e.setAttribute('transform',`translate(${px},${py}) scale(${sq*k},${k})`);
+      p.e.setAttribute('opacity', P.z>=0 ? 1 : .3);
     } else if(p.kind==='MONITOR'){
-      const mx=px+nx*p.out*k, my=py+ny*p.out*k;
+      // 讀數面板要睇得清 —— 保持浮空、永遠喺前層，但**根部釘死喺表面錨點**，
+      // 錨點轉到背面就淡出。呢個係易讀性同「黐住物體」之間嘅取捨。
+      const dir=Math.sin(p.th+yaw)>=0?1:-1;
+      const W=CFG.W*sx, H=CFG.H*sy, pw=p.w*k, ph=p.h2*k;
+      const cl=(v,lo,hi)=>hi<lo?lo:Math.max(lo,Math.min(hi,v));
+      // 夾嘅係面板個框，唔係中心點；而且留返四角畀 HUD（名／世代／年表／狀態）
+      const lx=cl(px+dir*p.out*k-(dir<0?pw:0), 10, W-pw-10);
+      const ly=cl(py-ph/2, H*.20, H*.66-ph);
       p.tether.setAttribute('x1',px); p.tether.setAttribute('y1',py);
-      p.tether.setAttribute('x2',mx); p.tether.setAttribute('y2',my);
-      p.mon.setAttribute('transform',
-        `translate(${mx-(nx<0?p.w*k:0)},${my-p.h*k/2}) scale(${k})`);
-      if(now-(p.tb||0)>110){ p.tb=now;                 // 長條圖跳動
+      p.tether.setAttribute('x2',dir>0?lx:lx+pw); p.tether.setAttribute('y2',ly+ph/2);
+      p.mon.setAttribute('transform',`translate(${lx},${ly}) scale(${k})`);
+      p.e.setAttribute('opacity', Math.max(0,Math.min(1,(P.z+.15)/.45)).toFixed(3));
+      if(now-(p.tb||0)>110){ p.tb=now;                       // 長條圖跳動
         let d='';
-        for(let k=0;k<p.nb;k++) d+=`M${4+k*(p.w-8)/p.nb},${p.h-4}v${-(3+Math.random()*(p.h-10))}`;
+        for(let b=0;b<p.nb;b++) d+=`M${4+b*(p.w-8)/p.nb},${p.h2-4}v${-(3+Math.random()*(p.h2-10))}`;
         p.bars.setAttribute('d',d);
       }
     } else {
-      const qx=smooth[p.j*2]*sx, qy=smooth[p.j*2+1]*sy, b=ang(p.j);
-      const cx2=(px+qx)/2, cy2=(py+qy)/2;
-      let ux=(nx+Math.cos(b))/2, uy=(ny+Math.sin(b))/2;
+      const Q=bodyPoint(p.thj,p.hj,cx,cy,hh,yaw);
+      const qx=Q.x*sx, qy=Q.y*sy, zAvg=(P.z+Q.z)/2;
+      side(p, zAvg>=0, gF, gB);
+      let ux=P.x-cx+Q.x-cx, uy=P.y-cy+Q.y-cy;                // 由質心向外拱
       const L=Math.hypot(ux,uy)||1;
-      const d=`M${px},${py}Q${cx2+ux/L*p.bulge*k},${cy2+uy/L*p.bulge*k} ${qx},${qy}`;
+      const d=`M${px},${py}Q${(px+qx)/2+ux/L*p.bulge*k},${(py+qy)/2+uy/L*p.bulge*k} ${qx},${qy}`;
       p.line.setAttribute('d',d); p.glow.setAttribute('d',d);
+      p.e.setAttribute('opacity', zAvg>=0 ? 1 : .3);
+    }
+
+    // 2127 外殼嘅隆起跟住模組一齊繞（權重按深度淡出，轉到背面就冇隆起）。
+    // ponytail: 遲一格 —— projectFuture 喺呢個 function 之前跑。16ms，睇唔出。
+    if(anchors[n]){
+      anchors[n].i=((Math.round(Math.atan2(P.y-cy,P.x-cx)/(Math.PI*2)*CFG.rays))%CFG.rays+CFG.rays)%CFG.rays;
+      anchors[n].w=(p.wt??1)*Math.max(0,P.z);
     }
   }
+}
+
+// 換層先至改 DOM —— 每格都 appendChild 係浪費
+function side(p,front,gF,gB){
+  if(p.front===front) return;
+  p.front=front;
+  (front?gF:gB).appendChild(p.e);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -655,16 +856,140 @@ const mockScan = () => new Promise(r =>
 // 狀態機 —— 七節拍。轉一圈 = 進度條
 // ══════════════════════════════════════════════════════════════
 const REV=60000/CFG.rpm, el=id=>document.getElementById(id);
-const $={feed:el('feed'),feedWrap:el('feedWrap'),tint:el('tint'),ties:el('ties'),
+const $={feed:el('feed'),disp:el('disp'),feedWrap:el('feedWrap'),tint:el('tint'),ties:el('ties'),
          scan:el('scanlines'),ov:el('ov'),sweep:el('sweep'),
          nodes:el('nodes'),reticle:el('reticle'),axis:el('axis'),l1:el('l1'),l2:el('l2'),stage:el('stage')};
 let state='IDLE', tEnter=performance.now(), fresh=true, present=0, absent=0;
 let data=null, prevArea=0, flux=0, lastTick=0;
-let futureSeed=0, anchors=[], lastT=null;
+let futureSeed=0, anchors=[], lastT=null, lastNow=0;
 
 const go=s=>{ state=s; tEnter=performance.now(); fresh=true; el('st').textContent=s; };
 const onEnter=()=>{ const f=fresh; fresh=false; return f; };   // 只在進入該節拍的第一格為 true
 const since=()=>performance.now()-tEnter;
+
+// ══════════════════════════════════════════════════════════════
+// 捕捉環 —— 轉盤只係掃描器
+// 轉一圈錄低一環（影像 + 輪廓），之後畫面播返呢個環，速度由 CFG.playRpm 話事。
+// **我哋永遠唔需要知真實 RPM，只需要知格嘅次序。**
+// 台座快咗慢咗、皮帶鬆咗，播返出嚟只係速度輕微不均，肉眼零感覺 ——
+// 相位／轉速同步問題唔係「要控制」，係根本唔存在。
+// ══════════════════════════════════════════════════════════════
+const RING = { sheet:null, cw:0, ch:0, cols:0, cap:0, n:0, frames:[],
+               t0:0, playing:false, phase:0 };
+
+const cellXY=(k,cols,cw,ch)=>[(k%cols)*cw, ((k/cols)|0)*ch];
+
+// 播出嚟一秒有幾多格唔同嘅影像 —— 順唔順就係呢個數，唔係轉速
+const ringFps = n => n*CFG.playRpm/60;
+
+// 半徑指紋：除以平均值 → 對尺寸漂移（前後移一移、對焦呼吸）免疫
+function radSig(c,cx,cy){
+  const n=c.length/2, sig=new Float32Array(n); let m=0;
+  for(let i=0;i<n;i++){ sig[i]=Math.hypot(c[i*2]-cx, c[i*2+1]-cy); m+=sig[i]; }
+  m=m/n||1;
+  for(let i=0;i<n;i++) sig[i]/=m;
+  return sig;
+}
+
+// 接縫：**nominal（由 CFG.rpm 推）做預設，比對只係證據夠強先修正。**
+// 只喺 nominal ±30% 之內搵最似第 0 格嗰格；唔夠似就照用 nominal。
+// 咁樣最壞情況係差 30%，唔會好似「淨信相關性」咁畀個 2/3 圈嘅答案，一 loop 就跳。
+// ponytail: 旋轉對稱物（籃球）每格都似第 0 格 → 平手 → 距離懲罰揀返 nominal。
+//           佢每格都一樣，切喺邊度都睇唔出，所以無害。
+function ringSeam(frames,nominal,tol){
+  const fallback=Math.min(frames.length,nominal);
+  const lo=Math.max(2,Math.round(nominal*.7)), hi=Math.min(frames.length-1,Math.round(nominal*1.3));
+  if(hi<lo) return fallback;                           // 冇 slack（啱啱錄夠一圈）→ 全部就係一圈
+  const a=frames[0].sig;
+  const ssd=k=>{ const b=frames[k].sig; let e=0;
+    for(let i=0;i<a.length;i++){ const d=a[i]-b[i]; e+=d*d; }
+    return e/a.length; };
+  let best=fallback, bs=Infinity;
+  for(let k=lo;k<=hi;k++){ const e=ssd(k); if(e<bs){ bs=e; best=k; } }
+  // 要**明顯**好過 nominal 本身先算數。輕微噪聲會令每格都「差唔多似」，
+  // 嗰陣最細嗰個 k 純粹係噪聲揀出嚟 —— 唔可以當佢係證據。
+  const eNom=ssd(Math.min(hi,Math.max(lo,nominal)));
+  return (bs<=tol && bs < eNom*0.6) ? best : fallback;
+}
+
+function ringReset(){
+  HULL.ready=false;
+  RING.cap=0; RING.n=0; RING.frames=[]; RING.playing=false; RING.phase=0; RING.t0=0;
+}
+
+function ringStart(video){
+  ringReset();
+  if(!video.videoWidth) return false;                  // 來源未 ready → 環空 → 照走 live 路徑
+  const cw=CFG.ringCell, ch=Math.max(2,Math.round(cw*video.videoHeight/video.videoWidth));
+  const cols=Math.ceil(Math.sqrt(CFG.ringMax)), rows=Math.ceil(CFG.ringMax/cols);
+  RING.sheet ||= document.createElement('canvas');
+  if(RING.cw!==cw||RING.ch!==ch||RING.cols!==cols){
+    RING.sheet.width=cw*cols; RING.sheet.height=ch*rows;
+    RING.cw=cw; RING.ch=ch; RING.cols=cols;
+  }
+  RING.sheet.getContext('2d').clearRect(0,0,RING.sheet.width,RING.sheet.height);
+  RING.t0=performance.now();
+  return true;
+}
+
+// 每 REV/ringN 毫秒收一格。收滿 ringMax（約 1.3 圈）就停 —— 多出嗰截係接縫偵測嘅 slack。
+function ringPush(video,t,now){
+  if(!RING.sheet || RING.cap>=CFG.ringMax || !smooth) return;
+  if(now < RING.t0 + RING.cap*(REV/CFG.ringN)) return;
+  const k=RING.cap, [dx,dy]=cellXY(k,RING.cols,RING.cw,RING.ch);
+  RING.sheet.getContext('2d').drawImage(video,dx,dy,RING.cw,RING.ch);
+  RING.frames.push({t:now, cont:smooth.slice(), cx:t.cx, cy:t.cy, angle:t.angle,
+                    bbox:t.bbox.slice(), sig:radSig(smooth,t.cx,t.cy)});
+  RING.cap++;
+}
+
+// nominal（一圈幾多格）由**實錄嘅時間跨度**推，唔假設 rAF 跑得滿：
+// 掉格（背景分頁、慢機）只會令格數少咗，唔會令「一圈」嘅判斷歪掉。
+function ringNominal(){
+  if(RING.cap<2) return CFG.ringN;
+  const span=RING.frames[RING.cap-1].t - RING.frames[0].t;
+  return span>0 ? Math.max(2,Math.round(REV*(RING.cap-1)/span)) : CFG.ringN;
+}
+
+function ringClose(){
+  RING.n = RING.cap ? ringSeam(RING.frames, ringNominal(), CFG.seamTol) : 0;
+  RING.phase=0;
+  // 實效格率唔夠就唔好播 —— 9.6fps 嘅「旋轉」比唔播仲差。退返 live，行為同以前一樣。
+  RING.playing = ringFps(RING.n) >= CFG.minFps;
+  if(RING.playing) buildHull();                        // 一圈剪影白撿返嚟嘅真橫切面
+  // 現場校正睇呢個：實錄格數 vs CFG.ringN 就係實體轉盤同 CFG.rpm 嘅偏差
+  el('ring').textContent = RING.n+'/'+RING.cap
+    + ' ' + ringFps(RING.n).toFixed(0) + 'fps'
+    + (!RING.playing ? ' LIVE'
+       : RING.n===Math.min(RING.cap,ringNominal()) ? ' NOM' : ' FIT');
+  return RING.n;
+}
+
+// 播放：index 由我哋自己嘅虛擬轉速推進，同實體轉盤完全脫鈎。
+// 回傳嘅嘢同 track() 同一個形狀，所以下游幾何（輪廓、模組、2127 形態）零改動。
+function ringPlay(dt){
+  RING.phase = (RING.phase + dt*CFG.playRpm/60000*RING.n) % RING.n;
+  const k=Math.floor(RING.phase)%RING.n, f=RING.frames[k];
+  const [sxc,syc]=cellXY(k,RING.cols,RING.cw,RING.ch), g=$.disp.getContext('2d');
+  g.clearRect(0,0,$.disp.width,$.disp.height);
+  g.drawImage(RING.sheet, sxc,syc,RING.cw,RING.ch, 0,0,$.disp.width,$.disp.height);
+  smooth=f.cont;                                       // 錄嗰陣已經 EMA 平滑過，唔使再平滑
+  return {cx:f.cx, cy:f.cy, angle:f.angle, bbox:f.bbox};
+}
+
+// live 同播放共用同一塊畫布 → 上游一換，clip-path／泛光／全息化全部唔使識分
+function dispLive(video){
+  const g=$.disp.getContext('2d');
+  g.clearRect(0,0,$.disp.width,$.disp.height);
+  if(video.videoWidth) g.drawImage(video,0,0,$.disp.width,$.disp.height);
+}
+
+// 顯示解析度封頂 1280 —— stage 拉伸由 CSS 做，長寬比同來源一致所以只係純縮放
+function fitDisp(box){
+  const w=Math.min(1280,Math.max(2,Math.round(box.width)));
+  const h=Math.max(2,Math.round(w*box.height/box.width));
+  if($.disp.width!==w||$.disp.height!==h){ $.disp.width=w; $.disp.height=h; }
+}
 
 function applyTheme(n){
   const t=THEMES[n]||THEMES.UNKNOWN;
@@ -681,33 +1006,35 @@ function reveal(d){
   el('gen').textContent='GEN '+String(d.gen).padStart(2,'0');
   typewrite(el('lineage'),d.lineage,1900);
   setTimeout(()=>typewrite(el('kept'),d.kept,1500),1400);   // 最尾先出：呢句係整件事嘅重點
-  $.feed.classList.add('holo'); $.feedWrap.classList.add('on');
+  $.disp.classList.add('holo'); $.feedWrap.classList.add('on');
   $.tint.classList.add('on'); $.scan.classList.add('on');
   el('pName').classList.add('on'); el('pStat').classList.add('on'); el('notes').classList.add('on');
   [...$.nodes.children].forEach((n,i)=>setTimeout(()=>{n.style.opacity=.75;chirp();}, 120+i*55));
   // 每次掃描新 seed → 同一件物件都唔會出到一樣嘅佈局
-  const ps=buildParts(d.modules, Date.now(), lastT?lastT.cx:CFG.W/2, lastT?lastT.cy:CFG.H/2);
+  const bb=lastT?lastT.bbox:[0,0,CFG.W,CFG.H];
+  const ps=buildParts(d.modules, Date.now(), lastT?lastT.cx:CFG.W/2, lastT?lastT.cy:CFG.H/2,
+                      (bb[2]-bb[0])/2, (bb[3]-bb[1])/2);
   ps.forEach((p,i)=>setTimeout(()=>{ p.e.style.opacity=1; tick(); }, 320+i*90));
   // 2127 形態由模組位置長出來 —— 同一個 seed，每格重跑，跟住實體轉
   futureSeed=Date.now(); anchors=ps.map(p=>({i:p.i, w:p.wt??1}));
   $.stage.classList.add('morphed');
   // materialize 那一瞬的色差抖動
-  $.feed.classList.add('split');
-  setTimeout(()=>$.feed.classList.remove('split'), 420);
+  $.disp.classList.add('split');
+  setTimeout(()=>$.disp.classList.remove('split'), 420);
 }
 
 function resetView(){
-  data=null; humOff();
-  $.feed.classList.remove('holo','split'); $.feedWrap.classList.remove('on');
+  data=null; humOff(); ringReset();
+  $.disp.classList.remove('holo','split'); $.feedWrap.classList.remove('on');
   [$.tint,$.scan].forEach(n=>n.classList.remove('on'));
   ['pName','pStat','notes'].forEach(i=>el(i).classList.remove('on'));
   [...$.nodes.children].forEach(n=>n.style.opacity=0);
-  el('parts').innerHTML=''; parts=[];
+  el('parts').innerHTML=''; el('partsBack').innerHTML=''; parts=[];
   anchors=[]; futureSeed=0; $.stage.classList.remove('morphed');
   applyTheme('ARCHIVE');
   el('future').textContent=el('nowName').textContent=el('form').textContent='—';
   el('gen').textContent='GEN —';
-  el('lineage').textContent=''; el('kept').textContent='';
+  el('lineage').textContent=''; el('kept').textContent=''; el('ring').textContent='—';
 }
 
 function loop(now){
@@ -719,17 +1046,23 @@ function loop(now){
   const accent=getComputedStyle(document.documentElement).getPropertyValue('--a').trim();
   drawVoid(now,Math.round(box.width),Math.round(box.height),accent);
 
-  const t=track($.feed);
+  const dt=Math.min(100, now-(lastNow||now)); lastNow=now;
+  fitDisp(box);
+  // 播放中：畫面同來源已經係環，實體攞唔攞走都唔再影響（觀眾可以攞返件嘢走）
+  const t = RING.playing ? ringPlay(dt) : (dispLive($.feed), track($.feed));
   if(t) lastT=t;
-  if(t){ present++; absent=0; } else { absent++; present=0; }
+  if(RING.playing){ present=CFG.detectFrames+1; absent=0; }
+  else if(t){ present++; absent=0; } else { absent++; present=0; }
   const here = present>CFG.detectFrames;
   // 單格偵測唔到唔代表物件拎走咗（影片 loop、手掃過、對焦一下都會掉格）
   const gone = absent>CFG.goneFrames;
 
   if(t){
-    const raw=radialContour(t.mask,t.cx,t.cy,CFG.W,CFG.H,CFG.rays);
-    if(!smooth || smooth.length!==raw.length) smooth=raw.slice();
-    else for(let i=0;i<raw.length;i++) smooth[i]+=(raw[i]-smooth[i])*CFG.ema;
+    if(!RING.playing){                     // 播放時 smooth 由 ringPlay 直接畀
+      const raw=radialContour(t.mask,t.cx,t.cy,CFG.W,CFG.H,CFG.rays);
+      if(!smooth || smooth.length!==raw.length) smooth=raw.slice();
+      else for(let i=0;i<raw.length;i++) smooth[i]+=(raw[i]-smooth[i])*CFG.ema;
+    }
 
     const d=toPath(smooth,sx,sy);
     ['glow1','glow2','glow3','edge'].forEach(i=>el(i).setAttribute('d',d));
@@ -781,8 +1114,9 @@ function loop(now){
     }
     // A：同一條路徑裁切所有影像層 → 綠幕消失，物體漂在虛空裡
     const clip=`path('${d}')`;
-    [$.feed,$.tint,$.scan].forEach(n=>n.style.clipPath=clip);
-    $.feed.style.opacity=1;
+    drawLattice(sx,sy,ringYaw(),clip);
+    [$.disp,$.tint,$.scan].forEach(n=>n.style.clipPath=clip);
+    $.disp.style.opacity=1;
 
     const cx=t.cx*sx, cy=t.cy*sy;
     const r=Math.max(t.bbox[2]-t.bbox[0],t.bbox[3]-t.bbox[1])*sx*.58;
@@ -822,7 +1156,7 @@ function loop(now){
       n.setAttribute('d',`M${x-5},${y-5}h-3v3 M${x+5},${y-5}h3v3 M${x-5},${y+5}h-3v-3 M${x+5},${y+5}h3v-3`);
     });
 
-    layoutParts(sx,sy,now,cx,cy);
+    layoutParts(sx,sy,now,t);
 
     $.l1.setAttribute('x1',box.width*.05+40); $.l1.setAttribute('y1',box.height*.17);
     $.l1.setAttribute('x2',cx); $.l1.setAttribute('y2',cy);
@@ -831,7 +1165,7 @@ function loop(now){
 
 
   } else {
-    $.feed.style.clipPath='none'; $.feed.style.opacity=.10;   // 沒東西時留個微弱畫面，不要看起來像壞了
+    $.disp.style.clipPath='none'; $.disp.style.opacity=.10;   // 沒東西時留個微弱畫面，不要看起來像壞了
   }
 
   switch(state){
@@ -842,6 +1176,8 @@ function loop(now){
       break;
 
     case 'PROJECT': {
+      if(onEnter()) ringStart($.feed);
+      if(t) ringPush($.feed,t,now);                    // 台座轉呢一圈淨係做掃描
       const p=(since()%REV)/REV;
       $.sweep.setAttribute('x',0); $.sweep.setAttribute('width',box.width);
       $.sweep.setAttribute('y',p*box.height); $.sweep.setAttribute('height',7);
@@ -858,7 +1194,7 @@ function loop(now){
     }
 
     case 'MORPH':
-      if(onEnter()) reveal(data);
+      if(onEnter()){ ringClose(); reveal(data); }      // 收口 → 切去環播放，之後同實體脫鈎
       if(since()>1100) go('REVEAL');
       if(gone) go('RESET');
       break;
@@ -964,9 +1300,10 @@ function selfTest(){
   const R0=30, syn=new Float32Array(CFG.rays*2);
   for(let i=0;i<CFG.rays;i++){ const a=i/CFG.rays*Math.PI*2;
     syn[i*2]=80+Math.cos(a)*R0; syn[i*2+1]=45+Math.sin(a)*R0; }
-  const sxT=8, syT=8, cxT=80*sxT, cyT=45*syT;
-  const snap=seed=>{ smooth=syn; buildParts(['CHIP','MONITOR','CONDUIT'],seed);
-    layoutParts(sxT,syT,0,cxT,cyT);
+  const sxT=8, syT=8;
+  const tT={cx:80, cy:45, bbox:[50,15,110,75]}, HH=30;
+  const snap=seed=>{ smooth=syn; buildParts(['CHIP','MONITOR','CONDUIT'],seed,80,45,30,HH);
+    layoutParts(sxT,syT,0,tT);
     return parts.map(p=>p.kind==='CONDUIT'?p.line.getAttribute('d')
       :p.kind==='MONITOR'?p.i+'|'+p.tether.getAttribute('x1')+'|'+p.mon.getAttribute('transform')
       :p.i+'|'+p.e.getAttribute('transform')).join(';'); };
@@ -975,11 +1312,104 @@ function selfTest(){
   T('模組：同 seed 可重現', A===Bs);
   T('模組：異 seed 有變化', A!==C);
   snap(12345);
-  T('模組：MONITOR 引線錨喺輪廓上', parts.filter(p=>p.kind==='MONITOR').every(p=>
-      Math.abs(+p.tether.getAttribute('x1')-syn[p.i*2]*sxT)<1e-6));
-  T('模組：CONDUIT 兩端錨喺輪廓上', parts.filter(p=>p.kind==='CONDUIT').every(p=>{
+  T('模組：MONITOR 引線根部釘喺表面錨點', parts.filter(p=>p.kind==='MONITOR').every(p=>
+      Math.abs(+p.tether.getAttribute('x1')
+               - bodyPoint(p.th,p.h,80,45,HH,0).x*sxT) < 1e-6));
+  T('模組：CONDUIT 起點釘喺表面錨點', parts.filter(p=>p.kind==='CONDUIT').every(p=>{
       const m=p.line.getAttribute('d').match(/^M([\d.-]+),/);
-      return m && Math.abs(+m[1]-syn[p.i*2]*sxT)<1e-3; }));
+      return m && Math.abs(+m[1]-bodyPoint(p.th,p.h,80,45,HH,0).x*sxT)<1e-3; }));
+
+  // 4b. 模組上身：物體自身坐標 → 畫面（第 2 步嘅核心）
+  smooth=syn;
+  T('上身：剪影闊度 —— 圓形喺質心行 = 半徑',
+    Math.abs(halfWidthAt(45,80,HH)-30)<0.6, halfWidthAt(45,80,HH).toFixed(2));
+  const B0=bodyPoint(0,0,80,45,HH,0), Bpi=bodyPoint(Math.PI,0,80,45,HH,0),
+        Br=bodyPoint(Math.PI/2,0,80,45,HH,0), Bl=bodyPoint(-Math.PI/2,0,80,45,HH,0);
+  T('上身：θ=0 面向觀眾（x=質心、z=1）',
+    Math.abs(B0.x-80)<1e-6 && Math.abs(B0.z-1)<1e-9);
+  T('上身：45° 仰角 → 面向觀眾嗰點落咗少少', B0.y>45 && B0.y<75, B0.y.toFixed(2));
+  T('上身：θ=180° 喺背面（z=-1、位置反而向上）',
+    Math.abs(Bpi.z+1)<1e-9 && Bpi.y<45, Bpi.y.toFixed(2));
+  T('上身：θ=±90° 去到剪影邊緣、深度 0（壓扁成一條邊）',
+    Math.abs(Br.x-110)<0.6 && Math.abs(Bl.x-50)<0.6 && Math.abs(Br.z)<1e-9,
+    Br.x.toFixed(1)+'/'+Bl.x.toFixed(1));
+  T('上身：yaw 推進 → 貼片單調橫掃過物體（真係繞住轉）', (()=>{
+    let prev=-Infinity;
+    for(let qq=0;qq<=8;qq++){
+      const x=bodyPoint(0,0,80,45,HH,-Math.PI/2+qq*Math.PI/16).x;
+      if(x<=prev) return false; prev=x;
+    }
+    return true;
+  })());
+  T('上身：spinDir 反轉會反方向', (()=>{
+    RING.playing=true; RING.n=48; RING.phase=12;
+    const a=ringYaw(); CFG.spinDir=-1; const b=ringYaw(); CFG.spinDir=1;
+    ringReset();
+    return a!==0 && Math.abs(a+b)<1e-12;
+  })());
+  // 遮擋：背面零件要落 #ovBack（喺影像下層，而影像被剪影 clip 住）
+  RING.playing=true; RING.n=48; RING.phase=0;
+  buildParts(['CHIP'],7,80,45,30,HH);
+  parts[0].h=0; parts[0].th=Math.PI; layoutParts(sxT,syT,0,tT);
+  T('上身：背面零件搬去 #ovBack（畀物體擋住）', el('partsBack').contains(parts[0].e));
+  parts[0].th=0; layoutParts(sxT,syT,0,tT);
+  T('上身：轉返前面就搬返上 #ov', el('parts').contains(parts[0].e));
+  RING.phase=24; layoutParts(sxT,syT,0,tT);                    // 轉半圈
+  T('上身：轉半圈之後前面嗰件變咗背面', el('partsBack').contains(parts[0].e));
+  ringReset();
+
+  // 4c. 真橫切面：由一圈剪影還原（shape-from-silhouette）
+  // 合成一環：每格剪影係一個橢圓，x 半軸 = 該視角應有嘅剪影半闊
+  const ell=(ax,by,px2,py2)=>{ const c=new Float32Array(CFG.rays*2);
+    for(let i=0;i<CFG.rays;i++){ const th=i/CFG.rays*Math.PI*2;
+      c[i*2]=px2+ax*Math.cos(th); c[i*2+1]=py2+by*Math.sin(th); }
+    return c; };
+  const mkRing=(nn,aOf,cxOf)=>{ RING.frames=[]; RING.n=nn; RING.cap=nn;
+    for(let kk=0;kk<nn;kk++){
+      const yw=CFG.spinDir*kk/nn*Math.PI*2, aa=aOf(yw), cc=cxOf?cxOf(yw):80;
+      RING.frames.push({cont:ell(aa,30,cc,45), cx:cc, cy:45,
+                        bbox:[cc-aa,15,cc+aa,75]});
+    } };
+  const hullAt=(hh0,a)=>hullR(hh0, a/CFG.hullA*Math.PI*2);
+  const hullRow=hh0=>[...Array(CFG.hullA)].map((_,a)=>hullAt(hh0,a));
+
+  mkRing(90,()=>25);                                   // 旋轉體：每個方位角一樣
+  T('外殼：起得成', buildHull()===true);
+  const row=hullRow(0);
+  T('外殼：旋轉體 → 每個方位角半徑一樣（=25）',
+    Math.max(...row)-Math.min(...row)<.2 && Math.abs(row[0]-25)<.2,
+    Math.min(...row).toFixed(2)+'~'+Math.max(...row).toFixed(2));
+  T('外殼：軸心 = 一圈質心平均', Math.abs(HULL.axisX-80)<1e-6);
+  T('外殼：查表喺格點上等於格點值', (()=>{
+    const j=(CFG.hullH-1)/2|0;                          // h=0 嗰層
+    return Math.abs(hullAt(0,7)-HULL.r[j*CFG.hullA+7])<1e-6;
+  })());
+  T('外殼：bodyPoint 改用轉軸同真半徑（唔再理傳入嘅質心）',
+    Math.abs(bodyPoint(0,0,999,999,999,0).x-HULL.axisX)<1e-6);
+
+  // 扁平物（交通卡）：剪影半闊 = W|cos| + T|sin| → 還原返一個薄片
+  mkRing(90, yw=>30*Math.abs(Math.cos(yw))+6*Math.abs(Math.sin(yw)));
+  buildHull();
+  const plate=hullRow(0), pMin=Math.min(...plate), pMax=Math.max(...plate);
+  // 薄軸會被高估 ≈ W·tan(180°/n)（90 個視角 = 4° 解析度 → 30·tan2° ≈ 1.05）。
+  // 呢個係剪影法本身嘅極限，唔係 bug：視角越多越準，所以 ringN 同時服務順暢度同準確度。
+  const tol=30*Math.tan(Math.PI/90)+.3;
+  T('外殼：扁平物唔會當成圓柱（薄軸 ≈ 6、闊軸 ≈ √(30²+6²)）',
+    pMin>=6 && pMin<=6+tol && Math.abs(pMax-Math.hypot(30,6))<.8 && pMax/pMin>3.5,
+    pMin.toFixed(2)+'~'+pMax.toFixed(2)+'（薄軸容差 +'+tol.toFixed(2)+'）');
+
+  // 轉軸唔喺質心：非對稱物體嘅質心會繞住轉軸走，一圈平均先係轉軸
+  mkRing(90,()=>25, yw=>80+4*Math.cos(yw));
+  buildHull();
+  T('外殼：質心繞住轉軸走 → 軸心取一圈平均', Math.abs(HULL.axisX-80)<.2,
+    HULL.axisX.toFixed(3));
+
+  T('外殼：環唔夠視角就唔起（退返剪影半闊）', (()=>{
+    mkRing(CFG.hullMinN-1,()=>25);
+    const ok=buildHull();
+    return ok===false && HULL.ready===false;
+  })());
+  ringReset(); HULL.ready=false;
   // 5. 2127 形態推演
   const anch=[8,30,50], CX=80, CY=45;
   const bse=new Float32Array(CFG.rays*2);
@@ -1009,28 +1439,97 @@ function selfTest(){
       return Math.abs(+inner[0]-bse[bse.length-2])<.1;   // toPath 只留一位小數
     })());
 
-  // 6. 位置提示 at:[x,y] → 射線索引（0°=+x，順時針）
-  const CXa=CFG.W/2, CYa=CFG.H/2, q=CFG.rays/4;
-  T('位置：右 → 索引 0',      anchorToIndex([1000,500],CXa,CYa)===0);
-  T('位置：下 → 索引 rays/4', anchorToIndex([500,1000],CXa,CYa)===q);
-  T('位置：左 → 索引 rays/2', anchorToIndex([0,500],CXa,CYa)===q*2);
-  T('位置：上 → 索引 3rays/4',anchorToIndex([500,0],CXa,CYa)===q*3);
-  T('位置：冇提示回 null',    anchorToIndex(undefined,CXa,CYa)===null
-                              && anchorToIndex([1,2,3],CXa,CYa)===null);
+  // 6. 位置提示 at:[x,y] → 物體自身坐標（物體中心 = 面向觀眾）
+  const CXa=CFG.W/2, CYa=CFG.H/2, q=CFG.rays/4, HW=40, HHa=30;
+  const ab=at=>anchorToBody(at,CXa,CYa,HW,HHa);
+  T('位置：中心 → 面向觀眾（槽位 0）',        ab([500,500]).i===0);
+  T('位置：右邊緣 → +90°（槽位 rays/4）',     ab([1000,500]).i===q);
+  T('位置：左邊緣 → -90°（槽位 3rays/4）',    ab([0,500]).i===q*3);
+  T('位置：上下只改高度，方位角照舊 0',
+    ab([500,0]).i===0 && ab([500,1000]).i===0
+    && ab([500,0]).h<0 && ab([500,1000]).h>0);
+  T('位置：冇提示回 null', ab(undefined)===null && ab([1,2,3])===null);
 
   const withAt=buildParts([{type:'CHIP',at:[1000,500]},{type:'MONITOR',at:[0,500],label:'測試'},
-                           {type:'CONDUIT',at:[500,1000]}], 5, CXa, CYa);
+                           {type:'CONDUIT',at:[500,1000]}], 5, CXa, CYa, HW, HHa);
   const near=(i,j)=>{const d=Math.abs(i-j)%CFG.rays; return Math.min(d,CFG.rays-d);};
   T('位置：模組真係擺到指定方位',
-    near(withAt[0].i,0)<=2 && near(withAt[1].i,q*2)<=2, withAt.map(p=>p.i).join('/'));
+    near(withAt[0].i,q)<=2 && near(withAt[1].i,q*3)<=2, withAt.map(p=>p.i).join('/'));
+  T('位置：高度提示有跟', Math.abs(withAt[2].h-.85)<.2, withAt[2].h.toFixed(2));
   T('位置：MONITOR 用返 Gemini 畀嘅 label',
     withAt[1].mon.querySelector('text').textContent==='測試');
   T('位置：CONDUIT 接返上一個實體模組', withAt[2].j===withAt[1].i);
-  const clash=buildParts([{type:'CHIP',at:[1000,500]},{type:'CHIP',at:[1000,500]}],5,CXa,CYa);
+  const clash=buildParts([{type:'CHIP',at:[1000,500]},{type:'CHIP',at:[1000,500]}],5,CXa,CYa,HW,HHa);
   T('位置：撞位會推開，唔會重疊', clash[0].i!==clash[1].i, clash.map(p=>p.i).join('/'));
-  T('位置：舊格式（純字串）仍然行得', buildParts(['CHIP','MONITOR'],5,CXa,CYa).length===2);
+  T('位置：舊格式（純字串）仍然行得',
+    buildParts(['CHIP','MONITOR'],5,CXa,CYa,HW,HHa).length===2);
 
-  el('parts').innerHTML=''; parts=[]; smooth=null;
+  // 7. 捕捉環：格佈局、指紋、接縫、播放索引
+  const cols=Math.ceil(Math.sqrt(CFG.ringMax)), rows=Math.ceil(CFG.ringMax/cols);
+  const cxy=[...Array(CFG.ringMax)].map((_,k)=>cellXY(k,cols,10,10));
+  T('環：格座標唔重疊', new Set(cxy.map(v=>v.join(','))).size===CFG.ringMax);
+  T('環：格座標唔會爆出 sheet',
+    cxy.every(([x,y])=>x>=0&&y>=0&&x+10<=cols*10&&y+10<=rows*10));
+
+  const circ=(r,cx,cy)=>{ const c=new Float32Array(CFG.rays*2);
+    for(let i=0;i<CFG.rays;i++){ const a=i/CFG.rays*Math.PI*2;
+      c[i*2]=cx+Math.cos(a)*r; c[i*2+1]=cy+Math.sin(a)*r; } return c; };
+  const sigA=radSig(circ(30,80,45),80,45), sigB=radSig(circ(60,10,10),10,10);
+  T('環：半徑指紋對尺寸免疫', [...sigA].every((v,i)=>Math.abs(v-sigB[i])<1e-5));
+
+  // 合成 1.3 圈：一個冇旋轉對稱嘅輪廓，每格轉 2π/ringN → 第 ringN 格必然等於第 0 格
+  const NR=CFG.ringN;
+  const spun=[...Array(CFG.ringMax)].map((_,k)=>{
+    const th=k/NR*Math.PI*2, sg=new Float32Array(CFG.rays);
+    for(let i=0;i<CFG.rays;i++){ const ph=i/CFG.rays*Math.PI*2-th;
+      sg[i]=30+8*Math.cos(ph)+4*Math.cos(2*ph+1); }
+    return {sig:sg}; });
+  const seam=ringSeam(spun,NR,CFG.seamTol);
+  T('環：接縫比對搵返足一圈', seam===NR, seam+' vs '+NR);
+  T('環：唔夠 slack 時回全長', ringSeam(spun.slice(0,10),NR,CFG.seamTol)===10);
+  // 旋轉對稱（籃球）：每格都一樣 → 平手 → 要揀返 nominal，唔可以亂揀
+  const flat=[...Array(CFG.ringMax)].map(()=>({sig:new Float32Array(CFG.rays).fill(1)}));
+  T('環：旋轉對稱物平手時回 nominal', ringSeam(flat,NR,CFG.seamTol)===NR);
+  // 完全冇對應（雜訊）→ 唔可以信比對，要回 nominal
+  const nz=rng(7), noisy=[...Array(CFG.ringMax)].map(()=>{
+    const sg=new Float32Array(CFG.rays);
+    for(let i=0;i<CFG.rays;i++) sg[i]=1+nz()*0.6;
+    return {sig:sg}; });
+  T('環：證據唔夠強時回 nominal', ringSeam(noisy,NR,CFG.seamTol)===NR);
+  // 輕微噪聲：每格都「夠似」（SSD 低過 tol）但冇一格明顯出眾 → 一樣要回 nominal，
+  // 唔可以畀噪聲揀個 k 出嚟（籃球實測就係呢個情況）
+  const fz=rng(11), faint=[...Array(CFG.ringMax)].map(()=>{
+    const sg=new Float32Array(CFG.rays);
+    for(let i=0;i<CFG.rays;i++) sg[i]=1+(fz()-.5)*0.04;
+    return {sig:sg}; });
+  T('環：輕微噪聲唔算證據，照回 nominal', ringSeam(faint,NR,CFG.seamTol)===NR);
+
+  // nominal 由實測跨度推：掉格（背景分頁、慢機）唔應該令「一圈」嘅判斷歪掉
+  const mkFrames=(cnt,gap)=>[...Array(cnt)].map((_,i)=>({t:i*gap}));
+  RING.frames=mkFrames(NR,REV/NR); RING.cap=NR;
+  T('環：nominal 跑滿時 = ringN', ringNominal()===NR, String(ringNominal()));
+  RING.frames=mkFrames(12,REV/12); RING.cap=12;      // 得四分一格數，但跨度一樣係一圈
+  T('環：nominal 掉格時跟返實測跨度', ringNominal()===12, String(ringNominal()));
+  ringReset();
+  // 實效格率：呢個數就係「順唔順」。設定改到跌落 24fps 以下要即刻知。
+  T('環：預設設定播得夠順（≥24fps）', ringFps(CFG.ringN)>=24, ringFps(CFG.ringN).toFixed(1)+'fps');
+  T('環：ringN 冇高過 30fps 來源一圈嘅格數上限',
+    CFG.ringN <= 30*(60/CFG.rpm), CFG.ringN+' vs '+(30*(60/CFG.rpm)));
+  T('環：ringMax 留夠接縫 slack', CFG.ringMax>=Math.round(CFG.ringN*1.3));
+  T('環：minFps 守住幻燈片', ringFps(11)<CFG.minFps && CFG.minFps<ringFps(CFG.ringN));
+
+  T('環：播放索引覆蓋每一格、唔會出界', (()=>{
+    const n=CFG.ringN, seen=new Set(); let ph=0;
+    for(let i=0;i<2000;i++){
+      ph=(ph + (1000/60)*CFG.playRpm/60000*n) % n;
+      const k=Math.floor(ph)%n;
+      if(!(k>=0 && k<n)) return false;
+      seen.add(k);
+    }
+    return seen.size===n;
+  })());
+
+  el('parts').innerHTML=''; el('partsBack').innerHTML=''; parts=[]; smooth=null;
 
   document.body.innerHTML='<pre style="color:#0f0;font:14px/2.2 monospace;padding:30px">'
     +out.join('\n')+'\n\n'+(out.every(s=>s.startsWith('PASS'))?'全部通過':'有失敗')+'</pre>';
