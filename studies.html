@@ -8,15 +8,16 @@
 </style>
 </head>
 <body><main>
-<header><div class="mark">2127<span>100 YEARS LATER</span></div><nav aria-label="物件測試" style="display:flex;gap:20px;flex-wrap:wrap"><a href="phone.html">手機</a><a href="studies.html?object=bottle" id="nav-bottle">茶瓶</a><a href="studies.html?object=suica" id="nav-suica">交通卡</a></nav></header>
+<header><div class="mark">2127<span>100 YEARS LATER</span></div><nav aria-label="物件測試" style="display:flex;gap:20px;flex-wrap:wrap"><a href="phone.html">手機</a><a href="studies.html?object=bottle" id="nav-bottle">茶瓶</a><a href="studies.html?object=bottle-b" id="nav-bottle-b">茶瓶 B</a><a href="studies.html?object=suica" id="nav-suica">交通卡</a></nav></header>
 <section class="hero"><div class="copy"><div class="eyebrow">FORM STUDY / <span id="number">003</span></div><h1 id="title"></h1><p class="intro" id="intro"></p><div class="specs" id="specs"></div></div>
 <figure><canvas id="view" width="1456" height="970" role="img" aria-label="原物件與未來形態比較"></canvas><figcaption id="phase" aria-live="polite">準備形態推演</figcaption></figure></section>
 <div class="controls"><div class="compare"><div class="labels"><label for="evolution">原始物件</label><span>2127 形態</span></div><input id="evolution" aria-label="原始物件與 2127 形態比較" type="range" min="0" max="100" value="100" disabled></div><button id="replay" disabled>重新推演 ↗</button></div>
 <footer><p class="kept" id="kept"></p><p>靜態相片・本地程序生成<br>單張相片校準測試，未包含旋轉追蹤。</p></footer><pre id="checks" hidden></pre>
 </main><script>
 'use strict';
-const Q=new URLSearchParams(location.search),kind=Q.get('object')==='suica'?'suica':'bottle';
-const copy=kind==='bottle'?{number:'003',title:'一口茶，<br>一個循環。',intro:'拋棄式瓶身退場。保留瓶口與茶液，讓培養、過濾與補水成為同一件容器。',specs:['循環培養艙','相連過濾莢','保留瓶口與茶液'],kept:'一百年後，還是為了那一口茶。'}:{number:'004',title:'通行，<br>隨身而行。',intro:'卡片縮成腕上的通行核心。玉色帶體環抱手腕，熟悉的企鵝陪你走過下一道門。',specs:['開口式腕環','無接觸感應端','保留企鵝識別面'],kept:'一百年後，還是想順利回家。'};
+const SRC={bottle:'assets/bottle-source.webp','bottle-b':'assets/bottle-b-source.jpeg',suica:'assets/suica-source.jpg'};
+const Q=new URLSearchParams(location.search),kind=SRC[Q.get('object')]?Q.get('object'):'bottle',family=kind==='suica'?'suica':'bottle';
+const copy=kind==='bottle-b'?{number:'005',title:'水，<br>由空氣嚟。',intro:'保溫層退場。真空夾層外露成冷凝鰭，樽身自己由空氣抽水；你只需要帶住佢。',specs:['外露冷凝鰭層','底部進氣與集水','保留鋼蓋與樽身輪廓'],kept:'一百年後，還是想隨時有一口水。'}:family==='bottle'?{number:'003',title:'一口茶，<br>一個循環。',intro:'拋棄式瓶身退場。保留瓶口與茶液，讓培養、過濾與補水成為同一件容器。',specs:['循環培養艙','相連過濾莢','保留瓶口與茶液'],kept:'一百年後，還是為了那一口茶。'}:{number:'004',title:'通行，<br>隨身而行。',intro:'卡片縮成腕上的通行核心。玉色帶體環抱手腕，熟悉的企鵝陪你走過下一道門。',specs:['開口式腕環','無接觸感應端','保留企鵝識別面'],kept:'一百年後，還是想順利回家。'};
 for(const id of ['number','intro','kept'])document.getElementById(id).textContent=copy[id];
 document.getElementById('title').innerHTML=copy.title;
 document.getElementById('specs').innerHTML=copy.specs.map((s,i)=>`<div><span>0${i+1}</span>${s}</div>`).join('');
@@ -32,6 +33,53 @@ function line(c,d,color,width=1,glow=0){c.save();c.shadowBlur=glow;c.shadowColor
 function oval(c,x,y,rx,ry,fill,stroke,width=1){const p=new Path2D();p.ellipse(x,y,rx,ry,0,0,Math.PI*2);shape(c,p,fill,stroke,width);}
 function grad(c,x0,y0,x1,y1,stops){const g=c.createLinearGradient(x0,y0,x1,y1);stops.forEach(([p,col])=>g.addColorStop(p,col));return g;}
 function tube(c,d,width=8){line(c,d,'#172b2d',width+3);line(c,d,'#97b6a6',width);line(c,d,'#d7ede0',1.1);}
+// ponytail: one upright opaque object, plain and smoothly lit, fully inside frame.
+// Background is estimated per row by blending that row's left and right edge colour, so a studio
+// gradient is tracked where a single near-white threshold reads the whole frame as foreground.
+// Busy, cropped-through or reflective backgrounds are out of scope and fail the sanity gate below.
+function segment(img){
+ const w=img.naturalWidth,h=img.naturalHeight,m=document.createElement('canvas');
+ m.width=w;m.height=h;const x=m.getContext('2d');x.drawImage(img,0,0);
+ const id=x.getImageData(0,0,w,h),d=id.data,N=w*h,tol=32;
+ const med=a=>{a.sort((p,q)=>p-q);return(a[2]+a[3])/2;};
+ const edge=(y,x0)=>{const r=[],g=[],b=[];for(let i=0;i<6;i++){const j=(y*w+x0+i)*4;r.push(d[j]);g.push(d[j+1]);b.push(d[j+2]);}return[med(r),med(g),med(b)];};
+ const ok=new Uint8Array(N);
+ for(let y=0;y<h;y++){const L=edge(y,0),R=edge(y,w-6);
+  for(let px=0;px<w;px++){const t=px/(w-1),j=(y*w+px)*4;
+   ok[y*w+px]=Math.max(Math.abs(d[j]-(L[0]*(1-t)+R[0]*t)),Math.abs(d[j+1]-(L[1]*(1-t)+R[1]*t)),Math.abs(d[j+2]-(L[2]*(1-t)+R[2]*t)))<=tol?1:0;}}
+ const q=new Int32Array(N),seen=new Uint8Array(N),cleared=new Uint8Array(N);let head=0,tail=0;
+ const push=i=>{if(i<0||i>=N||seen[i])return;seen[i]=1;if(!ok[i])return;cleared[i]=1;q[tail++]=i;};
+ for(let i=0;i<w;i++){push(i);push((h-1)*w+i);}
+ for(let y=0;y<h;y++){push(y*w);push(y*w+w-1);}
+ while(head<tail){const i=q[head++];if(i%w)push(i-1);if(i%w<w-1)push(i+1);push(i-w);push(i+w);}
+ // An upright bottle is horizontally convex at every height, so refilling each row's span closes
+ // any low-contrast leak (here: the bottle's own reflection) that ate a channel up its middle.
+ const wid=new Int32Array(h),ends=new Int32Array(h*2);
+ for(let y=0;y<h;y++){let a=-1,b=-1;
+  for(let px=0;px<w;px++)if(!cleared[y*w+px]){if(a<0)a=px;b=px;}
+  if(a<0)continue;for(let px=a;px<=b;px++)cleared[y*w+px]=0;
+  wid[y]=b-a+1;ends[y*2]=a;ends[y*2+1]=b;}
+ let top=-1,base=-1;for(let y=0;y<h;y++)if(wid[y]){if(top<0)top=y;base=y;}
+ if(top<0)return null;
+ const nz=[];for(let y=top;y<=base;y++)if(wid[y])nz.push(wid[y]);
+ nz.sort((a,b)=>a-b);const body=nz[nz.length>>1];
+ // The contact shadow and mirror reflection survive segmentation (they are genuinely darker
+ // than the background). Below its widest point a bottle's silhouette only narrows, so the first
+ // row in the lower part that flares back out is where the object ends and its shadow begins.
+ // Only when the object ends inside the frame; a bottle cropped by the bottom edge has no
+ // shadow below it, and trimming one there would shrink the silhouette and rescale the artwork.
+ if(base<h-1){let run=1e9;
+  for(let y=top+((base-top)*.6|0);y<=base;y++){
+   if(wid[y]<run)run=wid[y];
+   if(wid[y]>run+body*.06){base=y-1;break;}}
+  for(let y=base+1;y<h;y++){for(let px=0;px<w;px++)cleared[y*w+px]=1;wid[y]=0;}}
+ const cs=[];let width=0;
+ for(let y=top;y<=base;y++)if(wid[y]){cs.push((ends[y*2]+ends[y*2+1])/2);if(wid[y]>width)width=wid[y];}
+ cs.sort((a,b)=>a-b);
+ for(let i=0;i<N;i++)if(cleared[i])d[i*4+3]=0;
+ x.putImageData(id,0,0);
+ return{canvas:m,top,base,cx:cs[cs.length>>1],width};
+}
 function bottle(){
  const c=future.getContext('2d');c.scale(2,2);
  const pearl=grad(c,280,0,450,0,[[0,'#728c7a'],[.3,'#e3ecce'],[.55,'#97af91'],[1,'#344d48']]);
@@ -111,24 +159,80 @@ function cuff(){
  for(let i=0;i<5;i++)line(c,`M-80 ${i*14+8} L-73 ${i*14+8}`,'#b7d89a',1.2);
  c.restore();
 }
+let anchors=null;
+// Photo B is a vacuum steel flask: it has already solved the disposable bottle's problem, so it
+// gets its own evolution rather than the tea recipe. Its defining property is holding a state
+// against the environment; pushed a century on, it stops being filled and starts harvesting.
+function flask(){
+ const c=future.getContext('2d');c.scale(2,2);const cx=365;
+ const steel=grad(c,261,0,469,0,[[0,'#33434c'],[.22,'#e2ecf0'],[.5,'#93a8b3'],[.78,'#c3d4db'],[1,'#26333b']]);
+ const glass=grad(c,466,0,510,0,[[0,'#22383f60'],[.35,'#bfe4ee55'],[1,'#1b2d3670']]);
+ const water=grad(c,0,286,0,392,[[0,'#8fdcecb0'],[1,'#2d6d84d0']]);
+ const stube=(d,w=8)=>{line(c,d,'#16242b',w+3);line(c,d,'#8ea7b3',w);line(c,d,'#dcecf2',1.1);};
+ // The photographed steel cap and foot stay; the smooth shell between them is what goes.
+ c.save();c.rect(0,0,728,96);c.clip();c.drawImage(source,0,0,728,485);c.restore();
+ c.save();c.rect(0,404,728,81);c.clip();c.drawImage(source,0,0,728,485);c.restore();
+ // Rear riser lifts harvested water from the base trough to the neck. Both ends are seated on
+ // the surviving vessel with a visible collar, so it reads as plumbing, not a floating ornament.
+ stube('M347 126 L324 130 Q286 156 282 204 L282 330 Q284 374 332 397',9);
+ oval(c,349,126,7,5,'#26333b','#cfe3ea',1.1);
+ const fins=[];for(let i=0;i<9;i++)fins.push([180+i*24,58+Math.sin(i/8*Math.PI)*38]);
+ // Open rings spaced wider than they are thick, so air (and the background) passes between them.
+ // No drop shadow here: its alpha would fill the very gaps that make the negative space real.
+ for(const[y,r]of fins){const p=new Path2D();
+  p.ellipse(cx,y,r,r*.085,0,0,Math.PI*2);p.ellipse(cx,y,34,34*.085,0,Math.PI*2,0,true);
+  shape(c,p,steel,'#c2d6de',.7);}
+ // The surviving inner vessel, now visible, with the water it has pulled out of the air.
+ shape(c,'M345 98 Q365 92 385 98 L387 390 Q365 402 343 390 Z',grad(c,343,0,387,0,[[0,'#26343c'],[.22,'#a6cbd680'],[.55,'#5c7c8a70'],[1,'#1d2a33']]),'#a4c2cc',1.2);
+ shape(c,'M344 286 Q365 296 386 286 L387 384 Q365 396 343 384 Z',water,'#93e0ef',.8);
+ oval(c,365,286,21,5,'#a9e9f5c0','#d2f4fb',1);
+ // Front arc of each fin redrawn over the core so the rings read as wrapping around it.
+ for(const[y,r]of fins){const a=new Path2D();a.ellipse(cx,y,r,r*.085,0,.15,Math.PI-.15);line(c,a,'#cfe3ea',1.3);
+  const b=new Path2D();b.ellipse(cx,y,34,34*.085,0,.2,Math.PI-.2);line(c,b,'#7d99a5',1);}
+ // Collection column, bracketed onto the fin stack where the water is visible without opening it.
+ stube('M428 214 L472 210',7);stube('M428 332 L472 336',7);
+ shape(c,'M470 198 Q490 192 510 198 L510 344 Q490 352 470 344 Z',glass,'#a7cbd6',1.1);
+ shape(c,'M471 300 Q490 308 509 300 L510 343 Q490 351 470 343 Z',water,'#93e0ef',.8);
+ oval(c,490,300,19,5,'#a9e9f5c0','#d2f4fb',1);
+ oval(c,490,197,20,6,'#243b43','#bcd6df',1);
+ for(let i=0;i<4;i++)line(c,`M474 ${222+i*18} L482 ${222+i*18}`,'#9dc4d0',1.2);
+ // Intake: air is drawn in at the base ring, condenses on the fins, drains to the trough.
+ oval(c,365,392,58,12,'#16242b','#93aab6',1);
+ for(let i=-2;i<=2;i++)line(c,`M${365+i*19} 385 L${365+i*19} 399`,'#8fb0bd',1.5);
+ oval(c,365,386,58,11,'#1d3038','#c4dbe4',1);
+ line(c,'M311 388 Q365 399 419 388','#c8e6f0',1.7,3);
+ oval(c,365,95,29,6,'#243b43','#c8dae2',1);
+}
 function build(){
  const c=source.getContext('2d');c.scale(2,2);
- if(kind==='bottle'){
-  // Border-connected near-white removal preserves the enclosed original cap and amber liquid.
-  const m=document.createElement('canvas');m.width=m.height=1280;const x=m.getContext('2d');x.drawImage(photo,0,0);const img=x.getImageData(0,0,1280,1280),d=img.data,q=new Int32Array(1280*1280),seen=new Uint8Array(q.length);let head=0,tail=0;
-  function push(i){if(i<0||i>=seen.length||seen[i])return;seen[i]=1;const j=i*4;if(Math.min(d[j],d[j+1],d[j+2])<233)return;d[j+3]=0;q[tail++]=i;}
-  for(let i=0;i<1280;i++){push(i);push(1279*1280+i);push(i*1280);push(i*1280+1279);}while(head<tail){const i=q[head++];if(i%1280)push(i-1);if(i%1280<1279)push(i+1);push(i-1280);push(i+1280);}x.putImageData(img,0,0);c.drawImage(m,150.6,22,428.8,428.8);bottle();
+ if(family==='bottle'){
+  const s=segment(photo);if(!s)return false;
+  // Reject anything that is not one upright bottle-shaped silhouette rather than rendering nonsense.
+  const asp=s.width/(s.base-s.top);
+  if(!(s.base-s.top>photo.naturalHeight*.25&&asp>.15&&asp<.6))return false;
+  // bottle()'s geometry is drawn for a bottle whose top/base/centre sit at 22.3/450.5/364.8.
+  // Placing any measured bottle onto those anchors reuses that artwork without re-authoring it.
+  const k=428.2/(s.base-s.top);
+  c.drawImage(s.canvas,364.8-s.cx*k,22.3-s.top*k,s.canvas.width*k,s.canvas.height*k);
+  anchors=s;if(kind==='bottle-b')flask();else bottle();
  }else{
   c.save();const clip=new Path2D();clip.roundRect(83,85,562,352,19);c.clip(clip);c.drawImage(photo,155,190,938,588,83,85,562,352);c.restore();cuff();
  }
+ return true;
 }
 let raf=0;
 function draw(mix=1){ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,728,485);ctx.save();ctx.shadowColor='#0009';ctx.shadowBlur=15;ctx.shadowOffsetY=14;ctx.globalAlpha=1-mix;ctx.drawImage(source,0,0,728,485);ctx.globalAlpha=mix;ctx.drawImage(future,0,0,728,485);ctx.restore();}
 function evolve(){cancelAnimationFrame(raf);slider.value=100;phase.textContent='形態重組中';const start=performance.now();function tick(now){const p=Math.min(1,(now-start)/1800);draw(p*p*(3-2*p));if(p<1)raf=requestAnimationFrame(tick);else{raf=0;phase.textContent='2127 / 形態完成';}}if(matchMedia('(prefers-reduced-motion: reduce)').matches){draw();phase.textContent='2127 / 形態完成';}else raf=requestAnimationFrame(tick);}
 slider.addEventListener('input',()=>{cancelAnimationFrame(raf);raf=0;draw(+slider.value/100);phase.textContent=+slider.value===0?'原始物件':+slider.value===100?'2127 / 形態完成':'原型 ↔ 未來形態';});replay.addEventListener('click',evolve);
 function selfTest(){const rows=[],check=(n,ok)=>rows.push(`${ok?'PASS':'FAIL'} ${n}`),a=source.getContext('2d').getImageData(0,0,1456,970).data,b=future.getContext('2d').getImageData(0,0,1456,970).data;let count=0,removed=0,added=0;for(let i=3;i<a.length;i+=4){if(a[i]>200){count++;if(b[i]<30)removed++;}else if(a[i]<10&&b[i]>180)added++;}
- check('calibrated source dimensions',photo.naturalWidth===1280&&photo.naturalHeight===(kind==='bottle'?1280:961));check('source background is transparent',a[3]===0&&count>1000);check('original solid area physically removed',removed/count>(kind==='bottle'?.12:.3));if(kind==='bottle')check('connected pods extend beyond source',added/count>.05);else{const alpha=(x,y)=>b[(y*2*1456+x*2)*4+3];check('open cuff has solid band and credential mount, clear side gap',alpha(358,125)>200&&alpha(312,330)>200&&alpha(581,229)===0);}
- const hole=kind==='bottle'?[309,280]:[365,228],k=(hole[1]*2*1456+hole[0]*2)*4+3;check('former body contains actual transparent negative space',a[k]>200&&b[k]===0);draw();check('final composite removes old body',ctx.getImageData(0,0,1456,970).data[k]<30);check('controls enabled',!slider.disabled&&!replay.disabled);
+ if(family==='bottle'){check('anchors measured from this photo, not hardcoded',!!anchors&&anchors.base-anchors.top>photo.naturalHeight*.25&&Math.abs(anchors.cx-photo.naturalWidth/2)<photo.naturalWidth*.2);
+  if(kind==='bottle'){const k=428.2/(anchors.base-anchors.top);
+   check('calibrated fixture still lands on its authored placement',Math.abs(364.8-anchors.cx*k-150.6)<3&&Math.abs(photo.naturalWidth*k-428.8)<6);}}
+ else check('calibrated source dimensions',photo.naturalWidth===1280&&photo.naturalHeight===961);check('source background is transparent',a[3]===0&&count>1000);check('original solid area physically removed',removed/count>(family==='bottle'?.12:.3));if(family==='bottle')check('new structures extend beyond source',added/count>.05);else{const alpha=(x,y)=>b[(y*2*1456+x*2)*4+3];check('open cuff has solid band and credential mount, clear side gap',alpha(358,125)>200&&alpha(312,330)>200&&alpha(581,229)===0);}
+ const hole=kind==='bottle-b'?[314,160]:family==='bottle'?[309,280]:[365,228],k=(hole[1]*2*1456+hole[0]*2)*4+3;check('former body contains actual transparent negative space',a[k]>200&&b[k]===0);draw();check('final composite removes old body',ctx.getImageData(0,0,1456,970).data[k]<30);check('controls enabled',!slider.disabled&&!replay.disabled);
  const out=document.getElementById('checks');out.hidden=false;out.textContent=rows.join('\n');return{rows,removed:removed/count,added:added/count};}
-photo.onload=()=>{const expectedHeight=kind==='bottle'?1280:961;if(photo.naturalWidth!==1280||photo.naturalHeight!==expectedHeight){phase.textContent='圖片尺寸與校準不符';return;}build();slider.disabled=replay.disabled=false;evolve();if(Q.has('test'))selfTest();};photo.onerror=()=>{phase.textContent='圖片載入失敗，請用本地預覽網址開啟';phase.classList.add('error');};photo.src=`assets/${kind}-source.${kind==='bottle'?'webp':'jpg'}`;
+photo.onload=()=>{
+ if(family==='suica'&&(photo.naturalWidth!==1280||photo.naturalHeight!==961)){phase.textContent='圖片尺寸與校準不符';phase.classList.add('error');return;}
+ if(!build()){phase.textContent='此相片不在支援範圍：需要單一直立瓶身、乾淨漸層背景、完整入鏡';phase.classList.add('error');if(Q.has('test'))selfTest();return;}
+ slider.disabled=replay.disabled=false;evolve();if(Q.has('test'))selfTest();};photo.onerror=()=>{phase.textContent='圖片載入失敗，請用本地預覽網址開啟';phase.classList.add('error');};photo.src=SRC[kind];
 </script></body></html>
