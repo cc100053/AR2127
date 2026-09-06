@@ -148,3 +148,42 @@
   嘅最終美術質素**從來冇**得到使用者明確認可，只係當時協調 agent 評為可接受，唔好報稱佢認可咗。
 - 仍然未證明：任意物件、雜亂背景、透明／反光物件、相機擷取、旋轉黏附。
   `segment()` 只支援單一直立不透明物件、乾淨平滑漸層背景、完整入鏡。
+
+## 用網上相片驗證 segment() 穩定性（2026-09-06）
+
+由 Wikimedia Commons 取五張 CC BY-SA 4.0 相片做測試（**冇 commit 入 repo**，避開
+share-alike 傳染；URL 見下，要重跑可以自己抓）。
+
+**發現：原本嗰個 sanity gate 純粹係幾何嘅（高度佔比 + 闊高比），完全偵測唔到分割失敗。**
+五張入面三個負面樣本，兩個係**撞彩**靠比例超標擋到，另一張（麻布紋理背景嘅 Tiger 保溫樽）
+背景一忽都冇清到、成塊布當咗前景，但比例啱啱好落喺範圍內，直接**放行**。
+
+`kept`（未被清除嘅像素比例）本身就係直接訊號，而且分得好開：
+
+| 樣本 | kept | 幾何 gate | 加 kept<.45 之後 | 應該 |
+|---|---:|---|---|---|
+| bottle-source（茶瓶） | 0.26 | PASS | PASS | PASS |
+| bottle-b-source（鋼樽） | 0.16 | PASS | PASS | PASS |
+| bourbon-white | 0.223 | PASS | PASS | PASS |
+| evian-clear（透明膠樽） | 0.482 | **PASS** | FAIL | FAIL |
+| niksun（戶外草地背景） | 0.600 | FAIL | FAIL | FAIL |
+| steel-nocap（雜亂暗背景） | 0.718 | FAIL | FAIL | FAIL |
+| tiger-tall（麻布紋理背景） | 0.753 | **PASS** | FAIL | FAIL |
+
+已加 `s.kept<.45` 落 gate，同埋一項檢查 `background actually removed, not merely
+plausible geometry`。加咗之後五張全部判斷正確。
+
+**要老實講嘅限制：透明物件根本冇被偵測到。** Evian 係因為 kept 面積啱啱好超標先被擋，
+唔係因為系統知道佢透明。透明／反光物件仍然係完全未處理嘅範疇。
+
+另一個教訓：Wikimedia 頁面文字講嘅「plain background」**唔可信** —— 五張入面兩張標住
+乾淨背景嘅，實際係雜亂實景。一定要自己開圖睇。
+
+來源（全部 CC BY-SA 4.0）：
+- Stainless_steel_water_bottle.jpg（Corn cheese）
+- A_Tiger_Corp._Stainless_Steel_Bottle.jpg（TwentytwoAug）
+- Niksun_stainless_steel_water_bottle.jpg（Jonathan Schilling）
+- Bottle-white-background-1024x1024-1.jpg（Mshoer）
+- Evian_Bottle.jpg（James Tamim）
+
+檢查：legacy 67 ｜ phone 9 ｜ bottle 9 ｜ bottle-b 8 ｜ suica 7 = **100 項全綠**。
