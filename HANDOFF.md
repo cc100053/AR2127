@@ -27,6 +27,7 @@ A clearly labeled manual calibration UI can be an intermediate step. It is **not
 - The second phone concept's imaginative principle was explicitly approved: remove and add physical structures, change the silhouette, preserve recognizable lineage, and connect additions to the object.
 - The user authorized using their phone photograph, then supplied the bottle and Suica photographs and authorized those two further static studies.
 - The user requested that the coordinating agent handle planning/decisions and delegate execution/coding to sub-agents. Keep a single integration owner; give implementers bounded tasks.
+- **Capture direction changed on 2026-09-06 (tentative, no hardware exists yet).** The motorised turntable is dropped in favour of a **photo box with one fixed front camera**, staying 2.5D. The goal is explicitly **not 360 degrees**: it is a front-to-oblique **elevation transition**. A second camera at roughly **45 degrees** (not 90-degree top-down) is contemplated but not built. Backdrop is to be **mid-grey, matte, seamless** — white is ruled out by measurement, not preference, and green conflicts with object identity (trap 1). Photogrammetry, structured light and radiance fields are ruled out because this project's object mix (featureless steel, glossy phone, transparent bottle, thin card) is precisely their failure set. Full reasoning and the superseded turntable decisions are in `memory-bank/30-decisions.md`, section 擷取硬件方向.
 
 ### What was not established
 
@@ -269,6 +270,8 @@ If using a provider, confirm provider/model access, image-upload permission and 
 
 ### E — Camera single-frame capture
 
+**2026-09-06:** this package is now the main hardware path, not an optional add-on, since the turntable is dropped. One fixed front camera in a photo box feeds exactly one frame into the still-image pipeline. The `?cam=1` legacy branch remains untested reference code.
+
 **Dependencies:** C's working still-image path; D only if chosen. **Suggested owner/files:** camera/input owner coordinates with the `studies.html` integration owner; `index.html` camera helpers are reference code, not a mandate to merge pipelines.
 
 Add permission, preview, capture, retake, and release-stream handling. Feed exactly one captured frame into the same tested still-image pipeline. Show the user when an unsupported background/mask needs correction. Keep file input for repeatable tests and for unavailable cameras.
@@ -276,6 +279,8 @@ Add permission, preview, capture, retake, and release-stream handling. Feed exac
 **Gate:** permission denied/unavailable camera does not break file mode; capture orientation/aspect ratio is correct; replacing a frame resets old results; the frozen image and attached geometry remain aligned. Test on actual camera hardware when available. Do not call an untested legacy `?cam=1` branch evidence of exhibition readiness.
 
 ### F — Optional rotation and consistent viewpoints
+
+**2026-09-06: deferred, not cancelled.** The user chose a fixed-camera photo box over a turntable, so nothing here is scheduled. What replaces it is a far smaller idea: parameterise elevation in the existing procedural artwork so the drawn 2127 parts re-project as the viewpoint rises (`flask()` already encodes elevation as the `r*.085` ellipse factor), and optionally cross-fade the photographed kept regions to a second camera's view. That is an approximation for effect, **not** a reconstruction, and must never be described as 3D. Everything below stays valid if rotation is ever revived — read it before reinventing it.
 
 **Dependencies:** successful still-image pipeline and an explicit requirement for rotation; hardware/known-angle test data as appropriate. **Suggested owner/files:** dedicated geometry/video owner, eventually `index.html` and its geometry functions if reusing that path; schedule separately from unrelated edits to the same file.
 
