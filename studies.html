@@ -77,8 +77,11 @@ function segment(img){
  for(let y=top;y<=base;y++)if(wid[y]){cs.push((ends[y*2]+ends[y*2+1])/2);if(wid[y]>width)width=wid[y];}
  cs.sort((a,b)=>a-b);
  let keptN=0;for(let i=0;i<N;i++){if(cleared[i])d[i*4+3]=0;else keptN++;}
+ // A correctly segmented single object never spans to both side borders; an unsegmented frame does.
+ let onL=false,onR=false;
+ for(let y=0;y<h;y++){if(!cleared[y*w])onL=true;if(!cleared[y*w+w-1])onR=true;}
  x.putImageData(id,0,0);
- return{canvas:m,top,base,cx:cs[cs.length>>1],width,kept:keptN/N};
+ return{canvas:m,top,base,cx:cs[cs.length>>1],width,kept:keptN/N,bothSides:onL&&onR};
 }
 function bottle(){
  const c=future.getContext('2d');c.scale(2,2);
@@ -209,10 +212,12 @@ function build(){
   const s=segment(photo);if(!s)return false;
   // Reject anything that is not one upright bottle-shaped silhouette rather than rendering nonsense.
   // The shape tests alone are geometric and cannot tell a good mask from none at all: a cluttered
-  // background survives segmentation whole and can still land inside them. The kept fraction is the
-  // direct signal — one segmented upright object measures ~0.16-0.26 here, an unsegmented frame ~0.5+.
+  // background survives segmentation whole and can still land inside them. Area alone is no better —
+  // it conflates "background not removed" with "object simply framed tight", which would reject a
+  // correctly segmented photo. Reaching both side borders is the signal that the frame, not an
+  // object, is what survived; the loose area bound catches a mask that hugs one edge only.
   const asp=s.width/(s.base-s.top);
-  if(!(s.base-s.top>photo.naturalHeight*.25&&asp>.15&&asp<.6&&s.kept<.45))return false;
+  if(!(s.base-s.top>photo.naturalHeight*.25&&asp>.15&&asp<.6&&!s.bothSides&&s.kept<.6))return false;
   // bottle()'s geometry is drawn for a bottle whose top/base/centre sit at 22.3/450.5/364.8.
   // Placing any measured bottle onto those anchors reuses that artwork without re-authoring it.
   const k=428.2/(s.base-s.top);
@@ -228,7 +233,7 @@ function draw(mix=1){ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,728,485);ct
 function evolve(){cancelAnimationFrame(raf);slider.value=100;phase.textContent='形態重組中';const start=performance.now();function tick(now){const p=Math.min(1,(now-start)/1800);draw(p*p*(3-2*p));if(p<1)raf=requestAnimationFrame(tick);else{raf=0;phase.textContent='2127 / 形態完成';}}if(matchMedia('(prefers-reduced-motion: reduce)').matches){draw();phase.textContent='2127 / 形態完成';}else raf=requestAnimationFrame(tick);}
 slider.addEventListener('input',()=>{cancelAnimationFrame(raf);raf=0;draw(+slider.value/100);phase.textContent=+slider.value===0?'原始物件':+slider.value===100?'2127 / 形態完成':'原型 ↔ 未來形態';});replay.addEventListener('click',evolve);
 function selfTest(){const rows=[],check=(n,ok)=>rows.push(`${ok?'PASS':'FAIL'} ${n}`),a=source.getContext('2d').getImageData(0,0,1456,970).data,b=future.getContext('2d').getImageData(0,0,1456,970).data;let count=0,removed=0,added=0;for(let i=3;i<a.length;i+=4){if(a[i]>200){count++;if(b[i]<30)removed++;}else if(a[i]<10&&b[i]>180)added++;}
- if(family==='bottle'){check('background actually removed, not merely plausible geometry',!!anchors&&anchors.kept<.45);
+ if(family==='bottle'){check('background actually removed, not merely plausible geometry',!!anchors&&!anchors.bothSides&&anchors.kept<.6);
   check('anchors measured from this photo, not hardcoded',!!anchors&&anchors.base-anchors.top>photo.naturalHeight*.25&&Math.abs(anchors.cx-photo.naturalWidth/2)<photo.naturalWidth*.2);
   if(kind==='bottle'){const k=428.2/(anchors.base-anchors.top);
    check('calibrated fixture still lands on its authored placement',Math.abs(364.8-anchors.cx*k-150.6)<3&&Math.abs(photo.naturalWidth*k-428.8)<6);}}
