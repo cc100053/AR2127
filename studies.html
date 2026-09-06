@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2127 物件演化測試</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;color:#edf5f5;background:#080c10}*{box-sizing:border-box}body{margin:0;min-height:100svh;background:radial-gradient(ellipse at 55% 45%,#15262c 0,transparent 60%)}main{max-width:1240px;margin:auto;padding:32px 48px}header,footer,.controls,.labels{display:flex;align-items:center;justify-content:space-between;gap:24px}header{border-bottom:1px solid #263238;padding-bottom:20px}a{color:#a6babf;text-decoration:none;font-size:12px}a:hover{color:#7bf6e4}.mark{font-size:20px;letter-spacing:-1px}.mark span{color:#70858d;font-size:11px;letter-spacing:2px;margin-left:14px}.hero{display:grid;grid-template-columns:260px minmax(0,1fr);align-items:center;gap:24px;min-height:570px}.eyebrow{font:10px ui-monospace,monospace;letter-spacing:3px;color:#6fd9d3}h1{font-size:42px;font-weight:450;line-height:1.25;letter-spacing:-2px;margin:24px 0 18px}.intro{font-size:14px;color:#8da1a8;line-height:1.9;max-width:245px}.specs{margin-top:42px;display:grid;gap:16px;font-size:11px;color:#b9c9cd}.specs span{color:#5f757e;margin-right:15px;font:10px ui-monospace,monospace}figure{margin:0;min-width:0}canvas{display:block;width:100%;height:auto}figcaption{font:10px ui-monospace,monospace;letter-spacing:2px;color:#63808a;text-align:center}.controls{max-width:650px;margin:0 auto 48px}.compare{flex:1}.labels{font-size:11px;color:#9eafb5;gap:10px}input{width:100%;accent-color:#77e5d7;margin:14px 0 0;cursor:ew-resize}button{background:#132729;border:1px solid #36565b;color:#b7f5e8;padding:13px 19px;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap}button:hover{background:#1e3b3c}button:disabled{opacity:.45;cursor:wait}:focus-visible{outline:2px solid #a6fff0;outline-offset:5px}footer{border-top:1px solid #263238;padding-top:22px;font-size:11px;color:#617981}footer p{margin:0;line-height:1.8}.kept{color:#a4babe;font-size:13px}.error{color:#ffaaaa}#checks{white-space:pre-wrap;font:12px/1.8 ui-monospace,monospace;color:#8af0bb} @media(max-width:800px){main{padding:22px}.hero{grid-template-columns:1fr;gap:0;min-height:0}.copy{padding-top:35px}h1{font-size:32px;margin:15px 0}.intro{max-width:none}.specs{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}.hero figure{margin:10px -20px 30px}.controls{gap:15px;margin-bottom:32px}footer{align-items:flex-start;flex-direction:column;gap:15px}.mark span{display:none}}
+</style>
+</head>
+<body><main>
+<header><div class="mark">2127<span>100 YEARS LATER</span></div><nav aria-label="物件測試" style="display:flex;gap:20px;flex-wrap:wrap"><a href="phone.html">手機</a><a href="studies.html?object=bottle" id="nav-bottle">茶瓶</a><a href="studies.html?object=suica" id="nav-suica">交通卡</a></nav></header>
+<section class="hero"><div class="copy"><div class="eyebrow">FORM STUDY / <span id="number">003</span></div><h1 id="title"></h1><p class="intro" id="intro"></p><div class="specs" id="specs"></div></div>
+<figure><canvas id="view" width="1456" height="970" role="img" aria-label="原物件與未來形態比較"></canvas><figcaption id="phase" aria-live="polite">準備形態推演</figcaption></figure></section>
+<div class="controls"><div class="compare"><div class="labels"><label for="evolution">原始物件</label><span>2127 形態</span></div><input id="evolution" aria-label="原始物件與 2127 形態比較" type="range" min="0" max="100" value="100" disabled></div><button id="replay" disabled>重新推演 ↗</button></div>
+<footer><p class="kept" id="kept"></p><p>靜態相片・本地程序生成<br>單張相片校準測試，未包含旋轉追蹤。</p></footer><pre id="checks" hidden></pre>
+</main><script>
+'use strict';
+const Q=new URLSearchParams(location.search),kind=Q.get('object')==='suica'?'suica':'bottle';
+const copy=kind==='bottle'?{number:'003',title:'一口茶，<br>一個循環。',intro:'拋棄式瓶身退場。保留瓶口與茶液，讓培養、過濾與補水成為同一件容器。',specs:['循環培養艙','相連過濾莢','保留瓶口與茶液'],kept:'一百年後，還是為了那一口茶。'}:{number:'004',title:'通行，<br>隨身而行。',intro:'卡片縮成腕上的通行核心。玉色帶體環抱手腕，熟悉的企鵝陪你走過下一道門。',specs:['開口式腕環','無接觸感應端','保留企鵝識別面'],kept:'一百年後，還是想順利回家。'};
+for(const id of ['number','intro','kept'])document.getElementById(id).textContent=copy[id];
+document.getElementById('title').innerHTML=copy.title;
+document.getElementById('specs').innerHTML=copy.specs.map((s,i)=>`<div><span>0${i+1}</span>${s}</div>`).join('');
+document.getElementById('nav-'+kind).style.color='#9ef4de';document.getElementById('nav-'+kind).setAttribute('aria-current','page');
+const canvas=document.getElementById('view'),ctx=canvas.getContext('2d'),slider=document.getElementById('evolution'),replay=document.getElementById('replay'),phase=document.getElementById('phase');
+const photo=new Image(),source=document.createElement('canvas'),future=document.createElement('canvas');
+source.width=future.width=1456;source.height=future.height=970;
+// ponytail: source crops, geometry and depth are calibrated for these two photos only.
+// This tests a creative grammar; add an evolution-spec renderer only after more categories validate it.
+const P=s=>new Path2D(s);
+function shape(c,d,fill,stroke,width=1){const p=typeof d==='string'?P(d):d;if(fill){c.fillStyle=fill;c.fill(p);}if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke(p);}}
+function line(c,d,color,width=1,glow=0){c.save();c.shadowBlur=glow;c.shadowColor=color;shape(c,d,null,color,width);c.restore();}
+function oval(c,x,y,rx,ry,fill,stroke,width=1){const p=new Path2D();p.ellipse(x,y,rx,ry,0,0,Math.PI*2);shape(c,p,fill,stroke,width);}
+function grad(c,x0,y0,x1,y1,stops){const g=c.createLinearGradient(x0,y0,x1,y1);stops.forEach(([p,col])=>g.addColorStop(p,col));return g;}
+function tube(c,d,width=8){line(c,d,'#172b2d',width+3);line(c,d,'#97b6a6',width);line(c,d,'#d7ede0',1.1);}
+function bottle(){
+ const c=future.getContext('2d');c.scale(2,2);
+ const pearl=grad(c,280,0,450,0,[[0,'#728c7a'],[.3,'#e3ecce'],[.55,'#97af91'],[1,'#344d48']]);
+ const green=grad(c,0,180,0,375,[[0,'#527e50'],[.45,'#a3c37e'],[1,'#294c40']]);
+ // The same photographed cap/mouth and amber lower reservoir anchor the new vessel's lineage.
+ c.save();c.rect(0,0,728,90);c.clip();c.drawImage(source,0,0,728,485);c.restore();
+ c.save();c.beginPath();c.rect(0,397,728,88);c.clip();c.drawImage(source,0,0,728,485);c.restore();
+ // Rear plumbing: rooted at the neck manifold and original base, behind the chamber and pods.
+ tube(c,'M347 87 C318 118 259 118 254 177 L254 320 Q254 380 323 408',10);
+ tube(c,'M382 87 C415 118 475 118 479 177 L479 320 Q479 380 407 408',10);
+ // A narrow transparent amber chamber leaves real open gaps where the disposable label used to be.
+ const chamber=grad(c,327,0,404,0,[[0,'#365d5940'],[.12,'#d0e3b356'],[.36,'#658e6140'],[.68,'#b8d39838'],[1,'#233e3966']]);
+ shape(c,'M329 125 Q364 111 400 125 L405 383 Q365 403 324 383 Z',chamber,'#8fae90',1.2);
+ const tea=grad(c,330,287,407,390,[[0,'#b5a947aa'],[.4,'#b48628bd'],[1,'#704e1adc']]);
+ shape(c,'M326 285 Q365 305 403 285 L405 382 Q365 401 325 383 Z',tea,'#b2a768',.8);
+ oval(c,365,285,39,9,'#c8c776b0','#ddd89d',1);
+ line(c,'M335 143 L332 366','#c9dfbb90',2.3);
+ line(c,'M397 150 L400 373','#d0e5b780',1);
+ // Cultivation membranes and a capillary stem are inside the chamber, never outside its skin.
+ line(c,'M365 378 C358 315 375 257 362 184','#b1cf73',2);
+ for(let i=0;i<7;i++){const y=205+i*21,dir=i%2?1:-1;shape(c,`M365 ${y+12} Q${365+dir*29} ${y+5} ${365+dir*23} ${y-10} Q366 ${y-7} 365 ${y+12}`,i%2?'#82a763bd':'#a8c177b0','#b5ce8e70',.6);}
+ // Two non-identical pods are mechanically and hydraulically seated on the rear branches.
+ for(const p of [{x:235,y:190,w:44,h:131},{x:459,y:168,w:51,h:162}]){
+  const{x,y,w,h}=p;
+  tube(c,`M${x+w/2} ${y-10} L${x+w/2} ${y+18}`,9);
+  const pod=new Path2D();pod.roundRect(x,y,w,h,18);
+  c.save();c.shadowColor='#0008';c.shadowBlur=8;c.shadowOffsetY=5;shape(c,pod,pearl,'#b0c5a2',.9);c.restore();
+  const inset=new Path2D();inset.roundRect(x+9,y+15,w-18,h-30,10);shape(c,inset,green,'#c4ddb0',.7);
+  for(let j=0;j<7;j++){const yy=y+28+j*(h-55)/6;line(c,`M${x+13} ${yy} Q${x+w/2} ${yy+7} ${x+w-13} ${yy}`,'#344f42',2);}
+  line(c,`M${x+12} ${y+24} L${x+12} ${y+h-23}`,'#d3f0b5',1.2,2);
+  oval(c,x+w/2,y+h-8,9,3,'#223e35','#a9cda4',1);
+ }
+ // Foreground cage ribs load into the original neck/base collars; open sides remain unfilled.
+ for(const side of [-1,1]){
+  const x=365+side*44;
+  shape(c,`M${365+side*20} 88 Q${365+side*62} 116 ${x} 188 L${x+side*8} 351 Q${x+side*10} 383 ${365+side*59} 409 L${365+side*44} 414 Q${x-side*8} 380 ${x-side*3} 350 L${x-side*12} 185 Q${365+side*42} 125 ${365+side*9} 95 Z`,pearl,'#c7d9bb',.7);
+  line(c,`M${365+side*17} 99 Q${365+side*53} 120 ${x-side*6} 187 L${x+side*2} 347`,'#9cd9a3',1.4,2);
+ }
+ oval(c,365,408,66,13,'#45634a','#a4ba88',1);
+ shape(c,'M300 407 Q365 427 430 407 L428 419 Q364 438 302 419 Z',pearl,'#577b5f',1);
+ oval(c,365,405,52,9,'#29463c','#c0dca4',1);
+ line(c,'M319 409 Q365 420 411 409','#bcdf93',1.7,3);
+ oval(c,365,91,29,6,'#273e36','#c5d6ae',1);
+}
+function cuff(){
+ const c=future.getContext('2d');c.scale(2,2);
+ const cx=358,cy=229,rx=222,ry=115,a=.60,b=5.68;
+ function band(y,outerX=rx,outerY=ry,innerX=rx-43,innerY=ry-35){const p=new Path2D();p.ellipse(cx,y,outerX,outerY,0,a,b);p.ellipse(cx,y,innerX,innerY,0,b,a,true);p.closePath();return p;}
+ const pearl=grad(c,140,100,540,350,[[0,'#8ca89e'],[.3,'#e2eada'],[.6,'#a7beb2'],[1,'#416963']]);
+ const jade=grad(c,140,230,560,350,[[0,'#2d6859'],[.35,'#b9dbc5b0'],[.65,'#5baf8dc7'],[1,'#285952']]);
+ // Curved solid cuff, open at the right. The empty center is actual alpha, not a painted dark oval.
+ shape(c,band(cy+27),'#203f3e','#4e7367',1);
+ const wall=new Path2D();wall.ellipse(cx,cy,rx,ry,0,a,b);wall.lineTo(cx+Math.cos(b)*rx,cy+27+Math.sin(b)*ry);wall.ellipse(cx,cy+27,rx,ry,0,b,a,true);wall.closePath();
+ shape(c,wall,grad(c,150,190,550,330,[[0,'#496f62'],[.45,'#b6cec0'],[1,'#214740']]),'#739585',1);
+ shape(c,band(cy),pearl,'#d5e7db',1);
+ const inner=new Path2D();inner.ellipse(cx,cy,rx-43,ry-35,0,a,b);inner.lineTo(cx+Math.cos(b)*(rx-43),cy+27+Math.sin(b)*(ry-35));inner.ellipse(cx,cy+27,rx-43,ry-35,0,b,a,true);inner.closePath();
+ shape(c,inner,'#294a46','#6d9586',.8);
+ // A jade translucent secondary band is nested in and fastened to the same ceramic structure.
+ shape(c,band(cy+8,rx+5,ry+4,rx-10,ry-8),jade,'#a8dcc0',.8);
+ const seam=new Path2D();seam.ellipse(cx,cy+9,rx-4,ry-3,0,.69,5.59);line(c,seam,'#9ce2bd',1.3,3);
+ for(const t of [.95,1.3,1.65,2.2,2.75,3.4,4.05,4.65,5.2]){const x=cx+Math.cos(t)*(rx-20),y=cy+Math.sin(t)*(ry-18);c.save();c.translate(x,y);c.rotate(Math.atan2((ry-18)*Math.cos(t),-(rx-20)*Math.sin(t)));shape(c,'M-8 -3 L8 -3 L8 3 L-8 3Z','#315951','#91b99e',.7);c.restore();}
+ // Right terminal rests on the cuff cut-end; its nested antenna is housed in a compact ceramic block.
+ const ex=cx+Math.cos(a)*rx,ey=cy+Math.sin(a)*ry;
+ shape(c,`M${ex-20} ${ey-12} L${ex+22} ${ey-14} L${ex+29} ${ey+13} L${ex-11} ${ey+24}Z`,'#162f35','#607f79',1);
+ shape(c,`M${ex-22} ${ey-20} L${ex+20} ${ey-22} L${ex+27} ${ey+5} L${ex-13} ${ey+16}Z`,pearl,'#d3e9d6',1);
+ for(let i=0;i<3;i++){const r=7+i*4;line(c,`M${ex-r} ${ey+3} Q${ex-r-2} ${ey-r} ${ex+9} ${ey-r}`,'#335c51',1.6);}
+ oval(c,ex+14,ey-12,2.4,2,'#a4efb4','#477e5a',.6);
+ // The credential face is a small physical part of the front band: actual penguin + green card crop.
+ c.save();c.translate(312,300);c.transform(1,.13,-.20,.82,0,0);
+ shape(c,'M-74 -19 L62 -19 L80 -1 L80 106 L61 121 L-76 121 L-87 103 L-87 -3Z','#24483f','#6a9080',1);
+ const plate=P('M-74 -29 L62 -29 L80 -11 L80 96 L61 111 L-76 111 L-87 93 L-87 -13Z');
+ shape(c,plate,pearl,'#d1e3c9',1);c.save();c.clip(plate);
+ // This cropped source face is preserved, not transcribed into page text.
+ c.drawImage(photo,665,449,425,310,-79,-21,151,123);
+ c.restore();line(c,'M-76 96 L-64 104 L59 104 L71 94','#99daa7',1.2,2);
+ shape(c,'M-83 -4 L-68 -4 L-68 83 L-83 83Z','#3c7956','#94bc87',.6);
+ for(let i=0;i<5;i++)line(c,`M-80 ${i*14+8} L-73 ${i*14+8}`,'#b7d89a',1.2);
+ c.restore();
+}
+function build(){
+ const c=source.getContext('2d');c.scale(2,2);
+ if(kind==='bottle'){
+  // Border-connected near-white removal preserves the enclosed original cap and amber liquid.
+  const m=document.createElement('canvas');m.width=m.height=1280;const x=m.getContext('2d');x.drawImage(photo,0,0);const img=x.getImageData(0,0,1280,1280),d=img.data,q=new Int32Array(1280*1280),seen=new Uint8Array(q.length);let head=0,tail=0;
+  function push(i){if(i<0||i>=seen.length||seen[i])return;seen[i]=1;const j=i*4;if(Math.min(d[j],d[j+1],d[j+2])<233)return;d[j+3]=0;q[tail++]=i;}
+  for(let i=0;i<1280;i++){push(i);push(1279*1280+i);push(i*1280);push(i*1280+1279);}while(head<tail){const i=q[head++];if(i%1280)push(i-1);if(i%1280<1279)push(i+1);push(i-1280);push(i+1280);}x.putImageData(img,0,0);c.drawImage(m,150.6,22,428.8,428.8);bottle();
+ }else{
+  c.save();const clip=new Path2D();clip.roundRect(83,85,562,352,19);c.clip(clip);c.drawImage(photo,155,190,938,588,83,85,562,352);c.restore();cuff();
+ }
+}
+let raf=0;
+function draw(mix=1){ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,728,485);ctx.save();ctx.shadowColor='#0009';ctx.shadowBlur=15;ctx.shadowOffsetY=14;ctx.globalAlpha=1-mix;ctx.drawImage(source,0,0,728,485);ctx.globalAlpha=mix;ctx.drawImage(future,0,0,728,485);ctx.restore();}
+function evolve(){cancelAnimationFrame(raf);slider.value=100;phase.textContent='形態重組中';const start=performance.now();function tick(now){const p=Math.min(1,(now-start)/1800);draw(p*p*(3-2*p));if(p<1)raf=requestAnimationFrame(tick);else{raf=0;phase.textContent='2127 / 形態完成';}}if(matchMedia('(prefers-reduced-motion: reduce)').matches){draw();phase.textContent='2127 / 形態完成';}else raf=requestAnimationFrame(tick);}
+slider.addEventListener('input',()=>{cancelAnimationFrame(raf);raf=0;draw(+slider.value/100);phase.textContent=+slider.value===0?'原始物件':+slider.value===100?'2127 / 形態完成':'原型 ↔ 未來形態';});replay.addEventListener('click',evolve);
+function selfTest(){const rows=[],check=(n,ok)=>rows.push(`${ok?'PASS':'FAIL'} ${n}`),a=source.getContext('2d').getImageData(0,0,1456,970).data,b=future.getContext('2d').getImageData(0,0,1456,970).data;let count=0,removed=0,added=0;for(let i=3;i<a.length;i+=4){if(a[i]>200){count++;if(b[i]<30)removed++;}else if(a[i]<10&&b[i]>180)added++;}
+ check('calibrated source dimensions',photo.naturalWidth===1280&&photo.naturalHeight===(kind==='bottle'?1280:961));check('source background is transparent',a[3]===0&&count>1000);check('original solid area physically removed',removed/count>(kind==='bottle'?.12:.3));if(kind==='bottle')check('connected pods extend beyond source',added/count>.05);else{const alpha=(x,y)=>b[(y*2*1456+x*2)*4+3];check('open cuff has solid band and credential mount, clear side gap',alpha(358,125)>200&&alpha(312,330)>200&&alpha(581,229)===0);}
+ const hole=kind==='bottle'?[309,280]:[365,228],k=(hole[1]*2*1456+hole[0]*2)*4+3;check('former body contains actual transparent negative space',a[k]>200&&b[k]===0);draw();check('final composite removes old body',ctx.getImageData(0,0,1456,970).data[k]<30);check('controls enabled',!slider.disabled&&!replay.disabled);
+ const out=document.getElementById('checks');out.hidden=false;out.textContent=rows.join('\n');return{rows,removed:removed/count,added:added/count};}
+photo.onload=()=>{const expectedHeight=kind==='bottle'?1280:961;if(photo.naturalWidth!==1280||photo.naturalHeight!==expectedHeight){phase.textContent='圖片尺寸與校準不符';return;}build();slider.disabled=replay.disabled=false;evolve();if(Q.has('test'))selfTest();};photo.onerror=()=>{phase.textContent='圖片載入失敗，請用本地預覽網址開啟';phase.classList.add('error');};photo.src=`assets/${kind}-source.${kind==='bottle'?'webp':'jpg'}`;
+</script></body></html>
