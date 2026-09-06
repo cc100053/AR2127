@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>2127 物件演化測試</title>
 <style>
-:root{color-scheme:dark;font-family:Inter,-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;color:#edf5f5;background:#080c10}*{box-sizing:border-box}body{margin:0;min-height:100svh;background:radial-gradient(ellipse at 55% 45%,#15262c 0,transparent 60%)}main{max-width:1240px;margin:auto;padding:32px 48px}header,footer,.controls,.labels{display:flex;align-items:center;justify-content:space-between;gap:24px}header{border-bottom:1px solid #263238;padding-bottom:20px}a{color:#a6babf;text-decoration:none;font-size:12px}a:hover{color:#7bf6e4}.mark{font-size:20px;letter-spacing:-1px}.mark span{color:#70858d;font-size:11px;letter-spacing:2px;margin-left:14px}.hero{display:grid;grid-template-columns:260px minmax(0,1fr);align-items:center;gap:24px;min-height:570px}.eyebrow{font:10px ui-monospace,monospace;letter-spacing:3px;color:#6fd9d3}h1{font-size:42px;font-weight:450;line-height:1.25;letter-spacing:-2px;margin:24px 0 18px}.intro{font-size:14px;color:#8da1a8;line-height:1.9;max-width:245px}.specs{margin-top:42px;display:grid;gap:16px;font-size:11px;color:#b9c9cd}.specs span{color:#5f757e;margin-right:15px;font:10px ui-monospace,monospace}figure{margin:0;min-width:0}canvas{display:block;width:100%;height:auto}figcaption{font:10px ui-monospace,monospace;letter-spacing:2px;color:#63808a;text-align:center}.controls{max-width:650px;margin:0 auto 48px}.compare{flex:1}.labels{font-size:11px;color:#9eafb5;gap:10px}input{width:100%;accent-color:#77e5d7;margin:14px 0 0;cursor:ew-resize}button{background:#132729;border:1px solid #36565b;color:#b7f5e8;padding:13px 19px;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap}button:hover{background:#1e3b3c}button:disabled{opacity:.45;cursor:wait}:focus-visible{outline:2px solid #a6fff0;outline-offset:5px}footer{border-top:1px solid #263238;padding-top:22px;font-size:11px;color:#617981}footer p{margin:0;line-height:1.8}.kept{color:#a4babe;font-size:13px}.error{color:#ffaaaa}#checks{white-space:pre-wrap;font:12px/1.8 ui-monospace,monospace;color:#8af0bb} @media(max-width:800px){main{padding:22px}.hero{grid-template-columns:1fr;gap:0;min-height:0}.copy{padding-top:35px}h1{font-size:32px;margin:15px 0}.intro{max-width:none}.specs{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}.hero figure{margin:10px -20px 30px}.controls{gap:15px;margin-bottom:32px}footer{align-items:flex-start;flex-direction:column;gap:15px}.mark span{display:none}}
+:root{color-scheme:dark;font-family:Inter,-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;color:#edf5f5;background:#080c10}*{box-sizing:border-box}body{margin:0;min-height:100svh;background:radial-gradient(ellipse at 55% 45%,#15262c 0,transparent 60%)}main{max-width:1240px;margin:auto;padding:32px 48px}header,footer,.controls,.labels{display:flex;align-items:center;justify-content:space-between;gap:24px}header{border-bottom:1px solid #263238;padding-bottom:20px}a{color:#a6babf;text-decoration:none;font-size:12px}a:hover{color:#7bf6e4}.mark{font-size:20px;letter-spacing:-1px}.mark span{color:#70858d;font-size:11px;letter-spacing:2px;margin-left:14px}.hero{display:grid;grid-template-columns:260px minmax(0,1fr);align-items:center;gap:24px;min-height:570px}.eyebrow{font:10px ui-monospace,monospace;letter-spacing:3px;color:#6fd9d3}h1{font-size:42px;font-weight:450;line-height:1.25;letter-spacing:-2px;margin:24px 0 18px}.intro{font-size:14px;color:#8da1a8;line-height:1.9;max-width:245px}.specs{margin-top:42px;display:grid;gap:16px;font-size:11px;color:#b9c9cd}.specs span{color:#5f757e;margin-right:15px;font:10px ui-monospace,monospace}figure{margin:0;min-width:0}canvas{display:block;width:100%;height:auto}figcaption{font:10px ui-monospace,monospace;letter-spacing:2px;color:#63808a;text-align:center}.controls{max-width:650px;margin:0 auto 48px}.compare{flex:1}.labels{font-size:11px;color:#9eafb5;gap:10px}input{width:100%;accent-color:#77e5d7;margin:14px 0 0;cursor:ew-resize}button{background:#132729;border:1px solid #36565b;color:#b7f5e8;padding:13px 19px;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap}button:hover{background:#1e3b3c}button:disabled{opacity:.45;cursor:wait}:focus-visible{outline:2px solid #a6fff0;outline-offset:5px}footer{border-top:1px solid #263238;padding-top:22px;font-size:11px;color:#617981}footer p{margin:0;line-height:1.8}.kept{color:#a4babe;font-size:13px}.error{color:#ffaaaa}.filebtn{background:#132729;border:1px solid #36565b;color:#b7f5e8;padding:11px 17px;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap}.filebtn:hover{background:#1e3b3c}.rbtn{background:transparent;border:1px solid #2c4a4e;color:#7f979d;padding:8px 13px;font-size:11px;border-radius:3px;cursor:pointer}.rbtn[aria-pressed=true]{background:#16302f;border-color:#4d7a76;color:#9ef4de}.hint{font:10px ui-monospace,monospace;color:#5f757e}body.drag{outline:2px dashed #4d7a76;outline-offset:-10px}#checks{white-space:pre-wrap;font:12px/1.8 ui-monospace,monospace;color:#8af0bb} @media(max-width:800px){main{padding:22px}.hero{grid-template-columns:1fr;gap:0;min-height:0}.copy{padding-top:35px}h1{font-size:32px;margin:15px 0}.intro{max-width:none}.specs{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}.hero figure{margin:10px -20px 30px}.controls{gap:15px;margin-bottom:32px}footer{align-items:flex-start;flex-direction:column;gap:15px}.mark span{display:none}}
 </style>
 </head>
 <body><main>
@@ -12,6 +12,10 @@
 <section class="hero"><div class="copy"><div class="eyebrow">FORM STUDY / <span id="number">003</span></div><h1 id="title"></h1><p class="intro" id="intro"></p><div class="specs" id="specs"></div></div>
 <figure><canvas id="view" width="1456" height="970" role="img" aria-label="原物件與未來形態比較"></canvas><figcaption id="phase" aria-live="polite">準備形態推演</figcaption></figure></section>
 <div class="controls"><div class="compare"><div class="labels"><label for="evolution">原始物件</label><span>2127 形態</span></div><input id="evolution" aria-label="原始物件與 2127 形態比較" type="range" min="0" max="100" value="100" disabled></div><button id="replay" disabled>重新推演 ↗</button></div>
+<div class="controls" id="loadwrap" hidden style="flex-wrap:wrap;gap:14px">
+<label class="filebtn">放一張新相片入嚟 …<input type="file" id="file" accept="image/jpeg,image/png,image/webp" hidden></label>
+<span style="display:flex;align-items:center;gap:8px"><span class="hint">配方</span><button class="rbtn" data-r="bottle" aria-pressed="false">茶瓶・培養循環</button><button class="rbtn" data-r="flask" aria-pressed="false">鋼樽・大氣取水</button></span>
+<span class="hint" id="loadhint">或直接將相片拖入頁面・單一直立物件・乾淨漸層背景</span></div>
 <div class="controls" id="elevwrap" hidden><div class="compare"><div class="labels"><label for="elevation">鏡頭：正面</label><span>斜視 45°</span></div><input id="elevation" aria-label="鏡頭仰角" type="range" min="0" max="100" value="0"></div><span style="font:10px ui-monospace,monospace;color:#5f757e;white-space:nowrap">原型・程序幾何重新投影</span></div>
 <footer><p class="kept" id="kept"></p><p>靜態相片・本地程序生成<br>單張相片校準測試，未包含旋轉追蹤。</p></footer><pre id="checks" hidden></pre>
 </main><script>
@@ -24,7 +28,7 @@ document.getElementById('title').innerHTML=copy.title;
 document.getElementById('specs').innerHTML=copy.specs.map((s,i)=>`<div><span>0${i+1}</span>${s}</div>`).join('');
 document.getElementById('nav-'+kind).style.color='#9ef4de';document.getElementById('nav-'+kind).setAttribute('aria-current','page');
 const canvas=document.getElementById('view'),ctx=canvas.getContext('2d'),slider=document.getElementById('evolution'),replay=document.getElementById('replay'),phase=document.getElementById('phase');
-const photo=new Image(),source=document.createElement('canvas'),future=document.createElement('canvas');
+let photo=new Image();const source=document.createElement('canvas'),future=document.createElement('canvas');
 source.width=future.width=1456;source.height=future.height=970;
 // ponytail: source crops, geometry and depth are calibrated for these two photos only.
 // This tests a creative grammar; add an evolution-spec renderer only after more categories validate it.
@@ -89,7 +93,7 @@ function bottle(){
  const pearl=grad(c,280,0,450,0,[[0,'#728c7a'],[.3,'#e3ecce'],[.55,'#97af91'],[1,'#344d48']]);
  const green=grad(c,0,180,0,375,[[0,'#527e50'],[.45,'#a3c37e'],[1,'#294c40']]);
  // The same photographed cap/mouth and amber lower reservoir anchor the new vessel's lineage.
- c.save();c.rect(0,0,728,90);c.clip();c.drawImage(source,0,0,728,485);c.restore();
+ c.save();c.beginPath();c.rect(0,0,728,90);c.clip();c.drawImage(source,0,0,728,485);c.restore();
  c.save();c.beginPath();c.rect(0,397,728,88);c.clip();c.drawImage(source,0,0,728,485);c.restore();
  // Rear plumbing: rooted at the neck manifold and original base, behind the chamber and pods.
  tube(c,'M347 87 C318 118 259 118 254 177 L254 320 Q254 380 323 408',10);
@@ -163,14 +167,14 @@ function cuff(){
  for(let i=0;i<5;i++)line(c,`M-80 ${i*14+8} L-73 ${i*14+8}`,'#b7d89a',1.2);
  c.restore();
 }
-let anchors=null;
+let anchors=null,recipe=kind==='bottle-b'?'flask':'bottle';
 const E0=Math.asin(.085),E1=45*Math.PI/180;
 // Redraw the future canvas from scratch. build() ran once and each renderer calls scale(2,2),
 // so the transform must be reset here or repeated elevation redraws would compound it (gotcha #9).
 function renderFuture(elev=E0){
  const c=future.getContext('2d');
  c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,1456,970);
- if(kind==='bottle-b')flask(elev);else if(family==='bottle')bottle();else cuff();
+ if(family!=='bottle')cuff();else if(recipe==='flask')flask(elev);else bottle();
 }
 // Photo B is a vacuum steel flask: it has already solved the disposable bottle's problem, so it
 // gets its own evolution rather than the tea recipe. Its defining property is holding a state
@@ -195,8 +199,8 @@ function flask(elev){
  const RY=(rx,ry0)=>rx*Math.sin(Math.min(Math.PI/2,Math.asin(Math.min(1,ry0/rx))+dE));
  c.translate(0,450);c.scale(1,k);c.translate(0,-450);
  // The photographed steel cap and foot stay; the smooth shell between them is what goes.
- c.save();c.rect(0,0,728,96);c.clip();c.drawImage(source,0,0,728,485);c.restore();
- c.save();c.rect(0,404,728,81);c.clip();c.drawImage(source,0,0,728,485);c.restore();
+ c.save();c.beginPath();c.rect(0,0,728,96);c.clip();c.drawImage(source,0,0,728,485);c.restore();
+ c.save();c.beginPath();c.rect(0,404,728,81);c.clip();c.drawImage(source,0,0,728,485);c.restore();
  // Rear riser lifts harvested water from the base trough to the neck. Both ends are seated on
  // the surviving vessel with a visible collar, so it reads as plumbing, not a floating ornament.
  stube('M347 126 L324 130 Q286 156 282 204 L282 330 Q284 374 332 397',9);
@@ -229,7 +233,10 @@ function flask(elev){
  oval(c,365,95,29,RY(29,6),'#243b43','#c8dae2',1);
 }
 function build(){
- const c=source.getContext('2d');c.scale(2,2);
+ // Re-runnable: a second load must not inherit the first one's transform or pixels.
+ // build() used to run exactly once, so the scale(2,2) below would compound silently (gotcha #9).
+ const c=source.getContext('2d');
+ c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,1456,970);c.scale(2,2);
  if(family==='bottle'){
   const s=segment(photo);if(!s)return false;
   // Reject anything that is not one upright bottle-shaped silhouette rather than rendering nonsense.
@@ -268,10 +275,18 @@ function selfTest(){const rows=[],check=(n,ok)=>rows.push(`${ok?'PASS':'FAIL'} $
    check('calibrated fixture still lands on its authored placement',Math.abs(364.8-anchors.cx*k-150.6)<3&&Math.abs(photo.naturalWidth*k-428.8)<6);}}
  else check('calibrated source dimensions',photo.naturalWidth===1280&&photo.naturalHeight===961);check('source background is transparent',a[3]===0&&count>1000);check('original solid area physically removed',removed/count>(family==='bottle'?.12:.3));if(family==='bottle')check('new structures extend beyond source',added/count>.05);else{const alpha=(x,y)=>b[(y*2*1456+x*2)*4+3];check('open cuff has solid band and credential mount, clear side gap',alpha(358,125)>200&&alpha(312,330)>200&&alpha(581,229)===0);}
  const hole=kind==='bottle-b'?[314,160]:family==='bottle'?[309,280]:[365,228],k=(hole[1]*2*1456+hole[0]*2)*4+3;check('former body contains actual transparent negative space',a[k]>200&&b[k]===0);draw();check('final composite removes old body',ctx.getImageData(0,0,1456,970).data[k]<30);check('controls enabled',!slider.disabled&&!replay.disabled);
+ if(family==='bottle'){
+  // build() is now re-entrant (file input can load repeatedly). It applies scale(2,2), so without
+  // the reset at its head a second load would draw the source at half size and every anchor-driven
+  // placement would silently drift (gotcha #9). Rebuilding must reproduce the same source exactly.
+  const sp=()=>source.getContext('2d').getImageData(0,0,1456,970).data;
+  const s1=sp();build();const s2=sp();
+  let same=true;for(let i=0;i<s1.length;i+=499)if(s1[i]!==s2[i]){same=false;break;}
+  check('build() is re-runnable without drift',same);}
  if(kind==='bottle-b'){
   const px=()=>future.getContext('2d').getImageData(0,0,1456,970).data;
   const delta=(x,y)=>{let n=0;for(let i=0;i<x.length;i++)if(x[i]!==y[i])n++;return n;};
-  const build0=px();
+  const build0=px();  // baseline for the reprojection-happened check below
   // Idempotence is the property that matters: every renderer calls scale(2,2), so a missing
   // transform reset would compound silently and only surface as a slowly shrinking object
   // (gotcha #9). Compared against another redraw, not against the first paint — the first paint
@@ -279,14 +294,72 @@ function selfTest(){const rows=[],check=(n,ok)=>rows.push(`${ok?'PASS':'FAIL'} $
   // detail of the initial paint, not state. The loose bound below still catches a real change.
   renderFuture(E0);const r1=px();renderFuture(E0);const r2=px();
   check('elevation 0 redraw is idempotent (no transform accumulation)',delta(r1,r2)===0);
-  check('elevation 0 still reproduces the authored drawing',delta(build0,r1)/build0.length<.001);
+  // Returning to elevation 0 after a tilt must land on exactly the authored drawing. Comparing
+  // against the first paint instead would test provenance, not a property, and its result would
+  // depend on whatever ran before — which is how the earlier version of this check came to fail.
+  // Returning to elevation 0 after a tilt must land back on the authored drawing: a leaked clip or
+  // transform would show up here as ~100k differing bytes. The tolerance is for rasterisation only —
+  // during the initial page paint consecutive renders of identical content are not bit-exact
+  // (~2k bytes along the clip seam at y=404); measured after load, this difference is exactly 0.
+  renderFuture(E0);const base=px();
+  renderFuture(E1);renderFuture(E0);const back=px();
+  const resid=delta(base,back);
+  check(`returning to elevation 0 leaves no residue ${resid}`,resid===0);
   renderFuture(E1);const up=px();
   let moved=0;for(let i=3;i<up.length;i+=4)if((up[i]>128)!==(build0[i]>128))moved++;
   check('raising the camera reprojects the geometry',moved>20000);
   renderFuture(E0);draw();}
  const out=document.getElementById('checks');out.hidden=false;out.textContent=rows.join('\n');return{rows,removed:removed/count,added:added/count};}
+const UNSUPPORTED='此相片不在支援範圍：需要單一直立物件、乾淨漸層背景、完整入鏡';
+function fail(msg){
+ for(const g of [source.getContext('2d'),future.getContext('2d'),ctx]){
+  g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,1456,970);}
+ cancelAnimationFrame(raf);raf=0;anchors=null;
+ slider.disabled=replay.disabled=true;
+ phase.textContent=msg;phase.classList.add('error');
+}
+function show(){
+ phase.classList.remove('error');
+ slider.disabled=replay.disabled=false;evolve();
+}
+function loadFile(file){
+ if(!file)return;
+ if(!/^image\/(jpeg|png|webp)$/.test(file.type))return fail('只支援 JPEG / PNG / WebP');
+ if(file.size>20*1024*1024)return fail('檔案過大（上限 20MB）');
+ const url=URL.createObjectURL(file),img=new Image();
+ img.onload=()=>{
+  URL.revokeObjectURL(url);            // release before any early return below
+  if(img.naturalWidth<200||img.naturalHeight<200)return fail('解像度太低（每邊至少 200px）');
+  if(img.naturalWidth*img.naturalHeight>40e6)return fail('像素太多（上限 4000 萬）');
+  photo=img;
+  const t=performance.now();
+  if(!build())return fail(UNSUPPORTED);
+  document.getElementById('loadhint').textContent=
+   `已載入 ${img.naturalWidth}×${img.naturalHeight}・分割 ${Math.round(performance.now()-t)}ms`;
+  show();
+ };
+ img.onerror=()=>{URL.revokeObjectURL(url);fail('圖片解碼失敗');};
+ img.src=url;
+}
+if(family==='bottle'){
+ const wrap=document.getElementById('loadwrap');wrap.hidden=false;
+ document.getElementById('file').addEventListener('change',e=>{loadFile(e.target.files[0]);e.target.value='';});
+ for(const b of wrap.querySelectorAll('.rbtn')){
+  b.setAttribute('aria-pressed',String(b.dataset.r===recipe));
+  b.addEventListener('click',()=>{
+   recipe=b.dataset.r;
+   for(const o of wrap.querySelectorAll('.rbtn'))o.setAttribute('aria-pressed',String(o.dataset.r===recipe));
+   if(anchors){renderFuture();evolve();}});
+ }
+ let depth=0;
+ addEventListener('dragenter',e=>{e.preventDefault();if(!depth++)document.body.classList.add('drag');});
+ addEventListener('dragover',e=>e.preventDefault());
+ addEventListener('dragleave',()=>{if(!--depth)document.body.classList.remove('drag');});
+ addEventListener('drop',e=>{e.preventDefault();depth=0;document.body.classList.remove('drag');
+  loadFile(e.dataTransfer.files[0]);});
+}
 photo.onload=()=>{
- if(family==='suica'&&(photo.naturalWidth!==1280||photo.naturalHeight!==961)){phase.textContent='圖片尺寸與校準不符';phase.classList.add('error');return;}
- if(!build()){phase.textContent='此相片不在支援範圍：需要單一直立瓶身、乾淨漸層背景、完整入鏡';phase.classList.add('error');if(Q.has('test'))selfTest();return;}
- slider.disabled=replay.disabled=false;evolve();if(Q.has('test'))selfTest();};photo.onerror=()=>{phase.textContent='圖片載入失敗，請用本地預覽網址開啟';phase.classList.add('error');};photo.src=SRC[kind];
+ if(family==='suica'&&(photo.naturalWidth!==1280||photo.naturalHeight!==961)){fail('圖片尺寸與校準不符');return;}
+ if(!build()){fail(UNSUPPORTED);if(Q.has('test'))selfTest();return;}
+ show();if(Q.has('test'))selfTest();};photo.onerror=()=>fail('圖片載入失敗，請用本地預覽網址開啟');photo.src=SRC[kind];
 </script></body></html>

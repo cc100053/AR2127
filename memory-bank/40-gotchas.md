@@ -107,3 +107,27 @@ ffmpeg -i in.mp4 -c:v libx264 -pix_fmt yuv420p -an demo.mp4
 
 `?test=1` 67 項，涵蓋追蹤幾何、圓形守衛、模組可重現性與錨定、2127 形態推演、體積表現（切片堆疊 + 外殼帶）、捕捉環（格佈局、半徑指紋、接縫比對、nominal 推算、播放索引）。
 **改咗幾何／模組／形態就要補檢查。** 純數值，唔使睇畫面，背景分頁都跑得。
+
+## `c.rect()` 做 clip 冇 `beginPath()` —— 跨渲染累積（2026-09-06）
+
+**症狀**：`flask()` 去過高仰角再返仰角 0，畫面同乾淨嘅仰角 0 差 102727 bytes，
+差異集中喺樽頂條帶（x304–425, y130–198）。而且**第一次渲染先係啱**，之後全部被污染。
+
+**成因**：canvas 嘅 current path **唔屬於 save/restore 狀態**。
+
+```js
+c.save();c.rect(0,0,728,96);c.clip();…;c.restore();   // ← 冇 beginPath()
+```
+
+`restore()` 還原唔到 path。所以每次渲染啲 rect 一路累積，`clip()` 攞到嘅係
+**歷來所有 rect 嘅聯集**。更麻煩嘅係 rect 係喺**當時嘅 transform** 下入 path 嘅，
+所以仰角 45°（`scale(1,k)`）留低嘅 rect 比仰角 0 嗰個大，下一次仰角 0 渲染
+就會喺條帶外面畫多咗嘢。
+
+**修法**：每個做 clip 用嘅 `c.rect()` 前面加 `c.beginPath()`。
+
+**點解一直冇人發現**：`build()` 本身只跑一次，所以累積唔到。係加咗檔案輸入
+（可重複載入）同仰角參數（同一次 session 內多次渲染）之後先浮出嚟。
+
+**教訓**：`renderFuture()` 開頭嘅 `setTransform` + `clearRect` **保護唔到你** ——
+`clearRect` 本身受現行 clip 限制，而 clip 正正就係被污染嗰樣嘢。
