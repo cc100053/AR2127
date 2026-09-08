@@ -29,6 +29,12 @@ open http://localhost:8127/?test=1 # 67 項自我檢查
 `?object=suica` 交通卡 ｜ `phone.html` 手機 ｜ `?lab=1` 去背實驗（手動修遮罩再試演化）。
 每頁加 `&test=1` 跑該頁自我檢查；完整操作回歸 `node tests/browser.cjs`（見 `tests/README.md`）。
 
+## 介面語言
+
+**所有觀眾睇到嘅字一律日文**（`lang="ja"`）。新加嘅 UI 文案要用日文，而且照樣守前向原則：
+用「次の世代」「継承」「推定」，唔可以出現遺物／考古／鑑定／ANCIENT／RELIC／ARTIFACT。
+repo 文檔同程式碼註解維持中文；`index.html?test=1` 嗰 67 條檢查名亦保留中文（`memory-bank/` 用名引用緊）。
+
 ## 改完之後
 
 `?test=1` 必須全綠。改咗幾何、模組或形態推演就要補檢查落 `selfTest()`。

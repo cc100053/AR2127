@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="ja">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>2127 物件演化測試</title>
+<title>2127 モノの進化テスト</title>
 <style>
 :root{color-scheme:dark;font-family:Inter,-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;color:#edf5f5;background:#080c10}*{box-sizing:border-box}body{margin:0;min-height:100svh;background:radial-gradient(ellipse at 55% 45%,#15262c 0,transparent 60%)}main{max-width:1240px;margin:auto;padding:32px 48px}header,footer,.controls,.labels{display:flex;align-items:center;justify-content:space-between;gap:24px}header{border-bottom:1px solid #263238;padding-bottom:20px}a{color:#a6babf;text-decoration:none;font-size:12px}a:hover{color:#7bf6e4}.mark{font-size:20px;letter-spacing:-1px}.mark span{color:#70858d;font-size:11px;letter-spacing:2px;margin-left:14px}.hero{display:grid;grid-template-columns:260px minmax(0,1fr);align-items:center;gap:24px;min-height:570px}.eyebrow{font:10px ui-monospace,monospace;letter-spacing:3px;color:#6fd9d3}h1{font-size:42px;font-weight:450;line-height:1.25;letter-spacing:-2px;margin:24px 0 18px}.intro{font-size:14px;color:#8da1a8;line-height:1.9;max-width:245px}.specs{margin-top:42px;display:grid;gap:16px;font-size:11px;color:#b9c9cd}.specs span{color:#5f757e;margin-right:15px;font:10px ui-monospace,monospace}figure{margin:0;min-width:0}canvas{display:block;width:100%;height:auto}figcaption{font:10px ui-monospace,monospace;letter-spacing:2px;color:#63808a;text-align:center}.controls{max-width:650px;margin:0 auto 48px}.compare{flex:1}.labels{font-size:11px;color:#9eafb5;gap:10px}input{width:100%;accent-color:#77e5d7;margin:14px 0 0;cursor:ew-resize}button{background:#132729;border:1px solid #36565b;color:#b7f5e8;padding:13px 19px;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap}button:hover{background:#1e3b3c}button:disabled{opacity:.45;cursor:wait}:focus-visible{outline:2px solid #a6fff0;outline-offset:5px}footer{border-top:1px solid #263238;padding-top:22px;font-size:11px;color:#617981}footer p{margin:0;line-height:1.8}.kept{color:#a4babe;font-size:13px}.error{color:#ffaaaa}.filebtn{background:#132729;border:1px solid #36565b;color:#b7f5e8;padding:11px 17px;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap}.filebtn:hover{background:#1e3b3c}.rbtn{background:transparent;border:1px solid #2c4a4e;color:#7f979d;padding:8px 13px;font-size:11px;border-radius:3px;cursor:pointer}.rbtn[aria-pressed=true]{background:#16302f;border-color:#4d7a76;color:#9ef4de}.hint{font:10px ui-monospace,monospace;color:#5f757e}body.drag{outline:2px dashed #4d7a76;outline-offset:-10px}#checks{white-space:pre-wrap;font:12px/1.8 ui-monospace,monospace;color:#8af0bb} @media(max-width:800px){main{padding:22px}.hero{grid-template-columns:1fr;gap:0;min-height:0}.copy{padding-top:35px}h1{font-size:32px;margin:15px 0}.intro{max-width:none}.specs{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}.hero figure{margin:10px -20px 30px}.controls{gap:15px;margin-bottom:32px}footer{align-items:flex-start;flex-direction:column;gap:15px}.mark span{display:none}}
 
@@ -13,21 +13,21 @@
 <link rel="stylesheet" href="calibration.css">
 </head>
 <body><main>
-<header><div class="mark">2127<span>100 YEARS LATER</span></div><nav aria-label="物件測試" style="display:flex;gap:20px;flex-wrap:wrap"><a href="phone.html">手機</a><a href="studies.html?object=bottle" id="nav-bottle">茶瓶</a><a href="studies.html?object=bottle-b" id="nav-bottle-b">保溫樽</a><a href="studies.html?object=cup" id="nav-cup">水杯</a><a href="studies.html?object=banana" id="nav-banana">通用・試自己相</a><a href="studies.html?object=suica" id="nav-suica">交通卡</a><a href="studies.html?lab=1" id="nav-lab">去背實驗</a></nav></header>
+<header><div class="mark">2127<span>100 YEARS LATER</span></div><nav aria-label="モノのテスト" style="display:flex;gap:20px;flex-wrap:wrap"><a href="phone.html">スマホ</a><a href="studies.html?object=bottle" id="nav-bottle">お茶ボトル</a><a href="studies.html?object=bottle-b" id="nav-bottle-b">ステンレスボトル</a><a href="studies.html?object=cup" id="nav-cup">コップ</a><a href="studies.html?object=banana" id="nav-banana">汎用・自分の写真</a><a href="studies.html?object=suica" id="nav-suica">IC カード</a><a href="studies.html?lab=1" id="nav-lab">分離ラボ</a></nav></header>
 <section class="hero"><div class="copy"><div class="eyebrow">FORM STUDY / <span id="number">003</span></div><h1 id="title"></h1><p class="intro" id="intro"></p><div class="specs" id="specs"></div></div>
-<figure><canvas id="view" width="1456" height="970" role="img" aria-label="原物件與未來形態比較"></canvas><figcaption id="phase" aria-live="polite">準備形態推演</figcaption></figure></section>
-<div class="controls"><div class="compare"><div class="labels"><label for="evolution">原始物件</label><span>2127 形態</span></div><input id="evolution" aria-label="原始物件與 2127 形態比較" type="range" min="0" max="100" value="100" disabled></div><button id="replay" disabled>重新推演 ↗</button></div>
+<figure><canvas id="view" width="1456" height="970" role="img" aria-label="現在のモノと 2127 形態の比較"></canvas><figcaption id="phase" aria-live="polite">形態推定の準備中</figcaption></figure></section>
+<div class="controls"><div class="compare"><div class="labels"><label for="evolution">現在のモノ</label><span>2127 形態</span></div><input id="evolution" aria-label="現在のモノと 2127 形態の比較" type="range" min="0" max="100" value="100" disabled></div><button id="replay" disabled>推定をやり直す ↗</button></div>
 <div class="controls" id="loadwrap" hidden style="flex-wrap:wrap;gap:14px">
-<label class="filebtn">放一張新相片入嚟 …<input type="file" id="file" accept="image/jpeg,image/png,image/webp" hidden></label>
-<span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="hint">配方</span><button class="rbtn" data-r="bottle" aria-pressed="false">茶瓶・培養循環</button><button class="rbtn" data-r="flask" aria-pressed="false">鋼樽・大氣取水</button><button class="rbtn" data-r="cup" aria-pressed="false">闊身容器・懸掛內膽</button><button class="rbtn" data-r="generic" aria-pressed="false">通用・輪廓推演</button></span>
-<span class="hint" id="loadhint">或直接將相片拖入頁面・新相片預設用通用配方・專屬配方要自己揀</span></div>
-<div class="controls" id="elevwrap" hidden><div class="compare"><div class="labels"><label for="elevation">鏡頭：正面</label><span>斜視 45°</span></div><input id="elevation" aria-label="鏡頭仰角" type="range" min="0" max="100" value="0"></div><span style="font:10px ui-monospace,monospace;color:#5f757e;white-space:nowrap">原型・程序幾何重新投影</span></div>
-<footer><p class="kept" id="kept"></p><p>靜態相片・本地程序生成<br>單張相片校準測試，未包含旋轉追蹤。</p></footer><pre id="checks" hidden></pre>
+<label class="filebtn">新しい写真を入れる …<input type="file" id="file" accept="image/jpeg,image/png,image/webp" hidden></label>
+<span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="hint">レシピ</span><button class="rbtn" data-r="bottle" aria-pressed="false">お茶ボトル・循環培養</button><button class="rbtn" data-r="flask" aria-pressed="false">ステンレス・空気から採水</button><button class="rbtn" data-r="cup" aria-pressed="false">広口の容器・吊り下げ内胆</button><button class="rbtn" data-r="generic" aria-pressed="false">汎用・輪郭から推定</button></span>
+<span class="hint" id="loadhint">写真はページにドロップでも読み込めます・新しい写真は既定で汎用レシピ・専用レシピは手動で選択</span></div>
+<div class="controls" id="elevwrap" hidden><div class="compare"><div class="labels"><label for="elevation">カメラ：正面</label><span>斜め 45°</span></div><input id="elevation" aria-label="カメラ仰角" type="range" min="0" max="100" value="0"></div><span style="font:10px ui-monospace,monospace;color:#5f757e;white-space:nowrap">プロトタイプ・手続き幾何の再投影</span></div>
+<footer><p class="kept" id="kept"></p><p>静止画・ローカル生成<br>1 枚の写真によるキャリブレーション試験。回転追跡は含みません。</p></footer><pre id="checks" hidden></pre>
 </main><script src="segmentation.js"></script><script src="calibration.js"></script><script>
 'use strict';
 const SRC={bottle:'assets/bottle-source.webp','bottle-b':'assets/bottle-b-source.jpeg',cup:'assets/segmentation/water.jpg',banana:'assets/segmentation/banana.jpeg',suica:'assets/suica-source.jpg'};
 const Q=new URLSearchParams(location.search),kind=!Q.has('lab')&&SRC[Q.get('object')]?Q.get('object'):'bottle',family=kind==='suica'?'suica':'bottle';
-const COPY={generic:{number:'000',title:'冇專屬配方，<br>都有下一代。',intro:'呢件嘢未有為佢寫嘅配方，所以只用量到嘅輪廓推演：兩端保留原件，中間外殼退場，換成沿住原輪廓長出嘅承力骨架同一個縮細嘅內核。',specs:['由輪廓量出嘅骨架','保留兩端原件','外露縮細內核'],kept:'一百年後，佢仲係做返同一件事。'},cup:{number:'006',title:'一啖嘅<br>溫度。',intro:'杯壁退場。剩返就口嘅杯緣同承座，中間換成懸掛內膽同三條調溫臂；飲品淨係喺你手上嗰陣先保住溫度。',specs:['懸掛式內膽','三臂調溫葉片','保留杯緣與承座'],kept:'一百年後，還是想飲啖啱溫度嘅嘢。'},flask:{number:'005',title:'水，<br>由空氣嚟。',intro:'保溫層退場。真空夾層外露成冷凝鰭，樽身自己由空氣抽水；你只需要帶住佢。',specs:['外露冷凝鰭層','底部進氣與集水','保留鋼蓋與樽身輪廓'],kept:'一百年後，還是想隨時有一口水。'},bottle:{number:'003',title:'一口茶，<br>一個循環。',intro:'拋棄式瓶身退場。保留瓶口與茶液，讓培養、過濾與補水成為同一件容器。',specs:['循環培養艙','相連過濾莢','保留瓶口與茶液'],kept:'一百年後，還是為了那一口茶。'},suica:{number:'004',title:'通行，<br>隨身而行。',intro:'卡片縮成腕上的通行核心。玉色帶體環抱手腕，熟悉的識別面陪你走過下一道門。',specs:['開口式腕環','無接觸感應端','保留原卡識別面'],kept:'一百年後，還是想順利回家。'}};
+const COPY={generic:{number:'000',title:'専用レシピが<br>なくても、次の世代へ。',intro:'このモノ専用のレシピはまだない。だから測れた輪郭だけで推し進める。両端は元のまま残り、中間の外殻は退場し、輪郭に沿って伸びる耐力フレームと細くなった中核に置き換わる。',specs:['輪郭から測った骨格','両端は元のまま','露出した細い中核'],kept:'百年後も、やっていることは同じ。'},cup:{number:'006',title:'ひと口の<br>温度。',intro:'コップの壁は退場。口をつける縁と台座だけが残り、中間は吊り下げの内胆と三本の調温アームになる。飲みものはあなたの手の中にある間だけ温度を保つ。',specs:['吊り下げ式の内胆','三本アームの調温フィン','縁と台座を継承'],kept:'百年後も、ちょうどいい温度で飲みたい。'},flask:{number:'005',title:'水は、<br>空気から。',intro:'保温層は退場。真空層が凝縮フィンとして露出し、ボトル自身が空気から水を集める。あなたは持ち歩くだけ。',specs:['露出した凝縮フィン','底部の吸気と集水','鋼のキャップと輪郭を継承'],kept:'百年後も、いつでもひと口の水がほしい。'},bottle:{number:'003',title:'ひと口のお茶、<br>ひとつの循環。',intro:'使い捨ての胴は退場。飲み口とお茶を残し、培養・ろ過・補充がひとつの容器になる。',specs:['循環培養チャンバー','連結したろ過ポッド','飲み口とお茶を継承'],kept:'百年後も、あのひと口のお茶のために。'},suica:{number:'004',title:'改札を、<br>身につけて。',intro:'カードは手首の通行コアへ。翡翠色のバンドが手首を抱き、見慣れた識別面が次の扉まで一緒に行く。',specs:['開口型のリストバンド','非接触の読み取り端','元のカードの識別面を継承'],kept:'百年後も、まっすぐ家に帰りたい。'}};
 function setCopy(type){const copy=COPY[type];
 for(const id of ['number','intro','kept'])document.getElementById(id).textContent=copy[id];
 document.getElementById('title').innerHTML=copy.title;
@@ -327,19 +327,19 @@ function generic(){
  for(const a of [A0+band,A1-band]){const p=pr.reduce((m,q)=>Math.abs(q.a-a)<Math.abs(m.a-a)?q:m,pr[0]);
   line(c,`M${XY(a,p.lo-4).join(' ')} L${XY(a,p.hi+4).join(' ')}`,rimC,2,3);}
 }
-const RANGE={bottle:[.15,.6],flask:[.15,.6],cup:[.6,1.15],generic:[.02,50]},RNAME={bottle:'茶瓶',flask:'保溫樽',cup:'闊身容器',generic:'通用'};
+const RANGE={bottle:[.15,.6],flask:[.15,.6],cup:[.6,1.15],generic:[.02,50]},RNAME={bottle:'お茶ボトル',flask:'ステンレスボトル',cup:'広口の容器',generic:'汎用'};
 // Any photo that segments must produce something, so a new photo starts on the generic evolution.
 // It is NOT auto-classified: measured on this repo's own samples, a strawberry, a toy and a glass
 // of water all land inside the wide-container range, so proportions alone would confidently apply
 // the wrong class. The authored recipes stay one deliberate click away.
 function bottleGate(s,h,rec){
- if(!s)return '搵唔到前景：物件同背景顏色太接近';
- if(s.bothSides)return '剪影掂到左右兩邊畫框：背景未清走（可喺實驗模式修圖）';
- if(s.kept>=.6)return `保留範圍達 ${Math.round(s.kept*100)}%：背景大部分未清走`;
- if(s.base-s.top<=h*.25)return '物件太細：高度需要佔畫面四分一以上';
+ if(!s)return '前景が見つかりません：モノと背景の色が近すぎます';
+ if(s.bothSides)return 'シルエットが左右の画面端に接しています：背景が残っています（分離ラボで手直しできます）';
+ if(s.kept>=.6)return `残った領域が ${Math.round(s.kept*100)}%：背景の大半が残っています`;
+ if(s.base-s.top<=h*.25)return 'モノが小さすぎます：高さは画面の 1/4 以上必要です';
  const asp=s.width/(s.base-s.top),[lo,hi]=RANGE[rec];
  if(asp<=lo||asp>=hi){const fit=Object.keys(RANGE).find(r=>RANGE[r][0]!==lo&&asp>RANGE[r][0]&&asp<RANGE[r][1]);
-  return `闊高比 ${asp.toFixed(2)} 唔喺「${RNAME[rec]}」配方範圍（${lo}–${hi}）`+(fit?`；比較接近「${RNAME[fit]}」配方，可以喺配方揀返`:'');}
+  return `幅高比 ${asp.toFixed(2)} は「${RNAME[rec]}」レシピの範囲外（${lo}–${hi}）`+(fit?`。「${RNAME[fit]}」レシピの方が近いので、レシピを選び直せます`:'');}
  return null;
 }
 // Returns true, or the reason this photo/mask was rejected.
@@ -367,8 +367,8 @@ function build(prepared=null){
   // The generic copy names what was actually measured, so the page never claims to know more
   // about this object than the silhouette it read off it.
   if(recipe==='generic')document.getElementById('specs').innerHTML=[
-   `由輪廓量出嘅骨架 · 闊高比 ${(s.width/(s.base-s.top)).toFixed(2)}`,'保留兩端原件',
-   `內核收窄至橫切面 ${Math.round(place.shrink*100)}%`].map((t,i)=>`<div><span>0${i+1}</span>${t}</div>`).join('');
+   `輪郭から測った骨格 · 幅高比 ${(s.width/(s.base-s.top)).toFixed(2)}`,'両端は元のまま',
+   `中核は断面 ${Math.round(place.shrink*100)}% に縮小`].map((t,i)=>`<div><span>0${i+1}</span>${t}</div>`).join('');
  }else{
   c.save();const clip=new Path2D();clip.roundRect(83,85,562,352,19);c.clip(clip);c.drawImage(photo,155,190,938,588,83,85,562,352);c.restore();renderFuture();
  }
@@ -376,18 +376,18 @@ function build(prepared=null){
 }
 let raf=0;
 function draw(mix=1){ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,728,485);ctx.save();ctx.shadowColor='#0009';ctx.shadowBlur=15;ctx.shadowOffsetY=14;ctx.globalAlpha=1-mix;ctx.drawImage(source,0,0,728,485);ctx.globalAlpha=mix;ctx.drawImage(future,0,0,728,485);ctx.restore();}
-function evolve(){cancelAnimationFrame(raf);slider.value=100;phase.textContent='形態重組中';const start=performance.now();function tick(now){const p=Math.min(1,(now-start)/1800);draw(p*p*(3-2*p));if(p<1)raf=requestAnimationFrame(tick);else{raf=0;phase.textContent='2127 / 形態完成';}}if(matchMedia('(prefers-reduced-motion: reduce)').matches){draw();phase.textContent='2127 / 形態完成';}else raf=requestAnimationFrame(tick);}
+function evolve(){cancelAnimationFrame(raf);slider.value=100;phase.textContent='形態を再構成中';const start=performance.now();function tick(now){const p=Math.min(1,(now-start)/1800);draw(p*p*(3-2*p));if(p<1)raf=requestAnimationFrame(tick);else{raf=0;phase.textContent='2127 / 形態完成';}}if(matchMedia('(prefers-reduced-motion: reduce)').matches){draw();phase.textContent='2127 / 形態完成';}else raf=requestAnimationFrame(tick);}
 if(kind==='bottle-b'){const wrap=document.getElementById('elevwrap'),el=document.getElementById('elevation');
  wrap.hidden=false;
  el.addEventListener('input',()=>{cancelAnimationFrame(raf);raf=0;
   const e=E0+(E1-E0)*(+el.value/100);renderFuture(e);
   // The source photo cannot follow the camera, so the comparison is pinned to the future view.
   slider.value=100;draw(1);
-  phase.textContent=+el.value?`鏡頭仰角 ${Math.round(e*180/Math.PI)}°（原型・近似）`:'2127 / 形態完成';});}
-slider.addEventListener('input',()=>{cancelAnimationFrame(raf);raf=0;draw(+slider.value/100);phase.textContent=+slider.value===0?'原始物件':+slider.value===100?'2127 / 形態完成':'原型 ↔ 未來形態';});replay.addEventListener('click',evolve);
+  phase.textContent=+el.value?`カメラ仰角 ${Math.round(e*180/Math.PI)}°（プロトタイプ・近似）`:'2127 / 形態完成';});}
+slider.addEventListener('input',()=>{cancelAnimationFrame(raf);raf=0;draw(+slider.value/100);phase.textContent=+slider.value===0?'現在のモノ':+slider.value===100?'2127 / 形態完成':'現在 ↔ 2127 形態';});replay.addEventListener('click',evolve);
 function selfTest(){const rows=[],check=(n,ok)=>rows.push(`${ok?'PASS':'FAIL'} ${n}`),a=source.getContext('2d').getImageData(0,0,1456,970).data,b=future.getContext('2d').getImageData(0,0,1456,970).data;let count=0,removed=0,added=0;for(let i=3;i<a.length;i+=4){if(a[i]>200){count++;if(b[i]<30)removed++;}else if(a[i]<10&&b[i]>180)added++;}
  if(family==='bottle'){check('background actually removed, not merely plausible geometry',!!anchors&&!anchors.bothSides&&anchors.kept<.6);
-  check('rejection names the failing condition and the recipe that fits',/掂到左右/.test(bottleGate({bothSides:true,kept:.2,top:0,base:100,width:30},200,recipe))&&/闊身容器/.test(bottleGate({bothSides:false,kept:.2,top:0,base:100,width:90},200,'bottle'))&&bottleGate(anchors,photo.naturalHeight,recipe)===null);
+  check('rejection names the failing condition and the recipe that fits',/左右の画面端/.test(bottleGate({bothSides:true,kept:.2,top:0,base:100,width:30},200,recipe))&&/広口の容器/.test(bottleGate({bothSides:false,kept:.2,top:0,base:100,width:90},200,'bottle'))&&bottleGate(anchors,photo.naturalHeight,recipe)===null);
   check('anchors measured from this photo, not hardcoded',!!anchors&&anchors.base-anchors.top>photo.naturalHeight*.25&&Math.abs(anchors.cx-photo.naturalWidth/2)<photo.naturalWidth*.2);
   if(kind==='bottle'){const k=428.2/(anchors.base-anchors.top);
    check('calibrated fixture still lands on its authored placement',Math.abs(364.8-anchors.cx*k-150.6)<3&&Math.abs(photo.naturalWidth*k-428.8)<6);}}
@@ -448,25 +448,25 @@ function show(){
 }
 function loadFile(file){
  if(!file)return;
- if(!/^image\/(jpeg|png|webp)$/.test(file.type))return fail('只支援 JPEG / PNG / WebP');
- if(file.size>20*1024*1024)return fail('檔案過大（上限 20MB）');
+ if(!/^image\/(jpeg|png|webp)$/.test(file.type))return fail('JPEG / PNG / WebP のみ対応');
+ if(file.size>20*1024*1024)return fail('ファイルが大きすぎます（上限 20MB）');
  const url=URL.createObjectURL(file),img=new Image();
  img.onload=()=>{
   URL.revokeObjectURL(url);            // release before any early return below
-  if(img.naturalWidth<200||img.naturalHeight<200)return fail('解像度太低（每邊至少 200px）');
-  if(img.naturalWidth*img.naturalHeight>40e6)return fail('像素太多（上限 4000 萬）');
+  if(img.naturalWidth<200||img.naturalHeight<200)return fail('解像度が低すぎます（各辺 200px 以上）');
+  if(img.naturalWidth*img.naturalHeight>40e6)return fail('画素数が多すぎます（上限 4000 万）');
   photo=img;autoRecipe=true;
   const t=performance.now();
   const why=build();
   if(why!==true){
    // A rejection here means segmentation failed, and the lab is where that gets fixed by hand.
-   document.getElementById('loadhint').innerHTML='去背唔掂，所以未推演到。可以去 <a href="studies.html?lab=1">去背實驗</a> 手動修圖，喺嗰度直接試演化。';
-   return fail('不在支援範圍——'+why);}
+   document.getElementById('loadhint').innerHTML='背景を分離できず、推定できませんでした。<a href="studies.html?lab=1">分離ラボ</a>で手直しして、そのまま推定を試せます。';
+   return fail('対応範囲外 —— '+why);}
   document.getElementById('loadhint').textContent=
-   `已載入 ${img.naturalWidth}×${img.naturalHeight}・分割 ${Math.round(performance.now()-t)}ms`;
+   `読み込み ${img.naturalWidth}×${img.naturalHeight}・分離 ${Math.round(performance.now()-t)}ms`;
   show();
  };
- img.onerror=()=>{URL.revokeObjectURL(url);fail('圖片解碼失敗');};
+ img.onerror=()=>{URL.revokeObjectURL(url);fail('画像のデコードに失敗しました');};
  img.src=url;
 }
 if(family==='bottle'&&!Q.has('lab')){
@@ -480,7 +480,7 @@ if(family==='bottle'&&!Q.has('lab')){
    // Each recipe has its own supported proportions, so switching must re-run the gate:
    // a tea bottle silhouette is not a cup and must be rejected rather than drawn as one.
    if(!photo||!photo.naturalWidth)return;
-   const why=build();if(why!==true)return fail('不在支援範圍——'+why);
+   const why=build();if(why!==true)return fail('対応範囲外 —— '+why);
    show();});
  }
  let depth=0;
@@ -504,30 +504,30 @@ function eraseRegion(pixels,x,y,tolerance=32){
  return tail;
 }
 function startLab(){
- document.title='2127 去背實驗';
+ document.title='2127 分離ラボ';
  for(const el of document.querySelector('main').children)if(el.tagName!=='HEADER')el.hidden=true;
  const active=document.querySelector('[aria-current]');if(active){active.removeAttribute('aria-current');active.style.color='';}
  document.getElementById('nav-lab').style.color='#9ef4de';document.getElementById('nav-lab').setAttribute('aria-current','page');
  const lab=document.createElement('section');lab.id='lab';
- lab.innerHTML=`<p class="eyebrow" style="margin-top:36px">SEGMENTATION LAB / 02</p><h1>保留物件，清走背景。</h1>
- <p class="lab-note">載入相片 → 比較去背 → 修正空隙 → 匯出透明素材。全程本地處理；樽形素材修好後可繼續試演化。</p>
- <div class="lab-tools"><label>測試素材 <select id="lab-sample"><option value="toy.jpeg">算盤</option><option value="starwberry.jpeg">士多啤梨</option><option value="water.jpg">水杯</option><option value="banana.jpeg">香蕉</option><option value="bottle">茶瓶（演化測試）</option><option value="bottle-b">保溫樽（演化測試）</option><option value="" disabled>自選相片</option></select></label>
- <label>預覽底色 <select id="lab-bg"><option value="#777">灰</option><option value="#fff">白</option><option value="#000">黑</option><option value="checker">棋盤格</option></select></label>
- <label class="lab-file">載入相片／拖入頁面<input id="lab-file" type="file" accept="image/jpeg,image/png,image/webp"></label></div>
- <fieldset class="lab-settings"><legend>實驗去背設定</legend>
- <label>背景容差 <input id="lab-bg-tolerance" type="number" required min="0" max="100" value="32"></label>
- <label><input id="lab-enclosed" type="checkbox"> 同時清除封閉同色區域</label>
- <label><input id="lab-shadow" type="checkbox"> 樽形底部陰影裁切</label>
- <button id="lab-apply" disabled>套用設定</button><span class="lab-note">封閉同色區域亦可能係白色物件；可撤回比較。</span></fieldset>
+ lab.innerHTML=`<p class="eyebrow" style="margin-top:36px">SEGMENTATION LAB / 02</p><h1>モノを残し、背景を消す。</h1>
+ <p class="lab-note">写真を読み込む → 分離を比較 → 隙間を直す → 透過素材を書き出す。すべてローカル処理。直したマスクはそのまま推定に送れます。</p>
+ <div class="lab-tools"><label>テスト素材 <select id="lab-sample"><option value="toy.jpeg">そろばん</option><option value="starwberry.jpeg">いちご</option><option value="water.jpg">コップ</option><option value="banana.jpeg">バナナ</option><option value="bottle">お茶ボトル（推定テスト）</option><option value="bottle-b">ステンレスボトル（推定テスト）</option><option value="" disabled>自分の写真</option></select></label>
+ <label>プレビュー背景 <select id="lab-bg"><option value="#777">グレー</option><option value="#fff">白</option><option value="#000">黒</option><option value="checker">市松</option></select></label>
+ <label class="lab-file">写真を読み込む／ページにドロップ<input id="lab-file" type="file" accept="image/jpeg,image/png,image/webp"></label></div>
+ <fieldset class="lab-settings"><legend>実験分離の設定</legend>
+ <label>背景の許容差 <input id="lab-bg-tolerance" type="number" required min="0" max="100" value="32"></label>
+ <label><input id="lab-enclosed" type="checkbox"> 囲まれた同色領域も消す</label>
+ <label><input id="lab-shadow" type="checkbox"> ボトル用の底部影カット</label>
+ <button id="lab-apply" disabled>設定を適用</button><span class="lab-note">囲まれた同色領域は白いモノ自体のこともあります。元に戻して比較できます。</span></fieldset>
  <p class="lab-note" id="lab-status" role="status"></p><div class="lab-grid">
- ${['原圖','原有樽專用去背','實驗去背・保留凹位'].map((label,i)=>`<figure><canvas id="lab-view-${i}" role="img" aria-label="${label}"></canvas><figcaption>${label}<small id="lab-info-${i}"></small></figcaption></figure>`).join('')}</div>
- <div class="lab-tools"><button id="lab-undo" disabled>還原上一步</button><button id="lab-reset" disabled>重設去背</button>
- <button id="lab-export" disabled>匯出透明 PNG</button><button id="lab-mask" disabled>匯出黑白遮罩</button></div>
- <details class="lab-settings"><summary>手動修正：點實驗圖清除背景</summary><div class="lab-tools">
- <label>點選容差 <input id="lab-tolerance" type="number" required min="0" max="100" value="32"></label>
- <label>X <input id="lab-x" type="number" required min="0" value="0"></label><label>Y <input id="lab-y" type="number" required min="0" value="0"></label><button id="lab-erase" disabled>清除座標位置</button></div>
- <p class="lab-note" id="lab-help">點實驗圖內嘅背景，清除同色連通區域；鍵盤亦可輸入分析圖嘅像素座標。容差越高範圍可能越大。保留最近 8 步還原；重設可回到初次去背。</p></details>
- <p class="lab-note">預覽底色唔會影響去背或匯出，亦唔係模擬換背景拍攝。透明玻璃同白色物件未能單靠顏色可靠分辨；黑白遮罩係保留範圍，唔係深度圖。</p><div class="lab-settings"><label>演化配方 <select id="lab-recipe"><option value="bottle">即棄茶瓶 → 循環培養</option><option value="flask">保溫樽 → 大氣取水</option><option value="cup">闊身容器 → 懸掛內膽</option><option value="generic">冇專屬配方 → 輪廓推演</option></select></label><button id="lab-evolve" disabled>用此遮罩試演化</button><span class="lab-note">配方由你選擇；「通用」接受任何成功去背嘅剪影。</span></div><section id="lab-evolution" hidden aria-label="樽形演化預覽"></section><pre id="lab-checks" hidden></pre>`;
+ ${['元の写真','従来のボトル専用分離','実験分離・凹みを保持'].map((label,i)=>`<figure><canvas id="lab-view-${i}" role="img" aria-label="${label}"></canvas><figcaption>${label}<small id="lab-info-${i}"></small></figcaption></figure>`).join('')}</div>
+ <div class="lab-tools"><button id="lab-undo" disabled>ひとつ戻す</button><button id="lab-reset" disabled>分離をリセット</button>
+ <button id="lab-export" disabled>透過 PNG を書き出す</button><button id="lab-mask" disabled>白黒マスクを書き出す</button></div>
+ <details class="lab-settings"><summary>手動修正：実験画像をクリックして背景を消す</summary><div class="lab-tools">
+ <label>クリック許容差 <input id="lab-tolerance" type="number" required min="0" max="100" value="32"></label>
+ <label>X <input id="lab-x" type="number" required min="0" value="0"></label><label>Y <input id="lab-y" type="number" required min="0" value="0"></label><button id="lab-erase" disabled>座標の位置を消す</button></div>
+ <p class="lab-note" id="lab-help">実験画像の背景をクリックすると、同じ色でつながった領域を消します。キーボードから解析画像の画素座標を入力することもできます。許容差が大きいほど範囲は広がります。直近 8 手まで戻せます。リセットで最初の分離に戻ります。</p></details>
+ <p class="lab-note">プレビュー背景は分離や書き出しに影響せず、背景を替えた撮影の模擬でもありません。透明なガラスと白いモノは色だけでは確実に分けられません。白黒マスクは残す範囲であって、深度マップではありません。</p><div class="lab-settings"><label>推定レシピ <select id="lab-recipe"><option value="bottle">使い捨てのお茶ボトル → 循環培養</option><option value="flask">ステンレスボトル → 空気から採水</option><option value="cup">広口の容器 → 吊り下げ内胆</option><option value="generic">専用レシピなし → 輪郭から推定</option></select></label><button id="lab-evolve" disabled>このマスクで推定する</button><span class="lab-note">レシピは手動で選びます。「汎用」は分離に成功したシルエットなら何でも受け付けます。</span></div><section id="lab-evolution" hidden aria-label="推定プレビュー"></section><pre id="lab-checks" hidden></pre>`;
  document.querySelector('main').append(lab);
  const get=id=>document.getElementById('lab-'+id),status=get('status'),sample=get('sample'),editable=get('view-2'),g=editable.getContext('2d');
  const xInput=get('x'),yInput=get('y'),tolerance=get('tolerance'),bgTolerance=get('bg-tolerance'),enclosed=get('enclosed'),shadow=get('shadow');
@@ -540,7 +540,7 @@ function startLab(){
  const pixels=()=>g.getImageData(0,0,editable.width,editable.height);
  function controls(){for(const id of ['apply','erase','reset','export','mask','evolve'])get(id).disabled=!input;get('undo').disabled=!history.length;}
  function info(){const d=pixels().data;let n=0;for(let i=3;i<d.length;i+=4)if(d[i])n++;
-  get('info-2').textContent=`保留像素 ${(100*n/(d.length/4)).toFixed(1)}%（非準確率） · 分析 ${editable.width}×${editable.height}`;}
+  get('info-2').textContent=`残った画素 ${(100*n/(d.length/4)).toFixed(1)}%（精度ではありません） · 解析 ${editable.width}×${editable.height}`;}
  function message(text,error=false){status.textContent=text;status.classList.toggle('error',error);}
  function syncSettings(){bgTolerance.value=settings.tolerance;shadow.checked=settings.trimShadow;enclosed.checked=settings.clearEnclosed;}
  function remember(){
@@ -551,10 +551,10 @@ function startLab(){
  function showMask(mask){g.clearRect(0,0,editable.width,editable.height);if(mask)g.drawImage(mask.canvas,0,0);info();controls();}
  function remove(x,y){
   if(!input)return;
-  if(!tolerance.checkValidity()||!xInput.checkValidity()||!yInput.checkValidity()){message('請輸入有效座標同 0–100 容差',true);return;}
+  if(!tolerance.checkValidity()||!xInput.checkValidity()||!yInput.checkValidity()){message('有効な座標と 0–100 の許容差を入力してください',true);return;}
   const edited=pixels(),count=eraseRegion(edited,x,y,+tolerance.value);
-  if(!count){message('呢個位置已經透明，冇改動');return;}
-  remember();g.putImageData(edited,0,0);info();controls();message(`已清除 ${count} 個像素 · 可還原上一步`);
+  if(!count){message('この位置はすでに透明です。変更はありません');return;}
+  remember();g.putImageData(edited,0,0);info();controls();message(`${count} 画素を消しました · ひとつ戻せます`);
  }
  editable.addEventListener('click',e=>{
   if(!input)return;
@@ -564,13 +564,13 @@ function startLab(){
   xInput.value=x;yInput.value=y;remove(x,y);
  });
  get('erase').addEventListener('click',()=>remove(+xInput.value,+yInput.value));
- get('undo').addEventListener('click',()=>{const last=history.pop();if(!last)return;invalidate();g.putImageData(last.pixels,0,0);settings=last.settings;syncSettings();info();controls();message(`已還原 · 仲可撤回 ${history.length} 步`);});
- get('reset').addEventListener('click',()=>{if(!input)return;remember();g.putImageData(initial,0,0);settings={tolerance:32,trimShadow:false,clearEnclosed:false};syncSettings();info();controls();message('已回到初次去背 · 可還原上一步');});
+ get('undo').addEventListener('click',()=>{const last=history.pop();if(!last)return;invalidate();g.putImageData(last.pixels,0,0);settings=last.settings;syncSettings();info();controls();message(`元に戻しました · あと ${history.length} 手戻せます`);});
+ get('reset').addEventListener('click',()=>{if(!input)return;remember();g.putImageData(initial,0,0);settings={tolerance:32,trimShadow:false,clearEnclosed:false};syncSettings();info();controls();message('最初の分離に戻しました · ひとつ戻せます');});
  get('apply').addEventListener('click',()=>{
-  if(!input)return;if(!bgTolerance.checkValidity()){message('背景容差需要係 0–100',true);return;}
+  if(!input)return;if(!bgTolerance.checkValidity()){message('背景の許容差は 0–100 で入力してください',true);return;}
   const next={tolerance:+bgTolerance.value,trimShadow:shadow.checked,clearEnclosed:enclosed.checked};
   const result=segment(input,false,next);remember();settings=next;showMask(result);
-  message(result?'已由原圖重新去背 · 之前嘅手動修改可透過還原取回':'未找到前景 · 可降低容差或還原');
+  message(result?'元の写真から分離し直しました · 直前の手動修正は「ひとつ戻す」で取り戻せます':'前景が見つかりません · 許容差を下げるか元に戻してください');
  });
  async function download(maskOnly){
   if(!input)return;
@@ -578,18 +578,18 @@ function startLab(){
   const p=pixels();if(maskOnly)for(let i=0;i<p.data.length;i+=4){const a=p.data[i+3];p.data[i]=p.data[i+1]=p.data[i+2]=a;p.data[i+3]=255;}
   output.getContext('2d').putImageData(p,0,0);
   const name=filename.replace(/\.[^.]+$/,'').replace(/[^\p{L}\p{N}_-]/gu,'-')||'object';
-  const blob=await new Promise(resolve=>output.toBlob(resolve,'image/png'));if(!blob){message('匯出失敗，請重試',true);return;}
+  const blob=await new Promise(resolve=>output.toBlob(resolve,'image/png'));if(!blob){message('書き出しに失敗しました。もう一度お試しください',true);return;}
   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${name}-${maskOnly?'mask':'cutout'}.png`;a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),10000);message(`已匯出 ${output.width}×${output.height} ${maskOnly?'黑白遮罩':'透明 PNG'}`);
+  setTimeout(()=>URL.revokeObjectURL(url),10000);message(`${output.width}×${output.height} の${maskOnly?'白黒マスク':'透過 PNG'}を書き出しました`);
  }
  get('export').addEventListener('click',()=>download(false));get('mask').addEventListener('click',()=>download(true));
  function clear(){invalidate();input=null;initial=null;history=[];controls();for(const c of lab.querySelectorAll('.lab-grid canvas')){c.width=1;c.height=1;}for(let i=0;i<3;i++)get('info-'+i).textContent='';}
  async function load(url,name){
-  const id=++request;clear();message('載入中…');const img=new Image();
+  const id=++request;clear();message('読み込み中…');const img=new Image();
   try{
    img.src=url;await img.decode();if(id!==request)return;
-   if(img.naturalWidth<200||img.naturalHeight<200)throw Error('解像度太低（每邊至少 200px）');
-   if(img.naturalWidth*img.naturalHeight>40e6)throw Error('像素太多（上限 4000 萬）');
+   if(img.naturalWidth<200||img.naturalHeight<200)throw Error('解像度が低すぎます（各辺 200px 以上）');
+   if(img.naturalWidth*img.naturalHeight>40e6)throw Error('画素数が多すぎます（上限 4000 万）');
    // ponytail: bounded synchronous flood-fill at 1200px; use a worker if full-resolution editing becomes necessary.
    const scale=Math.min(1,1200/Math.max(img.naturalWidth,img.naturalHeight));
    const work=document.createElement('canvas');work.width=Math.max(1,Math.round(img.naturalWidth*scale));work.height=Math.max(1,Math.round(img.naturalHeight*scale));
@@ -601,15 +601,15 @@ function startLab(){
    // Imported cutouts already carry a mask: preserve it until the user explicitly reapplies segmentation.
    const masks=[segment(decoded),hasAlpha?{canvas:work,kept:kept/(work.width*work.height)}:segment(decoded,false,settings)];
    [decoded,...masks.map(m=>m?.canvas)].forEach((image,i)=>{const c=get('view-'+i);c.width=decoded.naturalWidth;c.height=decoded.naturalHeight;if(image)c.getContext('2d').drawImage(image,0,0);
-    get('info-'+i).textContent=i?(masks[i-1]?`保留像素 ${(masks[i-1].kept*100).toFixed(1)}%（非準確率）`:'未找到前景'):`${img.naturalWidth} × ${img.naturalHeight}`;});
+    get('info-'+i).textContent=i?(masks[i-1]?`残った画素 ${(masks[i-1].kept*100).toFixed(1)}%（精度ではありません）`:'前景が見つかりません'):`${img.naturalWidth} × ${img.naturalHeight}`;});
    input=decoded;filename=name;initial=pixels();info();controls();xInput.max=input.naturalWidth-1;yInput.max=input.naturalHeight-1;xInput.value=yInput.value=0;
-   message(`${name} · 比較完成${hasAlpha?' · 已保留來源透明遮罩':''}${scale<1?' · 分析及匯出縮至最長邊 1200px':''}`);
-  }catch(e){if(id===request){clear();message(e.name==='EncodingError'?'圖片解碼失敗，請揀另一張相片':e.message||'圖片載入失敗',true);}}
+   message(`${name} · 比較完了${hasAlpha?' · 元の透過マスクを保持':''}${scale<1?' · 解析と書き出しは長辺 1200px に縮小':''}`);
+  }catch(e){if(id===request){clear();message(e.name==='EncodingError'?'画像のデコードに失敗しました。別の写真を選んでください':e.message||'画像の読み込みに失敗しました',true);}}
   finally{if(url.startsWith('blob:'))URL.revokeObjectURL(url);}
  }
  function useFile(file){
   if(!file)return;
-  if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>20*1024*1024){++request;clear();message('請選擇 20MB 以內嘅 JPEG / PNG / WebP',true);return;}
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>20*1024*1024){++request;clear();message('20MB 以内の JPEG / PNG / WebP を選んでください',true);return;}
   sample.value='';load(URL.createObjectURL(file),file.name);
  }
  sample.addEventListener('change',()=>load(SRC[sample.value]||'assets/segmentation/'+sample.value,sample.value));
@@ -620,10 +620,10 @@ function startLab(){
    const geometry=maskGeometry(editable);
    photo=img;autoRecipe=false;recipe=get('recipe').value;setCopy(recipe);
    const why=geometry?build(geometry):bottleGate(null,0,recipe);
-   if(why!==true){fail('不在支援範圍——'+why);message(`此遮罩未能套用樽配方：${why}；請繼續修圖或匯出`,true);preview.hidden=true;return;}
-   preview.hidden=false;show();message(`${name} · 已用目前遮罩試演化（手動選配方，非自動辨識）`);
+   if(why!==true){fail('対応範囲外 —— '+why);message(`このマスクにはレシピを適用できません：${why}。修正を続けるか書き出してください`,true);preview.hidden=true;return;}
+   preview.hidden=false;show();message(`${name} · 今のマスクで推定しました（レシピは手動選択。自動認識ではありません）`);
    preview.scrollIntoView({behavior:'instant',block:'start'});
-  }catch(e){if(version===revision){preview.hidden=true;message('演化預覽失敗，遮罩仍然保留，可繼續編輯',true);}}
+  }catch(e){if(version===revision){preview.hidden=true;message('推定プレビューに失敗しました。マスクは残っているので編集を続けられます',true);}}
  });
  get('bg').addEventListener('change',e=>{lab.style.setProperty('--mask-bg',e.target.value==='checker'?'#777':e.target.value);lab.classList.toggle('checker',e.target.value==='checker');});
  get('file').addEventListener('change',e=>{useFile(e.target.files[0]);e.target.value='';});
@@ -663,12 +663,12 @@ async function labTest(){
 if(Q.has('lab'))startLab();else {
 function loadDefault(){photo=new Image();const current=photo;
 photo.onload=()=>{if(photo!==current)return;
- if(family==='suica'&&(photo.naturalWidth!==1280||photo.naturalHeight!==961)){fail('圖片尺寸與校準不符');return;}
- const why=build();if(why!==true){fail('不在支援範圍——'+why);if(Q.has('test'))selfTest();return;}
- show();if(Q.has('test'))selfTest();};photo.onerror=()=>{if(photo===current)fail('圖片載入失敗，請用本地預覽網址開啟');};photo.src=SRC[kind];
+ if(family==='suica'&&(photo.naturalWidth!==1280||photo.naturalHeight!==961)){fail('画像サイズがキャリブレーションと一致しません');return;}
+ const why=build();if(why!==true){fail('対応範囲外 —— '+why);if(Q.has('test'))selfTest();return;}
+ show();if(Q.has('test'))selfTest();};photo.onerror=()=>{if(photo===current)fail('画像の読み込みに失敗しました。ローカルサーバー経由で開いてください');};photo.src=SRC[kind];
 }
 loadDefault();
-if(family==='suica')mountCalibration({parent:document.querySelector('main'),kind:'交通卡',target:[[155,190],[1093,190],[1093,778],[155,778]],width:1280,height:961,onRestore:loadDefault,onReady:img=>{
+if(family==='suica')mountCalibration({parent:document.querySelector('main'),kind:'IC カード',target:[[155,190],[1093,190],[1093,778],[155,778]],width:1280,height:961,onRestore:loadDefault,onReady:img=>{
  cancelAnimationFrame(raf);photo=img;build();document.getElementById('checks').hidden=true;show();
 }});
 }

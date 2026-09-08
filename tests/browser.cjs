@@ -19,7 +19,7 @@ const errors=[];page.on('pageerror',e=>errors.push(e.message));
 const assert=require('assert/strict');
 const results=[];
 await page.goto(BASE+'/studies.html?lab=1&test=1');
-await page.waitForFunction(()=>document.querySelector('#lab-status').textContent.includes('比較完成'));
+await page.waitForFunction(()=>document.querySelector('#lab-status').textContent.includes('比較完了'));
 const labChecks=await page.locator('#lab-checks').innerText();assert(!labChecks.includes('FAIL'));assert.equal((labChecks.match(/PASS/g)||[]).length,12);results.push({labPassed:12});
 const png=()=>page.locator('#lab-view-2').evaluate(c=>c.toDataURL());
 const before=await png();
@@ -42,14 +42,14 @@ const [mask]=await Promise.all([page.waitForEvent('download'),page.locator('#lab
 const maskPath='previews/input-tests/'+mask.suggestedFilename();await mask.saveAs(maskPath);
 const verify=await page.evaluate(async()=>{const im=new Image();im.src='previews/input-tests/toy-mask.png';await im.decode();const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const g=c.getContext('2d');g.drawImage(im,0,0);const d=g.getImageData(0,0,c.width,c.height).data;let opaque=true,gray=true;for(let i=0;i<d.length;i+=4){opaque&&=d[i+3]===255;gray&&=d[i]===d[i+1]&&d[i]===d[i+2];}return{opaque,gray,width:im.width,height:im.height};});
 assert(verify.opaque&&verify.gray);results.push({exports:verify});
-await page.locator('#lab-file').setInputFiles(process.cwd()+'/'+cutoutPath);await page.waitForFunction(()=>document.querySelector('#lab-status').textContent.includes('來源透明遮罩'));
+await page.locator('#lab-file').setInputFiles(process.cwd()+'/'+cutoutPath);await page.waitForFunction(()=>document.querySelector('#lab-status').textContent.includes('元の透過マスクを保持'));
 assert.equal(await png(),after);assert(await page.locator('#lab-undo').isDisabled());results.push({exportReimportExact:true});
 // Invalid inputs do not mutate pixels or create history.
 await page.locator('details').evaluate(d=>d.open=true);
 await page.locator('#lab-x').fill('');await page.locator('#lab-erase').click();assert.equal(await png(),after);assert(await page.locator('#lab-undo').isDisabled());
 await page.locator('#lab-file').setInputFiles({name:'bad.jpg',mimeType:'image/jpeg',buffer:Buffer.from('bad')});await page.waitForFunction(()=>document.querySelector('#lab-status').classList.contains('error'));assert(await page.locator('#lab-export').isDisabled());
 for(const sample of ['starwberry.jpeg','water.jpg','banana.jpeg']){
- await page.locator('#lab-sample').selectOption(sample);await page.waitForFunction(()=>document.querySelector('#lab-status').textContent.includes('比較完成'));
+ await page.locator('#lab-sample').selectOption(sample);await page.waitForFunction(()=>document.querySelector('#lab-status').textContent.includes('比較完了'));
  const initial=await png();await page.locator('#lab-enclosed').check();await page.locator('#lab-apply').click();
  results.push({sample,auto:await page.locator('#lab-info-2').innerText()});
  await page.screenshot({path:'previews/input-tests/auto-'+sample.split('.')[0]+'.png',fullPage:true});
@@ -59,18 +59,18 @@ await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()
 await page.screenshot({path:'previews/input-tests/lab-complete-mobile.png',fullPage:true});
 // Single-turn rapid selection: the last input owns the displayed result.
 await page.locator('#lab-sample').evaluate(s=>{for(const value of ['toy.jpeg','water.jpg','banana.jpeg']){s.value=value;s.dispatchEvent(new Event('change'));}});
-await page.waitForFunction(()=>document.querySelector('#lab-status').textContent.startsWith('banana.jpeg · 比較完成'));
+await page.waitForFunction(()=>document.querySelector('#lab-status').textContent.startsWith('banana.jpeg · 比較完了'));
 assert.equal(await page.locator('#lab-view-2').evaluate(c=>c.width),620);
 results.push({rapidSelection:true,mobileNoOverflow:true,invalidInput:true});
 // Unsupported masks stay editable; supported prepared masks reach the existing renderer.
 await page.locator('#lab-evolve').click();await page.waitForFunction(()=>document.querySelector('#lab-status').classList.contains('error'));assert(await page.locator('#lab-evolution').isHidden());assert(!(await page.locator('#lab-export').isDisabled()));
-for(const [sample,recipe,title,name] of [['bottle','bottle','一口茶','bottle'],['bottle-b','flask','水，','bottle-b'],['banana.jpeg','generic','冇專屬配方','generic']]){
- await page.locator('#lab-sample').selectOption(sample);await page.waitForFunction(()=>document.querySelector('#lab-status').textContent.includes('比較完成'));
+for(const [sample,recipe,title,name] of [['bottle','bottle','ひと口のお茶','bottle'],['bottle-b','flask','水は、','bottle-b'],['banana.jpeg','generic','専用レシピ','generic']]){
+ await page.locator('#lab-sample').selectOption(sample);await page.waitForFunction(()=>document.querySelector('#lab-status').textContent.includes('比較完了'));
  await page.locator('#lab-recipe').selectOption(recipe);await page.locator('#lab-evolve').click();
  await page.waitForFunction(()=>!document.querySelector('#lab-evolution').hidden);
  assert((await page.locator('#title').innerText()).includes(title));
  assert.equal(await page.locator('#view').evaluate(c=>c.width),1456);
- await page.locator('#evolution').fill('0');await page.locator('#evolution').dispatchEvent('input');assert.equal(await page.locator('#phase').innerText(),'原始物件');
+ await page.locator('#evolution').fill('0');await page.locator('#evolution').dispatchEvent('input');assert.equal(await page.locator('#phase').innerText(),'現在のモノ');
  await page.locator('#replay').click();
  await page.screenshot({path:'previews/input-tests/bridge-'+name+'.png',fullPage:true});
  await page.locator('#lab-reset').click();assert(await page.locator('#lab-evolution').isHidden());
@@ -115,7 +115,7 @@ await page.waitForFunction(()=>!document.querySelector('#replay').disabled);
 await page.locator('.rbtn[data-r=bottle]').click();
 await page.waitForFunction(()=>document.querySelector('#phase').classList.contains('error'));
 const mismatch=await page.locator('#phase').innerText();
-assert(mismatch.includes('闊高比')&&mismatch.includes('闊身容器'));
+assert(mismatch.includes('幅高比')&&mismatch.includes('広口の容器'));
 await page.locator('.rbtn[data-r=cup]').click();
 await page.waitForFunction(()=>!document.querySelector('#phase').classList.contains('error'));
 await page.screenshot({path:'previews/input-tests/cup-recipe-mismatch.png',fullPage:true});
@@ -146,7 +146,7 @@ for(const [file,src,quad,w,h] of [
  if(file.includes('suica'))assert(!(await page.locator('.cal-apply').isDisabled()));
  for(let i=0;i<4;i++)for(let axis=0;axis<2;axis++)await page.locator(`[data-point="${i}"][data-axis="${axis}"]`).fill(String(fixture.quad[i][axis]*fixture.scale));
  assert(!(await page.locator('.cal-apply').isDisabled()));await page.locator('.cal-apply').click();
- await page.waitForFunction(()=>document.querySelector('.cal-status').textContent.includes('已套用'));
+ await page.waitForFunction(()=>document.querySelector('.cal-status').textContent.includes('適用しました'));
  assert(!(await page.locator('#replay').isDisabled()));
  await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  await page.screenshot({path:'previews/input-tests/calibrated-'+(file.startsWith('phone')?'phone':'card')+'.png',fullPage:true});

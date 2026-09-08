@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>2127 形態推演</title>
+<title>2127 形態推定</title>
 <style>
 :root{
   --a:#5ce1e6; --b:#b06cff;
@@ -174,22 +174,22 @@ video{object-fit:fill;display:block}
 
   <div class="panel" id="pName">
     <div class="k">2127 形態</div><div class="v" id="future">—</div>
-    <div class="k" style="margin-top:9px">現行型 · 2026</div>
+    <div class="k" style="margin-top:9px">現行モデル · 2026</div>
     <div class="v" id="nowName" style="font-size:12px;opacity:.55">—</div>
   </div>
   <div class="panel" id="pStat">
     <div class="k">世代</div><div id="gen">GEN —</div>
-    <div class="k" style="margin-top:9px">形態類別</div><div class="v" id="form" style="font-size:12px">—</div>
-    <div class="k" style="margin-top:9px">形變量</div><div class="v" id="morph" style="font-size:12px">0.0%</div>
+    <div class="k" style="margin-top:9px">形態カテゴリ</div><div class="v" id="form" style="font-size:12px">—</div>
+    <div class="k" style="margin-top:9px">変形量</div><div class="v" id="morph" style="font-size:12px">0.0%</div>
   </div>
   <div id="notes"><div id="lineage"></div><div id="kept"></div></div>
   <div id="status">2026 ──▶ 2127<br>STATE <b id="st">IDLE</b><br>THEME <b id="th">—</b><br>AXIS <b id="ang">—</b><br>RING <b id="ring">—</b></div>
 
-  <div id="veil" class="layer">放上物件 · 推演佢嘅 2127 形態
-    <small>?cam=1 真實攝影機 ｜ ?synth=1 合成物件 ｜ ?src=xx.mp4<br>
-           ?test=1 自我檢查 ｜ R 重掃 ｜ 也可直接把影片拖進來</small></div>
+  <div id="veil" class="layer">モノを置いてください · その 2127 形態を推定します
+    <small>?cam=1 実カメラ ｜ ?synth=1 合成オブジェクト ｜ ?src=xx.mp4<br>
+           ?test=1 セルフチェック ｜ R 再スキャン ｜ 動画はドロップでも読み込めます</small></div>
 </div>
-<a href="phone.html" style="position:fixed;bottom:16px;right:20px;z-index:10;color:#b5eee5;font:12px sans-serif;cursor:pointer">手機相片測試 ↗</a>
+<a href="phone.html" style="position:fixed;bottom:16px;right:20px;z-index:10;color:#b5eee5;font:12px sans-serif;cursor:pointer">スマホ写真テスト ↗</a>
 <div id="err"></div>
 
 <script>
@@ -293,10 +293,10 @@ function track(video){
     tainted=true;
     const el=document.getElementById('err');
     el.style.display='grid';
-    el.innerHTML='CANVAS 被跨來源污染，讀不到畫素。<br><br>'+
-      '用 file:// 開啟時 Chrome 會把每個檔案視為獨立來源。<br>請改用本機伺服器：<br><br>'+
+    el.innerHTML='CANVAS がクロスオリジンで汚染され、画素を読み取れません。<br><br>'+
+      'file:// で開くと Chrome は各ファイルを別オリジンとして扱います。<br>ローカルサーバーで開いてください：<br><br>'+
       '<code style="color:#fff">cd ~/item2127 &amp;&amp; python3 -m http.server 8127</code><br><br>'+
-      '然後開 <code style="color:#fff">http://localhost:8127</code>';
+      'そのあと <code style="color:#fff">http://localhost:8127</code> を開く';
     return null;
   }
 }
@@ -822,31 +822,31 @@ function synthStream(){
 // 假 Gemini —— 延遲 2~6s，跟真的一樣不可預測
 // ══════════════════════════════════════════════════════════════
 const MOCK_DB=[
-  {now:'橡膠籃球', futureName:'動能球體', gen:9, form:'自修復慣性體',
-   lineage:'2041 自修復表層 → 2073 內置慣性補償 → 2110 無氣結構',
-   kept:'一百年之後，佢仲係要你用隻手掟出去。', visualTheme:'PLASMA',
-   modules:[{type:'CORE',at:[500,500],label:'慣性核'},
+  {now:'ゴムのバスケットボール', futureName:'運動エネルギー球体', gen:9, form:'自己修復する慣性体',
+   lineage:'2041 自己修復表層 → 2073 内蔵の慣性補償 → 2110 無空気構造',
+   kept:'百年後も、投げるのはあなたの手。', visualTheme:'PLASMA',
+   modules:[{type:'CORE',at:[500,500],label:'慣性コア'},
             {type:'CHIP',at:[760,330]},
             {type:'CONDUIT',at:[520,820]},
-            {type:'MONITOR',at:[210,540],label:'自修復'}]},
-  {now:'黃銅家門鑰匙', futureName:'持有權密鑰', gen:7, form:'生體共生型',
-   lineage:'2038 無線化 → 2064 生體綁定 → 2099 量子簽章',
-   kept:'仲係要揸喺手，仲係會唔見。', visualTheme:'ARCHIVE',
-   modules:[{type:'CHIP',at:[790,470],label:'密鑰陣列'},   // 齒紋端
+            {type:'MONITOR',at:[210,540],label:'自己修復'}]},
+  {now:'真鍮の家の鍵', futureName:'所有権キー', gen:7, form:'生体共生タイプ',
+   lineage:'2038 ワイヤレス化 → 2064 生体ひも付け → 2099 量子署名',
+   kept:'やっぱり手に持つし、やっぱり無くす。', visualTheme:'ARCHIVE',
+   modules:[{type:'CHIP',at:[790,470],label:'キーアレイ'},   // 齒紋端
             {type:'PORT',at:[250,500]},                    // 握把端
             {type:'CONDUIT',at:[520,430]},
-            {type:'MONITOR',at:[300,760],label:'持有權'}]},
-  {now:'護唇膏', futureName:'表皮維持棒', gen:4, form:'活性膜載體',
-   lineage:'2044 溫感釋放 → 2081 菌群共生配方 → 2116 自量給',
-   kept:'仲係要你自己搽。', visualTheme:'BIOMECH',
+            {type:'MONITOR',at:[300,760],label:'所有権'}]},
+  {now:'リップクリーム', futureName:'皮膚維持スティック', gen:4, form:'活性膜キャリア',
+   lineage:'2044 温度で放出 → 2081 常在菌と共生する処方 → 2116 自己供給',
+   kept:'塗るのは、やっぱり自分。', visualTheme:'BIOMECH',
    modules:[{type:'VENT',at:[500,180]},                    // 出口端
-            {type:'MONITOR',at:[700,560],label:'菌群'}]},
-  {now:'交通儲值卡', futureName:'通行權載體', gen:11, form:'光學薄片',
-   lineage:'2033 全面無實體 → 2058 實體卡回歸 → 2104 光學層壓',
-   kept:'仲係一拍就過。', visualTheme:'CRYSTALLINE',
-   modules:[{type:'CHIP',at:[640,520],label:'光學層'},
+            {type:'MONITOR',at:[700,560],label:'常在菌'}]},
+  {now:'交通 IC カード', futureName:'通行権キャリア', gen:11, form:'光学シート',
+   lineage:'2033 完全に非実体化 → 2058 実体カードの復権 → 2104 光学ラミネート',
+   kept:'やっぱり、かざせば通れる。', visualTheme:'CRYSTALLINE',
+   modules:[{type:'CHIP',at:[640,520],label:'光学層'},
             {type:'CONDUIT',at:[500,760]},
-            {type:'MONITOR',at:[250,400],label:'通行權'}]},
+            {type:'MONITOR',at:[250,400],label:'通行権'}]},
 ];
 let mockIdx=0;
 const mockScan = () => new Promise(r =>
@@ -1186,8 +1186,8 @@ function loop(now){
       if(now-lastTick>140){ lastTick=now; tick(); }
       // 資料早到 → 等這圈轉完；晚到 → 多轉一圈。永遠對齊實體節奏。
       if(data && since()>=REV*Math.ceil(since()/REV-.001)-18){ $.sweep.style.opacity=0; humOff(); go('MORPH'); }
-      if(since()>12000){ data={now:'?',futureName:'推演失敗',gen:0,form:'ANOMALOUS',
-        lineage:'時間線分歧過多，無法收斂。',kept:'呢件物件拒絕畀人知佢會變成點。',
+      if(since()>12000){ data={now:'?',futureName:'推定できず',gen:0,form:'ANOMALOUS',
+        lineage:'時間線の分岐が多すぎて収束しません。',kept:'このモノは、自分がどうなるかを教えてくれない。',
         visualTheme:'UNKNOWN',modules:[{type:'CHIP'}]};
         $.sweep.style.opacity=0; humOff(); go('MORPH'); }
       if(gone) { humOff(); go('RESET'); }
@@ -1242,7 +1242,7 @@ async function boot(){
   $.feed.addEventListener('loadedmetadata',setAR);
   $.feed.addEventListener('error',()=>{
     const e=el('err'); e.style.display='grid';
-    e.innerHTML='影片解不開。<br><br>YouTube 預設下載可能是 AV1，部分環境不支援。<br>轉成 H.264：<br><br>'+
+    e.innerHTML='動画を再生できません。<br><br>YouTube の既定ダウンロードは AV1 のことがあり、環境によっては非対応です。<br>H.264 に変換：<br><br>'+
       '<code style="color:#fff">ffmpeg -i in.mp4 -c:v libx264 -pix_fmt yuv420p -an demo.mp4</code>';
   });
   applyTheme('ARCHIVE');

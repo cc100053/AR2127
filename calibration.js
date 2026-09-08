@@ -4,7 +4,7 @@ function project(quad){
  const [[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=quad;
  const dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3;
  const det=dx1*dy2-dx2*dy1;
- if(Math.abs(det)<1e-9)throw Error('四角太接近或重疊，請重新標記');
+ if(Math.abs(det)<1e-9)throw Error('四隅が近すぎるか重なっています。付け直してください');
  const g=(dx3*dy2-dx2*dy3)/det,h=(dx1*dy3-dx3*dy1)/det;
  const a=x1-x0+g*x1,b=x3-x0+h*x3,d=y1-y0+g*y1,e=y3-y0+h*y3;
  const map=(u,v)=>{const z=g*u+h*v+1;return[(a*u+b*v+x0)/z,(d*u+e*v+y0)/z];};
@@ -18,7 +18,7 @@ function validQuad(q,w,h){
  return Math.abs(area)>w*h*.02&&(turns.every(v=>v>0)||turns.every(v=>v<0));
 }
 function warpPhoto(img,quad,target,w,h){
- if(!validQuad(quad,img.naturalWidth,img.naturalHeight))throw Error('請順序標記四角，範圍至少佔相片 1%，避免交叉或重疊');
+ if(!validQuad(quad,img.naturalWidth,img.naturalHeight))throw Error('四隅は順番に、写真の 1% 以上の範囲で、交差や重なりがないように付けてください');
  const from=project(quad),to=project(target),src=document.createElement('canvas'),out=document.createElement('canvas');
  src.width=img.naturalWidth;src.height=img.naturalHeight;out.width=w;out.height=h;
  const sg=src.getContext('2d',{willReadFrequently:true});sg.drawImage(img,0,0);
@@ -39,29 +39,29 @@ function warpPhoto(img,quad,target,w,h){
  g.putImageData(p,0,0);return out;
 }
 function suggestCorners(img){
- const mask=segment(img,false,{trimShadow:false});if(!mask||mask.bothSides||mask.kept>.85)throw Error('背景或輪廓唔清楚，請手動標記四角');
+ const mask=segment(img,false,{trimShadow:false});if(!mask||mask.bothSides||mask.kept>.85)throw Error('背景か輪郭が不明瞭です。四隅は手動で付けてください');
  const w=img.naturalWidth,h=img.naturalHeight,d=mask.canvas.getContext('2d').getImageData(0,0,w,h).data,points=[];
  for(let y=0;y<h;y++){let left=-1,right=-1;for(let x=0;x<w;x++)if(d[(y*w+x)*4+3]>127){if(left<0)left=x;right=x;}if(left>=0){points.push([left,y]);if(right!==left)points.push([right,y]);}}
  points.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
  const cross=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
  const half=points=>{const out=[];for(const p of points){while(out.length>1&&cross(out[out.length-2],out[out.length-1],p)<=0)out.pop();out.push(p);}return out;};
  const lower=half(points),upper=half([...points].reverse());lower.pop();upper.pop();const hull=lower.concat(upper);
- if(hull.length<4)throw Error('搵唔到四邊形，請手動標記');
+ if(hull.length<4)throw Error('四角形が見つかりません。手動で付けてください');
  const area=q=>Math.abs(q.reduce((sum,p,i)=>sum+p[0]*q[(i+1)%q.length][1]-q[(i+1)%q.length][0]*p[1],0))/2,full=area(hull);
  // ponytail: convex outline reduced to four vertices; rounded corners and shadows still need human adjustment.
  while(hull.length>4){let index=0,least=Infinity;for(let i=0;i<hull.length;i++){const loss=Math.abs(cross(hull[(i+hull.length-1)%hull.length],hull[i],hull[(i+1)%hull.length]));if(loss<least){least=loss;index=i;}}hull.splice(index,1);}
- if(area(hull)/full<.86||!validQuad(hull,w,h))throw Error('輪廓唔夠接近四邊形，請手動標記');
+ if(area(hull)/full<.86||!validQuad(hull,w,h))throw Error('輪郭が四角形に近くありません。手動で付けてください');
  const start=hull.reduce((best,p,i)=>p[0]+p[1]<hull[best][0]+hull[best][1]?i:best,0);
  return hull.slice(start).concat(hull.slice(0,start));
 }
 function mountCalibration({parent,kind,target,width,height,onReady,onRestore}){
  const panel=document.createElement('details');panel.className='calibration';
- panel.innerHTML=`<summary>用另一張${kind}相片試演化（人工四角校準）</summary>
- <p>選擇正面清楚、四角完整嘅相片。依次標記左上、右上、右下、左下，將相片對齊現有造型；呢個係人工校準，唔係自動辨識或 3D 重建。</p>
- <label>載入相片 <input class="cal-file" type="file" accept="image/jpeg,image/png,image/webp"></label>
- <canvas class="cal-view" width="728" height="485" role="img" aria-label="點選物件四角嘅校準相片" hidden></canvas>
+ panel.innerHTML=`<summary>別の${kind}の写真で推定する（四隅の手動キャリブレーション）</summary>
+ <p>正面がはっきり写り、四隅が欠けていない写真を選んでください。左上 → 右上 → 右下 → 左下 の順に付けると、写真が既存の造形に合わせて変形します。これは手動キャリブレーションであり、自動認識でも 3D 復元でもありません。</p>
+ <label>写真を読み込む <input class="cal-file" type="file" accept="image/jpeg,image/png,image/webp"></label>
+ <canvas class="cal-view" width="728" height="485" role="img" aria-label="四隅を指定するキャリブレーション写真" hidden></canvas>
  <div class="cal-points">${['左上','右上','右下','左下'].map((name,i)=>`<label>${i+1} ${name}<span>X <input type="number" required min="0" data-point="${i}" data-axis="0" aria-label="${name} X"> Y <input type="number" required min="0" data-point="${i}" data-axis="1" aria-label="${name} Y"></span></label>`).join('')}</div>
- <div class="cal-actions"><button class="cal-auto" disabled>自動提議四角（本地）</button><button class="cal-apply" disabled>套用校準並推演</button><button class="cal-clear" disabled>重新標四角</button><button class="cal-restore">返回原示範</button></div><p class="cal-status" role="status">未載入新相片</p>`;
+ <div class="cal-actions"><button class="cal-auto" disabled>四隅を自動提案（ローカル）</button><button class="cal-apply" disabled>適用して推定</button><button class="cal-clear" disabled>四隅を付け直す</button><button class="cal-restore">最初の作例に戻す</button></div><p class="cal-status" role="status">新しい写真は未読み込み</p>`;
  parent.append(panel);
  const view=panel.querySelector('canvas'),g=view.getContext('2d'),status=panel.querySelector('.cal-status'),apply=panel.querySelector('.cal-apply'),clear=panel.querySelector('.cal-clear'),auto=panel.querySelector('.cal-auto'),fields=[...panel.querySelectorAll('[data-point]')];
  let image=null,points=[],request=0,revision=0;
@@ -74,30 +74,30 @@ function mountCalibration({parent,kind,target,width,height,onReady,onRestore}){
  function reset(){revision++;points=[];for(const f of fields)f.value='';apply.disabled=true;paint();}
  function ready(){apply.disabled=!image||!validQuad(points,view.width,view.height);}
  view.addEventListener('click',e=>{if(!image)return;revision++;if(points.length===4)reset();const r=view.getBoundingClientRect();points.push([(e.clientX-r.left)*view.width/r.width,(e.clientY-r.top)*view.height/r.height]);
-  for(const f of fields)f.value=points[+f.dataset.point]?.[+f.dataset.axis]?.toFixed(1)??'';ready();paint();tell(points.length===4?(apply.disabled?'四角範圍無效，請重新標記':'四角已齊，可以套用'): `已標記 ${points.length}/4 個角`);
+  for(const f of fields)f.value=points[+f.dataset.point]?.[+f.dataset.axis]?.toFixed(1)??'';ready();paint();tell(points.length===4?(apply.disabled?'四隅の範囲が無効です。付け直してください':'四隅がそろいました。適用できます'): `${points.length}/4 隅を指定しました`);
  });
- for(const f of fields){f.step='any';f.addEventListener('input',()=>{revision++;points=fields.every(f=>f.value!==''&&f.checkValidity())?[0,1,2,3].map(i=>fields.slice(i*2,i*2+2).map(f=>+f.value)):[];ready();paint();tell(apply.disabled?'請填齊有效四角座標':'四角已齊，可以套用');});}
+ for(const f of fields){f.step='any';f.addEventListener('input',()=>{revision++;points=fields.every(f=>f.value!==''&&f.checkValidity())?[0,1,2,3].map(i=>fields.slice(i*2,i*2+2).map(f=>+f.value)):[];ready();paint();tell(apply.disabled?'四隅の座標をすべて有効な値で入力してください':'四隅がそろいました。適用できます');});}
  auto.addEventListener('click',()=>{if(!image)return;revision++;
-  try{points=suggestCorners(image);for(const f of fields)f.value=points[+f.dataset.point][+f.dataset.axis].toFixed(1);ready();paint();tell('已按輪廓提議四角；請檢查位置及方向，必要時重新標記。未辨識物件類別。');}
+  try{points=suggestCorners(image);for(const f of fields)f.value=points[+f.dataset.point][+f.dataset.axis].toFixed(1);ready();paint();tell('輪郭から四隅を提案しました。位置と向きを確認し、必要なら付け直してください。モノの種類は判定していません。');}
   catch(e){reset();tell(e.message,true);}
  });
- clear.addEventListener('click',()=>{reset();tell('由左上角開始重新標記');});
- panel.querySelector('.cal-restore').addEventListener('click',()=>{request++;image=null;reset();view.hidden=true;clear.disabled=auto.disabled=true;onRestore();tell('已返回原示範');});
+ clear.addEventListener('click',()=>{reset();tell('左上から付け直してください');});
+ panel.querySelector('.cal-restore').addEventListener('click',()=>{request++;image=null;reset();view.hidden=true;clear.disabled=auto.disabled=true;onRestore();tell('最初の作例に戻しました');});
  panel.querySelector('.cal-file').addEventListener('change',async e=>{
   const file=e.target.files[0];e.target.value='';if(!file)return;const id=++request;image=null;reset();view.hidden=true;clear.disabled=auto.disabled=true;
-  if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>20*1024*1024){tell('請用 20MB 以內嘅 JPEG / PNG / WebP',true);return;}
-  const url=URL.createObjectURL(file),img=new Image();tell('載入中…');
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>20*1024*1024){tell('20MB 以内の JPEG / PNG / WebP を使ってください',true);return;}
+  const url=URL.createObjectURL(file),img=new Image();tell('読み込み中…');
   try{img.src=url;await img.decode();if(id!==request)return;
-   if(Math.min(img.naturalWidth,img.naturalHeight)<200||img.naturalWidth*img.naturalHeight>40e6)throw Error('每邊至少 200px，總像素最多 4000 萬');
+   if(Math.min(img.naturalWidth,img.naturalHeight)<200||img.naturalWidth*img.naturalHeight>40e6)throw Error('各辺 200px 以上、総画素は 4000 万まで');
    // ponytail: calibration uses <=1200px input to keep interactive warping bounded.
    const scale=Math.min(1,1200/Math.max(img.naturalWidth,img.naturalHeight));view.width=Math.max(1,Math.round(img.naturalWidth*scale));view.height=Math.max(1,Math.round(img.naturalHeight*scale));
    g.drawImage(img,0,0,view.width,view.height);const normalized=new Image();normalized.src=view.toDataURL();await normalized.decode();if(id!==request)return;
-   image=normalized;view.hidden=false;clear.disabled=auto.disabled=false;for(const f of fields)f.max=f.dataset.axis==='0'?view.width:view.height;paint();tell(`依次點四角：左上 → 右上 → 右下 → 左下${scale<1?'（分析相片已縮至 1200px）':''}`);
-  }catch(e){if(id===request)tell(e.name==='EncodingError'?'圖片解碼失敗':e.message,true);}finally{URL.revokeObjectURL(url);}
+   image=normalized;view.hidden=false;clear.disabled=auto.disabled=false;for(const f of fields)f.max=f.dataset.axis==='0'?view.width:view.height;paint();tell(`順に四隅をクリック：左上 → 右上 → 右下 → 左下${scale<1?'（解析用に長辺 1200px へ縮小）':''}`);
+  }catch(e){if(id===request)tell(e.name==='EncodingError'?'画像のデコードに失敗しました':e.message,true);}finally{URL.revokeObjectURL(url);}
  });
  apply.addEventListener('click',async()=>{if(!image)return;const id=request,version=revision;apply.disabled=true;
   try{const out=warpPhoto(image,points,target,width,height),normalized=new Image();normalized.src=out.toDataURL();await normalized.decode();if(id!==request||version!==revision)return;
-   onReady(normalized,out);tell('已套用人工四角校準；正使用現有演化造型');
+   onReady(normalized,out);tell('四隅の手動キャリブレーションを適用しました。既存の造形で表示しています');
   }catch(e){if(id===request)tell(e.message,true);}finally{if(id===request)ready();}
  });
  return panel;
