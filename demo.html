@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2127 — あなたのモノ、その先へ。</title>
+<style>
+:root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#080c10;color:#edf5f5}*{box-sizing:border-box}body{margin:0}main{max-width:1320px;margin:auto;padding:28px 40px}header,.bar,nav{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}header{padding-bottom:24px;border-bottom:1px solid #304247}a{color:#b4d3d2;text-decoration:none}button,a.button{font:inherit;font-size:13px;border:1px solid #47625f;background:#142824;color:#d4fff1;padding:12px 18px;border-radius:30px;cursor:pointer}button:disabled{opacity:.4;cursor:wait}button[aria-pressed=true],.primary{background:#c4f9df!important;color:#10231f!important}a:hover,button:hover{filter:brightness(1.2)}:focus-visible{outline:3px solid #a8ffe0;outline-offset:4px}.brand{font-size:27px;letter-spacing:-2px}.small{font-size:12px;color:#9bafaf;line-height:1.8}.lead{display:grid;grid-template-columns:1.5fr 1fr;gap:40px;align-items:end;padding:38px 0 30px}h1{font-size:clamp(32px,4.2vw,60px);line-height:1.25;font-weight:450;letter-spacing:-2px;margin:10px 0}p{line-height:1.85}.tag{font-size:11px;letter-spacing:2px;color:#b7ead4}.lead p{color:#b3c4c5;margin:0}.stage{border:1px solid #304247;border-radius:12px;overflow:hidden;background:#080c10}iframe{display:block;border:0;width:100%;height:580px}.bar{padding:16px 20px;border-top:1px solid #304247}.status{min-height:24px;color:#b7ead4;font-size:13px}.compare{display:flex;gap:12px;align-items:center;font-size:12px}input{accent-color:#b7ead4;max-width:35vw}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;padding:40px 0}.cards article{border-top:1px solid #304247;padding-top:20px}.cards h2{font-size:20px;font-weight:500}.cards p{color:#9bafaf;font-size:14px}details{border-top:1px solid #304247;padding:22px 0;line-height:1.8}summary{cursor:pointer}footer{padding:20px 0;color:#9bafaf;font-size:12px} @media(max-width:760px){main{padding:20px}.lead,.cards{grid-template-columns:1fr;gap:16px}.lead{padding:26px 0}.cards{padding:28px 0}iframe{height:760px}.bar{padding:14px}.compare{width:100%;justify-content:center}input{max-width:50vw}.small{font-size:11px}}
+
+/* 展示入口：將視覺重心留給物件，研究頁不受影響。 */
+body{background:radial-gradient(ellipse at 80% 0%,#18302b66,transparent 45%),#080c10}
+main{max-width:1440px;padding:22px 48px}header{padding-bottom:18px;border-color:#263936}.brand{font-size:34px;letter-spacing:-2.5px}.lead{padding:28px 0 26px;grid-template-columns:1.2fr 1fr}.lead h1{font-size:clamp(32px,3.6vw,50px);line-height:1.3;margin:8px 0 0}.lead p{font-size:13px}.lead .small{display:block;margin-top:8px;font-size:11px}.tag{letter-spacing:1.5px}
+nav{justify-content:flex-start;gap:4px;border-bottom:1px solid #304247;padding:0 0 12px}nav button{background:transparent;border-color:transparent;color:#8fa5a4;border-radius:6px;padding:12px 20px}nav button[aria-pressed=true]{background:#1c3530!important;color:#d4ffea!important;border-color:#476c5d}#tour{margin-left:auto;border-color:#3d534e;color:#c2d7cf}.status{font-size:12px;margin:14px 0;letter-spacing:.3px}
+.stage{border-radius:8px;box-shadow:0 24px 80px #0004;border-color:#344a43}.bar{background:#101b1b;padding:18px 24px;gap:22px}.bar button{border-radius:5px}.primary{font-weight:600;box-shadow:0 0 28px #c4f9df10}#card{background:transparent;border-color:#354c45;color:#bdd0c7}.compare{flex:1;justify-content:center;gap:18px;color:#b7c7c0;letter-spacing:1px}.compare input{width:220px;height:24px;margin:0;cursor:ew-resize}.cards{gap:0;padding:48px 0 38px}.cards article{border-top:0;padding:0 30px;border-left:1px solid #304247}.cards article:first-child{padding-left:0;border-left:0}.cards article:last-child{padding-right:0}.cards h2{font-size:21px;margin:15px 0 10px}.cards p{font-size:13px;margin:0;line-height:1.9}details{font-size:13px}footer{display:flex;justify-content:space-between;gap:16px}
+@media(max-width:760px){main{padding:18px}header{gap:12px}.brand{font-size:30px}header>a:last-child{font-size:12px}.lead{grid-template-columns:1fr;gap:16px;padding:26px 0}.lead h1{font-size:36px}.lead p{font-size:12px}nav{gap:6px}nav button{padding:11px 13px;font-size:12px}#tour{margin:6px 0 0;width:100%;text-align:left}.status{line-height:1.7;min-height:40px}.bar{gap:16px;padding:18px}.compare{order:-1;flex-basis:100%}.bar button{flex:1;padding:13px 8px;font-size:11px}.cards{grid-template-columns:1fr;gap:24px;padding:32px 0}.cards article,.cards article:first-child,.cards article:last-child{border-left:0;border-top:1px solid #304247;padding:22px 0 0}.cards h2{font-size:21px}footer{flex-direction:column}}
+</style>
+<main>
+<header><a class="brand" href="demo.html">2127</a><span class="small">体験プロトタイプ · ローカル動作</span><a href="studies.html?object=banana">自分の写真で試す ↗</a></header>
+<section class="lead"><div><span class="tag">あなたのモノ、その先へ。</span><h1>いつものモノに、<br>まだ見ぬ百年を。</h1></div><p>持ち主だけが知っている形や手触り。<br>その面影を残しながら、2127 年の姿を想像する。<br><span class="small">実際の予言ではなく、写真から描く未来のデザインです。</span></p></section>
+<nav aria-label="体験するモノ"><button data-scene="0" aria-pressed="true">01 スマホ</button><button data-scene="1" aria-pressed="false">02 ボトル</button><button data-scene="2" aria-pressed="false">03 IC カード</button><button id="tour">3 つの未来を自動で見る</button></nav>
+<p class="status" id="status" role="status">写真を準備しています…</p>
+<section class="stage" aria-label="未来の形態"><iframe id="scene" title="写真から描く 2127 形態"></iframe><div class="bar"><button id="reveal" class="primary" disabled>2127 年の姿を見る ↗</button><label class="compare">現在 <input id="compare" type="range" min="0" max="100" value="0" aria-label="現在と未来の比較" disabled> 2127</label><button id="card" disabled>世代カードを保存 ↓</button></div></section>
+<section class="cards" aria-label="展示で生まれる体験">
+<article><span class="tag">01 · 自分ごとになる</span><h2>展示の主役は、持ち物。</h2><p>見慣れた輪郭が残るから、「自分のモノが変わった」と感じられる。写真の比較から、会話のきっかけへ。</p></article>
+<article><span class="tag">02 · 一緒に見られる</span><h2>変わる瞬間を、みんなで。</h2><p>個人の画面に閉じず、大きな画面で前後を比較。体験している人も、次に待つ人も、同じ変化を楽しむ展示へ。</p></article>
+<article><span class="tag">03 · 会場で完結する</span><h2>ネット接続に頼らない。</h2><p>現在の形態処理はブラウザ内で完結。写真を外部サービスへ送らず、ローカルサーバーから繰り返し体験できる。</p></article>
+</section>
+<details><summary>展示への次の一歩 — できることと、これから</summary><p><strong>今、動くもの：</strong>写真の読み込み、背景分離の調整、専用／汎用レシピによる 2.5D 形態、前後比較、画像カードの保存。専用レシピは人が選び、汎用レシピは輪郭と色を使います。物体の意味を自動認識する AI ではありません。</p><p><strong>展示の構想：</strong>持ち物を置く → 固定カメラで撮る → 未来の形を見る → 世代カードを持ち帰る。1 人約 60 秒を目標に、撮影箱・照明・実体プリンターと接続します。撮影、物理印刷、連続運転、会場での視認性はこれから検証します。</p><p>現在はサンプル写真を使った体験です。透明・反射・背景と同色のモノは分離に失敗する場合があります。</p><a href="studies.html?lab=1">分離ラボを開く ↗</a></details>
+<footer>2127 · 同じモノから、次の物語へ。 <span class="small">画像カードはデザイン試作です。</span></footer>
+</main>
+<script>
+const scenes=['phone.html','studies.html?object=bottle-b','studies.html?object=suica'];
+const frame=document.querySelector('#scene'), status=document.querySelector('#status'), compare=document.querySelector('#compare'), reveal=document.querySelector('#reveal'), card=document.querySelector('#card'), tour=document.querySelector('#tour');
+let selected=0, revision=0, timer, touring=false, resize;
+function stop(){clearTimeout(timer);touring=false;tour.textContent='3 つの未来を自動で見る';}
+function setAmount(value){const el=frame.contentDocument.querySelector('#evolution');el.value=value;el.dispatchEvent(new frame.contentWindow.Event('input'));compare.value=value;}
+function showFuture(){setAmount(100);frame.contentDocument.querySelector('#replay').click();status.textContent='2127 · '+frame.contentDocument.querySelector('.kept').textContent;}
+async function select(index){
+ resize?.disconnect();selected=index;const version=++revision;clearTimeout(timer);reveal.disabled=compare.disabled=card.disabled=true;status.textContent='写真を準備しています…';
+ document.querySelectorAll('[data-scene]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.scene===index)));
+ frame.src=scenes[index];
+ // ponytail: same-origin pages are the renderer; keep their controls and art as the single source of truth.
+ for(let tries=0;tries<150;tries++){
+  await new Promise(r=>setTimeout(r,100));if(version!==revision)return;
+  const doc=frame.contentDocument;
+  if(!doc||!doc.location.href.endsWith(scenes[index])||!doc.querySelector('#evolution')||doc.querySelector('#evolution').disabled)continue;
+  const style=doc.createElement('style');style.textContent='header,footer,.controls,.calibration,#checks{display:none!important}main{padding:12px 32px;max-width:none}.hero{min-height:400px;grid-template-columns:250px minmax(0,1fr);gap:28px}.hero figure{max-width:660px;width:100%;justify-self:center}body{min-height:0;background:radial-gradient(ellipse at 67% 50%,#20373188,transparent 65%)}h1{font-size:36px;line-height:1.35;letter-spacing:-1px}.intro{font-size:13px;color:#a4b8b5}.specs{margin-top:24px;color:#b9cdc4;gap:12px}.eyebrow{color:#9fc8b6;letter-spacing:2px}figcaption{font-size:10px;padding-bottom:8px;color:#98b7aa}@media(max-width:800px){main{padding:12px 20px}.hero{min-height:0;grid-template-columns:1fr;gap:0}.hero figure{margin:8px 0 0;grid-row:1}.copy{padding:0 0 18px}h1{font-size:26px;margin:12px 0}.intro{max-width:none;font-size:12px;margin:0}.specs{display:none}.eyebrow{font-size:9px}}';doc.head.append(style);
+  resize=new ResizeObserver(()=>{frame.style.height=Math.ceil(doc.querySelector('.hero').getBoundingClientRect().height+24)+'px';});resize.observe(doc.querySelector('.hero'));
+  setAmount(0);reveal.disabled=compare.disabled=card.disabled=false;status.textContent='現在 · 見慣れた形を、覚えてください。';
+  if(touring)timer=setTimeout(()=>{showFuture();timer=setTimeout(()=>{if(selected<2)select(selected+1);else{stop();status.textContent='3 つの未来を体験しました。次は、自分の写真で。';}},7000);},2500);
+  return;
+ }
+ stop();status.textContent='読み込めませんでした。モノのボタンを押して、もう一度お試しください。';
+}
+document.querySelectorAll('[data-scene]').forEach(b=>b.onclick=()=>{stop();select(+b.dataset.scene);});
+reveal.onclick=()=>{stop();showFuture();};compare.oninput=()=>{stop();setAmount(compare.value);};
+tour.onclick=()=>{if(touring){stop();return;}document.querySelector('.stage').scrollIntoView({block:'start'});touring=true;tour.textContent='自動再生を止める';select(0);};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
+card.onclick=()=>{
+ stop();setAmount(100);const doc=frame.contentDocument,c=document.createElement('canvas');c.width=1456;c.height=1260;const g=c.getContext('2d');g.fillStyle='#080c10';g.fillRect(0,0,c.width,c.height);g.fillStyle='#b7ead4';g.font='28px sans-serif';g.fillText('2127 — あなたのモノ、その先へ。',70,75);g.drawImage(doc.querySelector('#view'),0,120);g.font='32px sans-serif';g.fillText(doc.querySelector('.kept').textContent,70,1140);g.fillStyle='#9bafaf';g.font='20px sans-serif';g.fillText('写真から描く未来のデザイン · 2.5D コンセプト / 世代カード試作',70,1200);
+ const a=document.createElement('a');a.download='2127-generation-'+(selected+1)+'.png';a.href=c.toDataURL();a.click();status.textContent='世代カードの画像を保存しました。実体プリンター接続は今後の予定です。';
+};
+select(0);
+</script>
+</html>

@@ -79,6 +79,35 @@ results.push({preparedMaskEvolution:true,rejectRetainsEditor:true,editsHideStale
 for(const object of ['bottle','bottle-b','cup','banana','suica']){
  await page.goto(BASE+'/studies.html?object='+object+'&test=1');await page.waitForFunction(()=>document.querySelector('#checks').textContent.length>0);const checks=await page.locator('#checks').innerText();assert(!checks.includes('FAIL'));results.push({baseline:object,checks});
 }
+// Control real image completion order: a stale upload must never overwrite the latest choice.
+await page.goto(BASE+'/studies.html?object=banana');
+await page.waitForFunction(()=>!document.querySelector('#evolution').disabled);
+await page.evaluate(()=>{
+ window.imageCallbacks=[];const NativeImage=window.Image;window.restoreImage=()=>window.Image=NativeImage;
+ window.Image=function(){const img=new NativeImage();Object.defineProperty(img,'onload',{set(fn){img.addEventListener('load',()=>imageCallbacks.push(()=>fn.call(img)));}});return img;};
+});
+await page.locator('#file').setInputFiles('assets/segmentation/banana.jpeg');
+await page.waitForFunction(()=>imageCallbacks.length===1);
+assert(await page.locator('#evolution').isDisabled());
+await page.locator('[data-r="cup"]').click();assert(await page.locator('#evolution').isDisabled());
+await page.locator('#file').setInputFiles('assets/segmentation/water.jpg');
+await page.waitForFunction(()=>imageCallbacks.length===2);
+await page.evaluate(()=>imageCallbacks[1]());
+const newest=await page.locator('#view').evaluate(c=>c.toDataURL());
+assert((await page.locator('#loadhint').innerText()).includes('459×612'));
+await page.evaluate(()=>imageCallbacks[0]());
+assert.equal(await page.locator('#view').evaluate(c=>c.toDataURL()),newest);
+await page.locator('#file').setInputFiles('assets/segmentation/banana.jpeg');
+await page.waitForFunction(()=>imageCallbacks.length===3);
+await page.locator('#file').setInputFiles({name:'bad.txt',mimeType:'text/plain',buffer:Buffer.from('bad')});
+await page.evaluate(()=>imageCallbacks[2]());
+assert(await page.locator('#evolution').isDisabled());
+assert((await page.locator('#phase').innerText()).includes('JPEG / PNG / WebP'));
+await page.locator('#file').setInputFiles('assets/segmentation/water.jpg');
+await page.waitForFunction(()=>imageCallbacks.length===4);await page.evaluate(()=>imageCallbacks[3]());
+assert(!(await page.locator('#evolution').isDisabled()));
+await page.evaluate(()=>restoreImage());
+results.push({uploadLatestWins:true,invalidInputCancelsPending:true,uploadRecovery:true});
 // The demo promise: any photo that segments produces an evolution. These three are outside every
 // authored class and must land on the generic recipe rather than on a rejection or a wrong class.
 await page.goto(BASE+'/studies.html?object=banana');
@@ -105,7 +134,20 @@ const noisy=await page.evaluate(()=>{const c=document.createElement('canvas');c.
 await page.locator('#file').setInputFiles({name:'noisy.png',mimeType:'image/png',buffer:Buffer.from(noisy.split(',')[1],'base64')});
 await page.waitForFunction(()=>document.querySelector('#phase').classList.contains('error'));
 const refusal=await page.locator('#phase').innerText();
-assert(await page.locator('#loadhint a[href*="lab=1"]').count()===1);
+await page.locator('#loadhint button').click();
+await page.waitForFunction(()=>document.querySelector('#lab-status')?.textContent.includes('noisy.png · 比較完了'));
+assert.equal(await page.locator('#lab-view-0').evaluate(c=>c.toDataURL()),noisy);
+assert.equal(await page.locator('#lab-recipe').inputValue(),'generic');
+assert(!(await page.locator('#lab-export').isDisabled()));
+await page.evaluate(async()=>{
+ const blob=await (await fetch('assets/segmentation/banana.jpeg')).blob();const dt=new DataTransfer();
+ dt.items.add(new File([blob],'banana.jpeg',{type:'image/jpeg'}));
+ dispatchEvent(new DragEvent('drop',{dataTransfer:dt,bubbles:true,cancelable:true}));
+});
+await page.waitForFunction(()=>document.querySelector('#lab-status').textContent.includes('banana.jpeg · 比較完了'));
+await page.locator('#lab-evolve').click();await page.waitForFunction(()=>!document.querySelector('#lab-evolution').hidden);
+assert(!(await page.locator('#replay').isDisabled()));
+results.push({failedPhotoTransferredExactly:true,repairDropAndEvolution:true});
 results.push({busyBackgroundRefused:refusal});
 
 // Each recipe has its own supported proportions: picking the wrong one must be rejected with
@@ -158,6 +200,26 @@ for(const [file,src,quad,w,h] of [
 const curved=await page.evaluate(async()=>{const img=new Image();img.src='assets/segmentation/banana.jpeg';await img.decode();try{suggestCorners(img);return false;}catch{return true;}});assert(curved);results.push({curvedProposalRejected:true});
 assert.equal(errors.length,0);
 
+await page.goto(BASE+'/demo.html');
+await page.locator('#reveal').waitFor();await page.waitForFunction(()=>!document.querySelector('#reveal').disabled);
+assert.equal(await page.frameLocator('#scene').locator('#evolution').inputValue(),'0');
+await page.locator('#reveal').click();assert.equal(await page.frameLocator('#scene').locator('#evolution').inputValue(),'100');
+const [generation]=await Promise.all([page.waitForEvent('download'),page.locator('#card').click()]);
+assert.equal(generation.suggestedFilename(),'2127-generation-1.png');
+await generation.saveAs('/tmp/2127-generation-test.png');
+for(const i of [1,2,0]){await page.locator(`[data-scene="${i}"]`).click();await page.waitForFunction(()=>!document.querySelector('#reveal').disabled);assert.equal(await page.frameLocator('#scene').locator('#evolution').inputValue(),'0');}
+await page.screenshot({path:'previews/demo-desktop.png',fullPage:true});
+await page.locator('#tour').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('2127'));
+await page.locator('#tour').click();assert.equal(await page.locator('#tour').innerText(),'3 つの未来を自動で見る');
+await page.setViewportSize({width:390,height:844});
+assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+assert(await page.frameLocator('#scene').locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+await page.screenshot({path:'previews/demo-mobile.png',fullPage:true});
+await page.locator('#tour').click();
+await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('3 つの未来を体験しました'),{},{timeout:45000});
+assert.equal(await page.locator('[data-scene="2"]').getAttribute('aria-pressed'),'true');
+assert.equal(errors.length,0);
+results.push({presentation:true,cardDownload:true,mobileNoOverflow:true,completeTour:true});
 await page.goto(BASE+'/index.html?test=1');const legacy=await page.locator('pre').innerText();assert(!legacy.includes('FAIL'));results.push({legacyPassed:(legacy.match(/PASS/g)||[]).length});
 fs.writeFileSync('previews/input-tests/workflow-results.json',JSON.stringify({results,errors},null,2));console.log(JSON.stringify({results,errors},null,2));await browser.close();server.close();
 })().catch(e=>{console.error(e);process.exit(1);});

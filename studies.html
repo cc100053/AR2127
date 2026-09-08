@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="calibration.css">
 </head>
 <body><main>
-<header><div class="mark">2127<span>100 YEARS LATER</span></div><nav aria-label="モノのテスト" style="display:flex;gap:20px;flex-wrap:wrap"><a href="phone.html">スマホ</a><a href="studies.html?object=bottle" id="nav-bottle">お茶ボトル</a><a href="studies.html?object=bottle-b" id="nav-bottle-b">ステンレスボトル</a><a href="studies.html?object=cup" id="nav-cup">コップ</a><a href="studies.html?object=banana" id="nav-banana">汎用・自分の写真</a><a href="studies.html?object=suica" id="nav-suica">IC カード</a><a href="studies.html?lab=1" id="nav-lab">分離ラボ</a></nav></header>
+<header><div class="mark">2127<span>100 YEARS LATER</span></div><a href="demo.html">体験デモ ↗</a><nav aria-label="モノのテスト" style="display:flex;gap:20px;flex-wrap:wrap"><a href="phone.html">スマホ</a><a href="studies.html?object=bottle" id="nav-bottle">お茶ボトル</a><a href="studies.html?object=bottle-b" id="nav-bottle-b">ステンレスボトル</a><a href="studies.html?object=cup" id="nav-cup">コップ</a><a href="studies.html?object=banana" id="nav-banana">汎用・自分の写真</a><a href="studies.html?object=suica" id="nav-suica">IC カード</a><a href="studies.html?lab=1" id="nav-lab">分離ラボ</a></nav></header>
 <section class="hero"><div class="copy"><div class="eyebrow">FORM STUDY / <span id="number">003</span></div><h1 id="title"></h1><p class="intro" id="intro"></p><div class="specs" id="specs"></div></div>
 <figure><canvas id="view" width="1456" height="970" role="img" aria-label="現在のモノと 2127 形態の比較"></canvas><figcaption id="phase" aria-live="polite">形態推定の準備中</figcaption></figure></section>
 <div class="controls"><div class="compare"><div class="labels"><label for="evolution">現在のモノ</label><span>2127 形態</span></div><input id="evolution" aria-label="現在のモノと 2127 形態の比較" type="range" min="0" max="100" value="100" disabled></div><button id="replay" disabled>推定をやり直す ↗</button></div>
@@ -446,13 +446,21 @@ function show(){
  phase.classList.remove('error');
  slider.disabled=replay.disabled=false;evolve();
 }
+let inputRevision=0;
 function loadFile(file){
  if(!file)return;
+ const revision=++inputRevision;
+ photo=null;
+ fail('写真を読み込んでいます…');
+ phase.classList.remove('error');
+ document.getElementById('loadhint').textContent='写真を処理中です。別の写真を選ぶと、最後に選んだ写真を使います。';
  if(!/^image\/(jpeg|png|webp)$/.test(file.type))return fail('JPEG / PNG / WebP のみ対応');
  if(file.size>20*1024*1024)return fail('ファイルが大きすぎます（上限 20MB）');
  const url=URL.createObjectURL(file),img=new Image();
  img.onload=()=>{
-  URL.revokeObjectURL(url);            // release before any early return below
+  URL.revokeObjectURL(url);
+  if(revision!==inputRevision)return;
+  try {
   if(img.naturalWidth<200||img.naturalHeight<200)return fail('解像度が低すぎます（各辺 200px 以上）');
   if(img.naturalWidth*img.naturalHeight>40e6)return fail('画素数が多すぎます（上限 4000 万）');
   photo=img;autoRecipe=true;
@@ -460,13 +468,18 @@ function loadFile(file){
   const why=build();
   if(why!==true){
    // A rejection here means segmentation failed, and the lab is where that gets fixed by hand.
-   document.getElementById('loadhint').innerHTML='背景を分離できず、推定できませんでした。<a href="studies.html?lab=1">分離ラボ</a>で手直しして、そのまま推定を試せます。';
+   const hint=document.getElementById('loadhint');
+   hint.textContent='背景を分離できませんでした。写真を引き継いで修正できます。 ';
+   const repair=document.createElement('button');repair.textContent='この写真を分離ラボで修正';
+   repair.onclick=()=>{if(revision!==inputRevision)return;++inputRevision;Q.set('lab','1');startLab(file);};
+   hint.append(repair);
    return fail('対応範囲外 —— '+why);}
   document.getElementById('loadhint').textContent=
    `読み込み ${img.naturalWidth}×${img.naturalHeight}・分離 ${Math.round(performance.now()-t)}ms`;
   show();
+  }catch{fail('写真の処理に失敗しました。別の写真でもう一度お試しください');}
  };
- img.onerror=()=>{URL.revokeObjectURL(url);fail('画像のデコードに失敗しました');};
+ img.onerror=()=>{URL.revokeObjectURL(url);if(revision===inputRevision)fail('画像のデコードに失敗しました');};
  img.src=url;
 }
 if(family==='bottle'&&!Q.has('lab')){
@@ -484,10 +497,10 @@ if(family==='bottle'&&!Q.has('lab')){
    show();});
  }
  let depth=0;
- addEventListener('dragenter',e=>{e.preventDefault();if(!depth++)document.body.classList.add('drag');});
- addEventListener('dragover',e=>e.preventDefault());
- addEventListener('dragleave',()=>{if(!--depth)document.body.classList.remove('drag');});
- addEventListener('drop',e=>{e.preventDefault();depth=0;document.body.classList.remove('drag');
+ addEventListener('dragenter',e=>{if(Q.has('lab'))return;e.preventDefault();if(!depth++)document.body.classList.add('drag');});
+ addEventListener('dragover',e=>{if(!Q.has('lab'))e.preventDefault();});
+ addEventListener('dragleave',()=>{if(Q.has('lab'))return;depth=Math.max(0,depth-1);if(!depth)document.body.classList.remove('drag');});
+ addEventListener('drop',e=>{if(Q.has('lab'))return;e.preventDefault();depth=0;document.body.classList.remove('drag');
   loadFile(e.dataTransfer.files[0]);});
 }
 
@@ -503,7 +516,7 @@ function eraseRegion(pixels,x,y,tolerance=32){
  while(head<tail){const i=queue[head++];if(i%w)visit(i-1);if(i%w<w-1)visit(i+1);if(i>=w)visit(i-w);if(i<w*(h-1))visit(i+w);}
  return tail;
 }
-function startLab(){
+function startLab(initialFile=null){
  document.title='2127 分離ラボ';
  for(const el of document.querySelector('main').children)if(el.tagName!=='HEADER')el.hidden=true;
  const active=document.querySelector('[aria-current]');if(active){active.removeAttribute('aria-current');active.style.color='';}
@@ -632,7 +645,7 @@ function startLab(){
  addEventListener('dragover',e=>e.preventDefault());
  addEventListener('dragleave',()=>{dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)document.body.classList.remove('drag');});
  addEventListener('drop',e=>{e.preventDefault();dragDepth=0;document.body.classList.remove('drag');useFile(e.dataTransfer.files[0]);});
- load('assets/segmentation/'+sample.value,sample.value);if(Q.has('test'))labTest();
+ if(initialFile){get('recipe').value='generic';useFile(initialFile);}else load('assets/segmentation/'+sample.value,sample.value);if(Q.has('test'))labTest();
 }
 async function labTest(){
  const c=document.createElement('canvas');c.width=c.height=200;const g=c.getContext('2d');
@@ -661,11 +674,11 @@ async function labTest(){
 }
 
 if(Q.has('lab'))startLab();else {
-function loadDefault(){photo=new Image();const current=photo;
-photo.onload=()=>{if(photo!==current)return;
+function loadDefault(){const revision=++inputRevision;photo=new Image();const current=photo;
+photo.onload=()=>{if(photo!==current||revision!==inputRevision)return;
  if(family==='suica'&&(photo.naturalWidth!==1280||photo.naturalHeight!==961)){fail('画像サイズがキャリブレーションと一致しません');return;}
  const why=build();if(why!==true){fail('対応範囲外 —— '+why);if(Q.has('test'))selfTest();return;}
- show();if(Q.has('test'))selfTest();};photo.onerror=()=>{if(photo===current)fail('画像の読み込みに失敗しました。ローカルサーバー経由で開いてください');};photo.src=SRC[kind];
+ show();if(Q.has('test'))selfTest();};photo.onerror=()=>{if(photo===current&&revision===inputRevision)fail('画像の読み込みに失敗しました。ローカルサーバー経由で開いてください');};photo.src=SRC[kind];
 }
 loadDefault();
 if(family==='suica')mountCalibration({parent:document.querySelector('main'),kind:'IC カード',target:[[155,190],[1093,190],[1093,778],[155,778]],width:1280,height:961,onRestore:loadDefault,onReady:img=>{

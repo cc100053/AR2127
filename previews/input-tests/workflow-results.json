@@ -60,11 +60,20 @@
       "checks": "PASS calibrated source dimensions\nPASS source background is transparent\nPASS original solid area physically removed\nPASS open cuff has solid band and credential mount, clear side gap\nPASS former body contains actual transparent negative space\nPASS final composite removes old body\nPASS controls enabled"
     },
     {
+      "uploadLatestWins": true,
+      "invalidInputCancelsPending": true,
+      "uploadRecovery": true
+    },
+    {
       "genericFallback": {
         "toy.jpeg": "generic",
         "starwberry.jpeg": "generic",
         "water.jpg": "generic"
       }
+    },
+    {
+      "failedPhotoTransferredExactly": true,
+      "repairDropAndEvolution": true
     },
     {
       "busyBackgroundRefused": "対応範囲外 —— 残った領域が 74%：背景の大半が残っています"
@@ -91,6 +100,12 @@
     },
     {
       "curvedProposalRejected": true
+    },
+    {
+      "presentation": true,
+      "cardDownload": true,
+      "mobileNoOverflow": true,
+      "completeTour": true
     },
     {
       "legacyPassed": 67
