@@ -13,27 +13,27 @@
 <link rel="stylesheet" href="calibration.css">
 </head>
 <body><main>
-<header><div class="mark">2127<span>100 YEARS LATER</span></div><nav aria-label="物件測試" style="display:flex;gap:20px;flex-wrap:wrap"><a href="phone.html">手機</a><a href="studies.html?object=bottle" id="nav-bottle">茶瓶</a><a href="studies.html?object=bottle-b" id="nav-bottle-b">保溫樽</a><a href="studies.html?object=suica" id="nav-suica">交通卡</a><a href="studies.html?lab=1" id="nav-lab">去背實驗</a></nav></header>
+<header><div class="mark">2127<span>100 YEARS LATER</span></div><nav aria-label="物件測試" style="display:flex;gap:20px;flex-wrap:wrap"><a href="phone.html">手機</a><a href="studies.html?object=bottle" id="nav-bottle">茶瓶</a><a href="studies.html?object=bottle-b" id="nav-bottle-b">保溫樽</a><a href="studies.html?object=cup" id="nav-cup">水杯</a><a href="studies.html?object=suica" id="nav-suica">交通卡</a><a href="studies.html?lab=1" id="nav-lab">去背實驗</a></nav></header>
 <section class="hero"><div class="copy"><div class="eyebrow">FORM STUDY / <span id="number">003</span></div><h1 id="title"></h1><p class="intro" id="intro"></p><div class="specs" id="specs"></div></div>
 <figure><canvas id="view" width="1456" height="970" role="img" aria-label="原物件與未來形態比較"></canvas><figcaption id="phase" aria-live="polite">準備形態推演</figcaption></figure></section>
 <div class="controls"><div class="compare"><div class="labels"><label for="evolution">原始物件</label><span>2127 形態</span></div><input id="evolution" aria-label="原始物件與 2127 形態比較" type="range" min="0" max="100" value="100" disabled></div><button id="replay" disabled>重新推演 ↗</button></div>
 <div class="controls" id="loadwrap" hidden style="flex-wrap:wrap;gap:14px">
 <label class="filebtn">放一張新相片入嚟 …<input type="file" id="file" accept="image/jpeg,image/png,image/webp" hidden></label>
-<span style="display:flex;align-items:center;gap:8px"><span class="hint">配方</span><button class="rbtn" data-r="bottle" aria-pressed="false">茶瓶・培養循環</button><button class="rbtn" data-r="flask" aria-pressed="false">鋼樽・大氣取水</button></span>
-<span class="hint" id="loadhint">或直接將相片拖入頁面・單一直立物件・乾淨漸層背景</span></div>
+<span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="hint">配方</span><button class="rbtn" data-r="bottle" aria-pressed="false">茶瓶・培養循環</button><button class="rbtn" data-r="flask" aria-pressed="false">鋼樽・大氣取水</button><button class="rbtn" data-r="cup" aria-pressed="false">闊身容器・懸掛內膽</button></span>
+<span class="hint" id="loadhint">或直接將相片拖入頁面・單一物件・乾淨漸層背景・配方要自己揀</span></div>
 <div class="controls" id="elevwrap" hidden><div class="compare"><div class="labels"><label for="elevation">鏡頭：正面</label><span>斜視 45°</span></div><input id="elevation" aria-label="鏡頭仰角" type="range" min="0" max="100" value="0"></div><span style="font:10px ui-monospace,monospace;color:#5f757e;white-space:nowrap">原型・程序幾何重新投影</span></div>
 <footer><p class="kept" id="kept"></p><p>靜態相片・本地程序生成<br>單張相片校準測試，未包含旋轉追蹤。</p></footer><pre id="checks" hidden></pre>
 </main><script src="segmentation.js"></script><script src="calibration.js"></script><script>
 'use strict';
-const SRC={bottle:'assets/bottle-source.webp','bottle-b':'assets/bottle-b-source.jpeg',suica:'assets/suica-source.jpg'};
+const SRC={bottle:'assets/bottle-source.webp','bottle-b':'assets/bottle-b-source.jpeg',cup:'assets/segmentation/water.jpg',suica:'assets/suica-source.jpg'};
 const Q=new URLSearchParams(location.search),kind=!Q.has('lab')&&SRC[Q.get('object')]?Q.get('object'):'bottle',family=kind==='suica'?'suica':'bottle';
-const COPY={flask:{number:'005',title:'水，<br>由空氣嚟。',intro:'保溫層退場。真空夾層外露成冷凝鰭，樽身自己由空氣抽水；你只需要帶住佢。',specs:['外露冷凝鰭層','底部進氣與集水','保留鋼蓋與樽身輪廓'],kept:'一百年後，還是想隨時有一口水。'},bottle:{number:'003',title:'一口茶，<br>一個循環。',intro:'拋棄式瓶身退場。保留瓶口與茶液，讓培養、過濾與補水成為同一件容器。',specs:['循環培養艙','相連過濾莢','保留瓶口與茶液'],kept:'一百年後，還是為了那一口茶。'},suica:{number:'004',title:'通行，<br>隨身而行。',intro:'卡片縮成腕上的通行核心。玉色帶體環抱手腕，熟悉的識別面陪你走過下一道門。',specs:['開口式腕環','無接觸感應端','保留原卡識別面'],kept:'一百年後，還是想順利回家。'}};
+const COPY={cup:{number:'006',title:'一啖嘅<br>溫度。',intro:'杯壁退場。剩返就口嘅杯緣同承座，中間換成懸掛內膽同三條調溫臂；飲品淨係喺你手上嗰陣先保住溫度。',specs:['懸掛式內膽','三臂調溫葉片','保留杯緣與承座'],kept:'一百年後，還是想飲啖啱溫度嘅嘢。'},flask:{number:'005',title:'水，<br>由空氣嚟。',intro:'保溫層退場。真空夾層外露成冷凝鰭，樽身自己由空氣抽水；你只需要帶住佢。',specs:['外露冷凝鰭層','底部進氣與集水','保留鋼蓋與樽身輪廓'],kept:'一百年後，還是想隨時有一口水。'},bottle:{number:'003',title:'一口茶，<br>一個循環。',intro:'拋棄式瓶身退場。保留瓶口與茶液，讓培養、過濾與補水成為同一件容器。',specs:['循環培養艙','相連過濾莢','保留瓶口與茶液'],kept:'一百年後，還是為了那一口茶。'},suica:{number:'004',title:'通行，<br>隨身而行。',intro:'卡片縮成腕上的通行核心。玉色帶體環抱手腕，熟悉的識別面陪你走過下一道門。',specs:['開口式腕環','無接觸感應端','保留原卡識別面'],kept:'一百年後，還是想順利回家。'}};
 function setCopy(type){const copy=COPY[type];
 for(const id of ['number','intro','kept'])document.getElementById(id).textContent=copy[id];
 document.getElementById('title').innerHTML=copy.title;
 document.getElementById('specs').innerHTML=copy.specs.map((s,i)=>`<div><span>0${i+1}</span>${s}</div>`).join('');
 }
-setCopy(kind==='bottle-b'?'flask':family==='bottle'?'bottle':'suica');
+setCopy(kind==='bottle-b'?'flask':kind==='cup'?'cup':family==='bottle'?'bottle':'suica');
 document.getElementById('nav-'+kind).style.color='#9ef4de';document.getElementById('nav-'+kind).setAttribute('aria-current','page');
 const canvas=document.getElementById('view'),ctx=canvas.getContext('2d'),slider=document.getElementById('evolution'),replay=document.getElementById('replay'),phase=document.getElementById('phase');
 let photo=new Image();const source=document.createElement('canvas'),future=document.createElement('canvas');
@@ -127,14 +127,14 @@ function cuff(){
  for(let i=0;i<5;i++)line(c,`M-80 ${i*14+8} L-73 ${i*14+8}`,'#b7d89a',1.2);
  c.restore();
 }
-let anchors=null,recipe=kind==='bottle-b'?'flask':'bottle';
+let anchors=null,recipe=kind==='bottle-b'?'flask':kind==='cup'?'cup':'bottle';
 const E0=Math.asin(.085),E1=45*Math.PI/180;
 // Redraw the future canvas from scratch. build() ran once and each renderer calls scale(2,2),
 // so the transform must be reset here or repeated elevation redraws would compound it (gotcha #9).
 function renderFuture(elev=E0){
  const c=future.getContext('2d');
  c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,1456,970);
- if(family!=='bottle')cuff();else if(recipe==='flask')flask(elev);else bottle();
+ if(family!=='bottle')cuff();else if(recipe==='cup')cup();else if(recipe==='flask')flask(elev);else bottle();
 }
 // Photo B is a vacuum steel flask: it has already solved the disposable bottle's problem, so it
 // gets its own evolution rather than the tea recipe. Its defining property is holding a state
@@ -192,6 +192,53 @@ function flask(elev){
  line(c,'M311 388 Q365 399 419 388','#c8e6f0',1.7,3);
  oval(c,365,95,29,RY(29,6),'#243b43','#c8dae2',1);
 }
+// A cup is not a bottle pushed sideways: it is open at the top and meant to be drunk from
+// directly, so its century is about the drink's temperature, not about storing or harvesting.
+// The straight wall goes; the rim you put your mouth on and the foot it stands on remain.
+// Unlike bottle()/flask(), every x here is derived from the mask's own measured half-width,
+// because this class spans 0.6-1.15 width/height instead of one fixture's proportions.
+function cup(){
+ const c=future.getContext('2d');c.scale(2,2);
+ const k=428.2/(anchors.base-anchors.top),hw=anchors.width*k/2,cx=364.8,TOP=22.3,BOT=450.5;
+ const clay=grad(c,cx-hw,0,cx+hw,0,[[0,'#4b3a33'],[.24,'#f4e7d6'],[.56,'#cfae8e'],[1,'#3d302b']]);
+ const shell=grad(c,cx-hw*.42,0,cx+hw*.42,0,[[0,'#2f2a2a'],[.22,'#f0e6dbb0'],[.55,'#a2938aa0'],[1,'#282224']]);
+ const amber=grad(c,0,TOP+150,0,BOT-70,[[0,'#f2c983c0'],[.45,'#d4903dd0'],[1,'#7f4a1ae0']]);
+ const arm=(d,w=8)=>{line(c,d,'#2a1f1a',w+3);line(c,d,'#cba887',w);line(c,d,'#f8ead8',1.1);};
+ const yb=TOP+44,yf=BOT-46,cb=yf-38;
+ // The photographed drinking rim and foot stay; the wall and its contents between them go.
+ c.save();c.beginPath();c.rect(0,0,728,yb);c.clip();c.drawImage(source,0,0,728,485);c.restore();
+ c.save();c.beginPath();c.rect(0,yf,728,485-yf);c.clip();c.drawImage(source,0,0,728,485);c.restore();
+ // Back hanger first: it passes behind the suspended core, so the core reads as hung inside.
+ arm(`M${cx} ${yb-4} L${cx} ${cb-24}`,6);
+ // Mid brace ties the three arms together; the core hangs through it.
+ oval(c,cx,TOP+232,hw*1.02,hw*.12,null,'#c9a988',2.2);
+ // Suspended inner vessel, tapered and closed at the foot, hung from the rim collar.
+ const core=`M${cx-hw*.40} ${yb+18} Q${cx} ${yb+4} ${cx+hw*.40} ${yb+18} L${cx+hw*.28} ${cb-22} Q${cx} ${cb+10} ${cx-hw*.28} ${cb-22} Z`;
+ shape(c,core,shell,'#e6d2ba',1.2);
+ const lvl=yb+18+(cb-yb-18)*.5;
+ shape(c,`M${cx-hw*.345} ${lvl} Q${cx} ${lvl+12} ${cx+hw*.345} ${lvl} L${cx+hw*.28} ${cb-22} Q${cx} ${cb+10} ${cx-hw*.28} ${cb-22} Z`,amber,'#f4c883',.9);
+ oval(c,cx,lvl,hw*.345,hw*.055,'#f9d69ab0','#ffeecb',1);
+ line(c,`M${cx-hw*.31} ${yb+30} L${cx-hw*.24} ${cb-30}`,'#fff3e090',1.6);
+ // Three arms carry and temper the core: they bow outside the old wall, then plant on a stance
+ // wider than the cup ever had. Slit lamellae run up each blade, not stacked rings (that is flask()).
+ for(const side of [-1,1]){
+  const x1=cx+side*hw*.93,x2=cx+side*hw*1.05,x3=cx+side*hw*1.07;
+  shape(c,`M${x1} ${yb-2} Q${x2+side*8} ${TOP+190} ${x2} ${yf-12} L${x3} ${BOT-8} L${x3-side*20} ${BOT-8} L${x2-side*19} ${yf-14} Q${x2-side*25} ${TOP+193} ${x1-side*13} ${yb} Z`,clay,'#f3e3d1',.9);
+  line(c,`M${x1-side*5} ${yb+8} Q${x2-side*12} ${TOP+193} ${x2-side*9} ${yf-18}`,'#ffd6a2',1.4,3);
+  for(let i=0;i<9;i++){const t=(i+.5)/9,y=yb+16+(yf-34-yb)*t,px=x1+(x2-x1)*Math.sin(t*Math.PI*.9);
+   line(c,`M${px-side*4} ${y+1} L${px-side*14} ${y+6}`,'#6d4f3f',2.4);line(c,`M${px-side*4} ${y} L${px-side*14} ${y+5}`,'#f0d9bd',.7);}
+  // Strut back onto the photographed foot, so the stance is seated on the object, not beside it.
+  arm(`M${x3-side*10} ${BOT-16} L${cx+side*hw*.46} ${yf+4}`,6);
+  oval(c,x3-side*10,BOT-8,15,4.5,'#3d2b23','#dbbb9d',1);
+ }
+ // Collars close the joints at both surviving ends.
+ shape(c,`M${cx-hw*.96} ${yb-8} Q${cx} ${yb+9} ${cx+hw*.96} ${yb-8} L${cx+hw*.92} ${yb+7} Q${cx} ${yb+24} ${cx-hw*.92} ${yb+7} Z`,clay,'#f6e6d4',1);
+ line(c,`M${cx-hw*.78} ${yb+7} Q${cx} ${yb+20} ${cx+hw*.78} ${yb+7}`,'#ffdcae',1.5,3);
+ // The core is hung from the rim and footed on the surviving base: supported at both ends.
+ arm(`M${cx} ${cb+4} L${cx} ${yf-1}`,5);
+ oval(c,cx,yf+1,hw*.42,hw*.055,null,'#e6cbaf',1.4);
+ oval(c,cx,yf-1,hw*.13,hw*.03,'#5b4238','#e0c3a6',1);
+}
 // One reason per failed condition. A single 「不支援」 line cannot tell the operator whether to
 // re-shoot, crop, or fix the mask in the lab, and every rejection here has a different remedy.
 // The shape tests alone are geometric and cannot tell a good mask from none at all: a cluttered
@@ -199,13 +246,15 @@ function flask(elev){
 // it conflates "background not removed" with "object simply framed tight", which would reject a
 // correctly segmented photo. Reaching both side borders is the signal that the frame, not an
 // object, is what survived; the loose area bound catches a mask that hugs one edge only.
-function bottleGate(s,h){
+const RANGE={bottle:[.15,.6],flask:[.15,.6],cup:[.6,1.15]},RNAME={bottle:'茶瓶',flask:'保溫樽',cup:'闊身容器'};
+function bottleGate(s,h,rec){
  if(!s)return '搵唔到前景：物件同背景顏色太接近';
  if(s.bothSides)return '剪影掂到左右兩邊畫框：背景未清走（可喺實驗模式修圖）';
  if(s.kept>=.6)return `保留範圍達 ${Math.round(s.kept*100)}%：背景大部分未清走`;
  if(s.base-s.top<=h*.25)return '物件太細：高度需要佔畫面四分一以上';
- const asp=s.width/(s.base-s.top);
- if(asp<=.15||asp>=.6)return `闊高比 ${asp.toFixed(2)} 唔喺直立樽形範圍（0.15–0.6）`;
+ const asp=s.width/(s.base-s.top),[lo,hi]=RANGE[rec];
+ if(asp<=lo||asp>=hi){const fit=Object.keys(RANGE).find(r=>RANGE[r][0]!==lo&&asp>RANGE[r][0]&&asp<RANGE[r][1]);
+  return `闊高比 ${asp.toFixed(2)} 唔喺「${RNAME[rec]}」配方範圍（${lo}–${hi}）`+(fit?`；比較接近「${RNAME[fit]}」配方，可以喺配方揀返`:'');}
  return null;
 }
 // Returns true, or the reason this photo/mask was rejected.
@@ -216,7 +265,7 @@ function build(prepared=null){
  c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,1456,970);c.scale(2,2);
  if(family==='bottle'){
   // Reject anything that is not one upright bottle-shaped silhouette rather than rendering nonsense.
-  const s=prepared||segment(photo),why=bottleGate(s,photo.naturalHeight);if(why)return why;
+  const s=prepared||segment(photo),why=bottleGate(s,photo.naturalHeight,recipe);if(why)return why;
   // bottle()'s geometry is drawn for a bottle whose top/base/centre sit at 22.3/450.5/364.8.
   // Placing any measured bottle onto those anchors reuses that artwork without re-authoring it.
   const k=428.2/(s.base-s.top);
@@ -240,12 +289,12 @@ if(kind==='bottle-b'){const wrap=document.getElementById('elevwrap'),el=document
 slider.addEventListener('input',()=>{cancelAnimationFrame(raf);raf=0;draw(+slider.value/100);phase.textContent=+slider.value===0?'原始物件':+slider.value===100?'2127 / 形態完成':'原型 ↔ 未來形態';});replay.addEventListener('click',evolve);
 function selfTest(){const rows=[],check=(n,ok)=>rows.push(`${ok?'PASS':'FAIL'} ${n}`),a=source.getContext('2d').getImageData(0,0,1456,970).data,b=future.getContext('2d').getImageData(0,0,1456,970).data;let count=0,removed=0,added=0;for(let i=3;i<a.length;i+=4){if(a[i]>200){count++;if(b[i]<30)removed++;}else if(a[i]<10&&b[i]>180)added++;}
  if(family==='bottle'){check('background actually removed, not merely plausible geometry',!!anchors&&!anchors.bothSides&&anchors.kept<.6);
-  check('rejection names the failing condition',/掂到左右/.test(bottleGate({bothSides:true,kept:.2,top:0,base:100,width:30},200))&&/闊高比/.test(bottleGate({bothSides:false,kept:.2,top:0,base:100,width:90},200))&&bottleGate(anchors,photo.naturalHeight)===null);
+  check('rejection names the failing condition and the recipe that fits',/掂到左右/.test(bottleGate({bothSides:true,kept:.2,top:0,base:100,width:30},200,recipe))&&/闊身容器/.test(bottleGate({bothSides:false,kept:.2,top:0,base:100,width:90},200,'bottle'))&&bottleGate(anchors,photo.naturalHeight,recipe)===null);
   check('anchors measured from this photo, not hardcoded',!!anchors&&anchors.base-anchors.top>photo.naturalHeight*.25&&Math.abs(anchors.cx-photo.naturalWidth/2)<photo.naturalWidth*.2);
   if(kind==='bottle'){const k=428.2/(anchors.base-anchors.top);
    check('calibrated fixture still lands on its authored placement',Math.abs(364.8-anchors.cx*k-150.6)<3&&Math.abs(photo.naturalWidth*k-428.8)<6);}}
  else check('calibrated source dimensions',photo.naturalWidth===1280&&photo.naturalHeight===961);check('source background is transparent',a[3]===0&&count>1000);check('original solid area physically removed',removed/count>(family==='bottle'?.12:.3));if(family==='bottle')check('new structures extend beyond source',added/count>.05);else{const alpha=(x,y)=>b[(y*2*1456+x*2)*4+3];check('open cuff has solid band and credential mount, clear side gap',alpha(358,125)>200&&alpha(312,330)>200&&alpha(581,229)===0);}
- const hole=kind==='bottle-b'?[314,160]:family==='bottle'?[309,280]:[365,228],k=(hole[1]*2*1456+hole[0]*2)*4+3;check('former body contains actual transparent negative space',a[k]>200&&b[k]===0);draw();check('final composite removes old body',ctx.getImageData(0,0,1456,970).data[k]<30);check('controls enabled',!slider.disabled&&!replay.disabled);
+ const hole=kind==='bottle-b'?[314,160]:kind==='cup'?[250,300]:family==='bottle'?[309,280]:[365,228],k=(hole[1]*2*1456+hole[0]*2)*4+3;check('former body contains actual transparent negative space',a[k]>200&&b[k]===0);draw();check('final composite removes old body',ctx.getImageData(0,0,1456,970).data[k]<30);check('controls enabled',!slider.disabled&&!replay.disabled);
  if(family==='bottle'){
   // build() is now re-entrant (file input can load repeatedly). It applies scale(2,2), so without
   // the reset at its head a second load would draw the source at half size and every anchor-driven
@@ -319,7 +368,11 @@ if(family==='bottle'&&!Q.has('lab')){
   b.addEventListener('click',()=>{
    recipe=b.dataset.r;setCopy(recipe);
    for(const o of wrap.querySelectorAll('.rbtn'))o.setAttribute('aria-pressed',String(o.dataset.r===recipe));
-   if(anchors){renderFuture();evolve();}});
+   // Each recipe has its own supported proportions, so switching must re-run the gate:
+   // a tea bottle silhouette is not a cup and must be rejected rather than drawn as one.
+   if(!photo||!photo.naturalWidth)return;
+   const why=build();if(why!==true)return fail('不在支援範圍——'+why);
+   show();});
  }
  let depth=0;
  addEventListener('dragenter',e=>{e.preventDefault();if(!depth++)document.body.classList.add('drag');});
@@ -365,7 +418,7 @@ function startLab(){
  <label>點選容差 <input id="lab-tolerance" type="number" required min="0" max="100" value="32"></label>
  <label>X <input id="lab-x" type="number" required min="0" value="0"></label><label>Y <input id="lab-y" type="number" required min="0" value="0"></label><button id="lab-erase" disabled>清除座標位置</button></div>
  <p class="lab-note" id="lab-help">點實驗圖內嘅背景，清除同色連通區域；鍵盤亦可輸入分析圖嘅像素座標。容差越高範圍可能越大。保留最近 8 步還原；重設可回到初次去背。</p></details>
- <p class="lab-note">預覽底色唔會影響去背或匯出，亦唔係模擬換背景拍攝。透明玻璃同白色物件未能單靠顏色可靠分辨；黑白遮罩係保留範圍，唔係深度圖。</p><div class="lab-settings"><label>演化配方 <select id="lab-recipe"><option value="bottle">即棄茶瓶 → 循環培養</option><option value="flask">保溫樽 → 大氣取水</option></select></label><button id="lab-evolve" disabled>用此遮罩試演化</button><span class="lab-note">只適用於直立樽形，配方由你選擇。其他物件仍可修圖及匯出。</span></div><section id="lab-evolution" hidden aria-label="樽形演化預覽"></section><pre id="lab-checks" hidden></pre>`;
+ <p class="lab-note">預覽底色唔會影響去背或匯出，亦唔係模擬換背景拍攝。透明玻璃同白色物件未能單靠顏色可靠分辨；黑白遮罩係保留範圍，唔係深度圖。</p><div class="lab-settings"><label>演化配方 <select id="lab-recipe"><option value="bottle">即棄茶瓶 → 循環培養</option><option value="flask">保溫樽 → 大氣取水</option><option value="cup">闊身容器 → 懸掛內膽</option></select></label><button id="lab-evolve" disabled>用此遮罩試演化</button><span class="lab-note">只適用於直立樽形，配方由你選擇。其他物件仍可修圖及匯出。</span></div><section id="lab-evolution" hidden aria-label="樽形演化預覽"></section><pre id="lab-checks" hidden></pre>`;
  document.querySelector('main').append(lab);
  const get=id=>document.getElementById('lab-'+id),status=get('status'),sample=get('sample'),editable=get('view-2'),g=editable.getContext('2d');
  const xInput=get('x'),yInput=get('y'),tolerance=get('tolerance'),bgTolerance=get('bg-tolerance'),enclosed=get('enclosed'),shadow=get('shadow');
@@ -457,7 +510,7 @@ function startLab(){
   try{await img.decode();if(version!==revision)return;
    const geometry=maskGeometry(editable);
    photo=img;recipe=get('recipe').value;setCopy(recipe);
-   const why=geometry?build(geometry):bottleGate(null);
+   const why=geometry?build(geometry):bottleGate(null,0,recipe);
    if(why!==true){fail('不在支援範圍——'+why);message(`此遮罩未能套用樽配方：${why}；請繼續修圖或匯出`,true);preview.hidden=true;return;}
    preview.hidden=false;show();message(`${name} · 已用目前遮罩試演化（手動選配方，非自動辨識）`);
    preview.scrollIntoView({behavior:'instant',block:'start'});

@@ -7,6 +7,7 @@
 - `toy-cutout.png` / `toy-mask.png`: latest exported transparent image / grayscale alpha mask (the latter supersedes the early toy diagnostic mask).
 - `bridge-bottle*.png`: edited-mask-to-authored-evolution flow.
 - `reject-reasons.json` / `reject-reason.png`: per-condition rejection messages on the four out-of-class photos.
+- `cup-recipe-mismatch.png`: the cup photo rejected after picking a bottle recipe, naming the recipe that fits.
 - `calibrated-phone.png` / `calibrated-card.png`: translated/padded fixture calibration, not different real objects.
 
 Other result files and screenshots below retain earlier experiment history; use the latest workflow result for current status.

@@ -76,9 +76,24 @@ for(const [sample,recipe,title] of [['bottle','bottle','一口茶'],['bottle-b',
  await page.locator('#lab-reset').click();assert(await page.locator('#lab-evolution').isHidden());
 }
 results.push({preparedMaskEvolution:true,rejectRetainsEditor:true,editsHideStalePreview:true});
-for(const object of ['bottle','bottle-b','suica']){
+for(const object of ['bottle','bottle-b','cup','suica']){
  await page.goto(BASE+'/studies.html?object='+object+'&test=1');await page.waitForFunction(()=>document.querySelector('#checks').textContent.length>0);const checks=await page.locator('#checks').innerText();assert(!checks.includes('FAIL'));results.push({baseline:object,checks});
 }
+// Each recipe has its own supported proportions: picking the wrong one must be rejected with
+// the reason and the recipe that does fit, not drawn as if it were that class.
+await page.goto(BASE+'/studies.html?object=cup');
+await page.waitForFunction(()=>!document.querySelector('#replay').disabled);
+await page.locator('.rbtn[data-r=bottle]').click();
+await page.waitForFunction(()=>document.querySelector('#phase').classList.contains('error'));
+const mismatch=await page.locator('#phase').innerText();
+assert(mismatch.includes('闊高比')&&mismatch.includes('闊身容器'));
+await page.locator('.rbtn[data-r=cup]').click();
+await page.waitForFunction(()=>!document.querySelector('#phase').classList.contains('error'));
+await page.screenshot({path:'previews/input-tests/cup-recipe-mismatch.png',fullPage:true});
+results.push({cupRecipeMismatch:mismatch,recoveredByReselecting:true});
+await page.setViewportSize({width:390,height:844});
+assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
+await page.setViewportSize({width:1280,height:1000});
 for(const [file,src,quad,w,h] of [
  ['phone.html','assets/phone-source.jpg',[[421,65],[662,108],[329,408],[61,329]],728,485],
  ['studies.html?object=suica','assets/suica-source.jpg',[[155,190],[1093,190],[1093,778],[155,778]],1280,961]
