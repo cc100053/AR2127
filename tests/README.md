@@ -3,8 +3,8 @@
 No application build or new runtime dependency is needed. Serve the repository with `python3 -m http.server 8128 --bind 127.0.0.1` and open:
 
 - `studies.html?lab=1&test=1`: 12 segmentation / mask geometry checks.
-- `studies.html?object=bottle&test=1`: 10 checks.
-- `studies.html?object=bottle-b&test=1`: 12 checks.
+- `studies.html?object=bottle&test=1`: 11 checks.
+- `studies.html?object=bottle-b&test=1`: 13 checks.
 - `studies.html?object=suica&test=1`: 7 checks.
 - `phone.html?test=1`: 9 checks.
 - `index.html?test=1`: 67 legacy checks.

@@ -1,0 +1,13 @@
+{
+ "date": "2026-09-08",
+ "what": "studies.html?object=bottle real file input; each rejection now names the failing gate condition instead of one generic line.",
+ "rejections": {
+  "banana.jpeg": "不在支援範圍——闊高比 2.04 唔喺直立樽形範圍（0.15–0.6）",
+  "water.jpg": "不在支援範圍——闊高比 0.73 唔喺直立樽形範圍（0.15–0.6）",
+  "starwberry.jpeg": "不在支援範圍——闊高比 0.91 唔喺直立樽形範圍（0.15–0.6）",
+  "toy.jpeg": "不在支援範圍——闊高比 0.97 唔喺直立樽形範圍（0.15–0.6）"
+ },
+ "recoveredAfterRejection": "bottle-b-source.jpeg → 2127 / 形態完成",
+ "pageErrors": [],
+ "note": "Reported ratios match the 2026-09-07 measurements (2.044 / 0.727 / 0.913 / 0.970). The 剪影掂到左右兩邊畫框 and 保留範圍 branches have no in-repo photo; they are covered by the synthetic self-check 'rejection names the failing condition'."
+}

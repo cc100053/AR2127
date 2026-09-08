@@ -192,21 +192,31 @@ function flask(elev){
  line(c,'M311 388 Q365 399 419 388','#c8e6f0',1.7,3);
  oval(c,365,95,29,RY(29,6),'#243b43','#c8dae2',1);
 }
+// One reason per failed condition. A single 「不支援」 line cannot tell the operator whether to
+// re-shoot, crop, or fix the mask in the lab, and every rejection here has a different remedy.
+// The shape tests alone are geometric and cannot tell a good mask from none at all: a cluttered
+// background survives segmentation whole and can still land inside them. Area alone is no better —
+// it conflates "background not removed" with "object simply framed tight", which would reject a
+// correctly segmented photo. Reaching both side borders is the signal that the frame, not an
+// object, is what survived; the loose area bound catches a mask that hugs one edge only.
+function bottleGate(s,h){
+ if(!s)return '搵唔到前景：物件同背景顏色太接近';
+ if(s.bothSides)return '剪影掂到左右兩邊畫框：背景未清走（可喺實驗模式修圖）';
+ if(s.kept>=.6)return `保留範圍達 ${Math.round(s.kept*100)}%：背景大部分未清走`;
+ if(s.base-s.top<=h*.25)return '物件太細：高度需要佔畫面四分一以上';
+ const asp=s.width/(s.base-s.top);
+ if(asp<=.15||asp>=.6)return `闊高比 ${asp.toFixed(2)} 唔喺直立樽形範圍（0.15–0.6）`;
+ return null;
+}
+// Returns true, or the reason this photo/mask was rejected.
 function build(prepared=null){
  // Re-runnable: a second load must not inherit the first one's transform or pixels.
  // build() used to run exactly once, so the scale(2,2) below would compound silently (gotcha #9).
  const c=source.getContext('2d');
  c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,1456,970);c.scale(2,2);
  if(family==='bottle'){
-  const s=prepared||segment(photo);if(!s)return false;
   // Reject anything that is not one upright bottle-shaped silhouette rather than rendering nonsense.
-  // The shape tests alone are geometric and cannot tell a good mask from none at all: a cluttered
-  // background survives segmentation whole and can still land inside them. Area alone is no better —
-  // it conflates "background not removed" with "object simply framed tight", which would reject a
-  // correctly segmented photo. Reaching both side borders is the signal that the frame, not an
-  // object, is what survived; the loose area bound catches a mask that hugs one edge only.
-  const asp=s.width/(s.base-s.top);
-  if(!(s.base-s.top>photo.naturalHeight*.25&&asp>.15&&asp<.6&&!s.bothSides&&s.kept<.6))return false;
+  const s=prepared||segment(photo),why=bottleGate(s,photo.naturalHeight);if(why)return why;
   // bottle()'s geometry is drawn for a bottle whose top/base/centre sit at 22.3/450.5/364.8.
   // Placing any measured bottle onto those anchors reuses that artwork without re-authoring it.
   const k=428.2/(s.base-s.top);
@@ -230,6 +240,7 @@ if(kind==='bottle-b'){const wrap=document.getElementById('elevwrap'),el=document
 slider.addEventListener('input',()=>{cancelAnimationFrame(raf);raf=0;draw(+slider.value/100);phase.textContent=+slider.value===0?'原始物件':+slider.value===100?'2127 / 形態完成':'原型 ↔ 未來形態';});replay.addEventListener('click',evolve);
 function selfTest(){const rows=[],check=(n,ok)=>rows.push(`${ok?'PASS':'FAIL'} ${n}`),a=source.getContext('2d').getImageData(0,0,1456,970).data,b=future.getContext('2d').getImageData(0,0,1456,970).data;let count=0,removed=0,added=0;for(let i=3;i<a.length;i+=4){if(a[i]>200){count++;if(b[i]<30)removed++;}else if(a[i]<10&&b[i]>180)added++;}
  if(family==='bottle'){check('background actually removed, not merely plausible geometry',!!anchors&&!anchors.bothSides&&anchors.kept<.6);
+  check('rejection names the failing condition',/掂到左右/.test(bottleGate({bothSides:true,kept:.2,top:0,base:100,width:30},200))&&/闊高比/.test(bottleGate({bothSides:false,kept:.2,top:0,base:100,width:90},200))&&bottleGate(anchors,photo.naturalHeight)===null);
   check('anchors measured from this photo, not hardcoded',!!anchors&&anchors.base-anchors.top>photo.naturalHeight*.25&&Math.abs(anchors.cx-photo.naturalWidth/2)<photo.naturalWidth*.2);
   if(kind==='bottle'){const k=428.2/(anchors.base-anchors.top);
    check('calibrated fixture still lands on its authored placement',Math.abs(364.8-anchors.cx*k-150.6)<3&&Math.abs(photo.naturalWidth*k-428.8)<6);}}
@@ -270,7 +281,6 @@ function selfTest(){const rows=[],check=(n,ok)=>rows.push(`${ok?'PASS':'FAIL'} $
   check('raising the camera reprojects the geometry',moved>20000);
   renderFuture(E0);draw();}
  const out=document.getElementById('checks');out.hidden=false;out.textContent=rows.join('\n');return{rows,removed:removed/count,added:added/count};}
-const UNSUPPORTED='此相片不在支援範圍：需要單一直立物件、乾淨漸層背景、完整入鏡';
 function fail(msg){
  for(const g of [source.getContext('2d'),future.getContext('2d'),ctx]){
   g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,1456,970);}
@@ -293,7 +303,7 @@ function loadFile(file){
   if(img.naturalWidth*img.naturalHeight>40e6)return fail('像素太多（上限 4000 萬）');
   photo=img;
   const t=performance.now();
-  if(!build())return fail(UNSUPPORTED);
+  const why=build();if(why!==true)return fail('不在支援範圍——'+why);
   document.getElementById('loadhint').textContent=
    `已載入 ${img.naturalWidth}×${img.naturalHeight}・分割 ${Math.round(performance.now()-t)}ms`;
   show();
@@ -447,7 +457,8 @@ function startLab(){
   try{await img.decode();if(version!==revision)return;
    const geometry=maskGeometry(editable);
    photo=img;recipe=get('recipe').value;setCopy(recipe);
-   if(!geometry||!build(geometry)){fail(UNSUPPORTED);message('此遮罩未符合直立樽形比例；請繼續修圖或匯出，毋須套用樽配方',true);preview.hidden=true;return;}
+   const why=geometry?build(geometry):bottleGate(null);
+   if(why!==true){fail('不在支援範圍——'+why);message(`此遮罩未能套用樽配方：${why}；請繼續修圖或匯出`,true);preview.hidden=true;return;}
    preview.hidden=false;show();message(`${name} · 已用目前遮罩試演化（手動選配方，非自動辨識）`);
    preview.scrollIntoView({behavior:'instant',block:'start'});
   }catch(e){if(version===revision){preview.hidden=true;message('演化預覽失敗，遮罩仍然保留，可繼續編輯',true);}}
@@ -491,7 +502,7 @@ if(Q.has('lab'))startLab();else {
 function loadDefault(){photo=new Image();const current=photo;
 photo.onload=()=>{if(photo!==current)return;
  if(family==='suica'&&(photo.naturalWidth!==1280||photo.naturalHeight!==961)){fail('圖片尺寸與校準不符');return;}
- if(!build()){fail(UNSUPPORTED);if(Q.has('test'))selfTest();return;}
+ const why=build();if(why!==true){fail('不在支援範圍——'+why);if(Q.has('test'))selfTest();return;}
  show();if(Q.has('test'))selfTest();};photo.onerror=()=>{if(photo===current)fail('圖片載入失敗，請用本地預覽網址開啟');};photo.src=SRC[kind];
 }
 loadDefault();

@@ -11,7 +11,9 @@
 - `calibration.js`／`calibration.css` 共用四角校準，`phone.html`／Suica 可載入新相、點選或輸入四角、套用既有造型及返回原示範。透視對位沿用手機原有 `project()`，加入逆映射及 premultiplied-alpha 雙線性取樣。
 - 校準驗證用原相加邊框／移位，回復同一姿態最大差 1 色階；尚未有另一款真實手機／卡片嘅視覺驗證。對任意物件或新造型不作通用生成聲稱。
 - 發現讀回遮罩令初次／第二次 source resampling backend 不一致；固定 read-heavy canvas 使用 `willReadFrequently` 後，原本嚴格重畫一致性檢查通過，未放寬檢查。
-- Lab 12 + studies 29 + phone 9 + legacy 67 = 117 自我檢查通過；另有匯出重入、還原、載入失敗、快速切換、兩種樽的遮罩直送演化、四角校準及 390px 版面操作檢查。證據 `previews/input-tests/workflow-results.json`；可重跑入口 `tests/browser.cjs`。
+- Lab 12 + studies 31 + phone 9 + legacy 67 = 119 自我檢查通過；另有匯出重入、還原、載入失敗、快速切換、兩種樽的遮罩直送演化、四角校準及 390px 版面操作檢查。證據 `previews/input-tests/workflow-results.json`；可重跑入口 `tests/browser.cjs`。
+- 拒絕訊息由一句通用「不在支援範圍」改成**指名邊個條件唔過**：搵唔到前景／剪影掂到左右兩邊畫框（背景未清走）／保留範圍過大／物件太細／闊高比超出 0.15–0.6。守門邏輯抽成 `bottleGate()`，`build()` 改為回傳 `true` 或原因字串，主頁面、實驗模式橋接同初始 fixture 三個入口共用同一句原因。實測四張課外相片（香蕉 2.04、水杯 0.73、士多啤梨 0.91、玩具 0.97）全部報返實際闊高比，同 2026-09-07 量到嘅數一致；拒絕後載入鋼樽即時復原，無 pageerror。證據 `previews/input-tests/reject-reasons.json`、`reject-reason.png`。
+- 「掂到左右兩邊」同「保留範圍過大」兩條分支 repo 內冇對應相片（原本嗰批 Wikimedia 圖冇 commit），由新增嘅自我檢查 `rejection names the failing condition` 用合成幾何守住。門檻數值一個都冇放寬，只係報告方式改咗。
 - 使用者已選定全離線優先。共享 `segmentation.js` 提供本地輪廓給四角提議；交通卡得到候選四角，手機 fixture 及香蕉因輪廓不夠四邊形退回手動，沒有放寬守門。未引入模型或外部 API。
 
 ## 點選清除背景（2026-09-07）
