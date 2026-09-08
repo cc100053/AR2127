@@ -22,7 +22,7 @@
 | 掃描、鎖定、目錄 | 推演、形變、投影 |
 | 「遺物鑑定神社」 | **「2127 進化神社 / Evolution Shrine」** |
 | 鑑定台、鑑定書、S 級鑑定 | 推演台座、世代卡、`DIVERGENT` / `SINGULAR` |
-| SSR / SR / R 抽卡黑話 | 稀有度用前向詞，而且**由幾何算出來**（見根 `README.md` §1.8.5）|
+| SSR / SR / R 抽卡黑話 | 稀有度用前向詞，而且**由幾何算出來**（見 `30-decisions.md` D17）|
 
 ### 點解會偏離
 
@@ -48,7 +48,7 @@
 展示形式升級提案叫做「2127 遺物鑑定神社（Artifact Appraisal Shrine）」。
 **形式全部照收**（Pepper's Ghost 懸浮箱、燈帶、音效、實體卡片），
 **名字全部唔要**。儀式感 ≠ 向後望：儀式嘅內容係推演未來。
-細節見根 `README.md` §1.8。
+展場形式見 `../docs/exhibition-plan.md`，命名決策見 `30-decisions.md`。
 
 ## 情感落點：`kept`
 

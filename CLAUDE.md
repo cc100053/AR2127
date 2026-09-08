@@ -17,9 +17,9 @@
 ## 跑起佢
 
 ```bash
-python3 -m http.server 8127        # 一定要 HTTP，file:// 會令 canvas 跨來源污染
-open http://localhost:8127         # demo.mp4 綠幕籃球
-open http://localhost:8127/?test=1 # 67 項自我檢查
+python3 -m http.server 8127 --bind 127.0.0.1  # 一定要 HTTP，file:// 會令 canvas 跨來源污染
+open http://127.0.0.1:8127/demo.html           # 組員展示入口
+open 'http://127.0.0.1:8127/?test=1'           # legacy 67 項自我檢查
 ```
 
 `?cam=1` 真攝影機 ｜ `?synth=1` 合成物件 ｜ `?src=xx.mp4` ｜ 影片可直接拖入頁面
@@ -44,6 +44,7 @@ repo 文檔同程式碼註解維持中文；`index.html?test=1` 嗰 67 條檢查
 | 檔 | 係乜 |
 |---|---|
 | `index.html` | 成個前端，單檔，~1540 行 |
-| `README.md` | 規劃 + 架構 + 風險 + 時程（權威文件） |
+| `README.md` | 專案簡介、依賴、setup、入口、文檔索引 |
+| `docs/exhibition-plan.md` | 未落地嘅展場硬件、營運要求同風險 |
 | `memory-bank/` | 交接用：主旨、架構圖、進度、決策、陷阱 |
 | `demo.mp4` | 綠幕旋轉籃球，測試素材（H.264） |
