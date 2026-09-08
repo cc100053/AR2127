@@ -56,3 +56,28 @@ function maskGeometry(canvas){
  if(top<0)return null;centers.sort((a,b)=>a-b);
  return{canvas,top,base,cx:centers[centers.length>>1],width,kept:kept/(w*h),bothSides:onL&&onR};
 }
+// Cross-sections along the object's long axis, for renderers that have no authored artwork to
+// fall back on: the silhouette itself is the only thing known about an unclassified object.
+// Sampled to n bands and averaged over neighbours, because a raw photo mask edge reads as noise.
+function maskProfile(canvas,long='y',n=40){
+ const w=canvas.width,h=canvas.height,d=canvas.getContext('2d').getImageData(0,0,w,h).data;
+ const M=long==='y'?h:w,C=long==='y'?w:h,rows=[];
+ for(let i=0;i<M;i++){let lo=-1,hi=-1;
+  for(let j=0;j<C;j++)if(d[(long==='y'?i*w+j:j*w+i)*4+3]){if(lo<0)lo=j;hi=j;}
+  if(lo>=0)rows.push({a:i,lo,hi});}
+ if(rows.length<n)return rows;
+ const out=[];
+ for(let s=0;s<n;s++){const idx=Math.round(s/(n-1)*(rows.length-1));
+  let lo=0,hi=0,cnt=0;
+  for(let j=Math.max(0,idx-2);j<=Math.min(rows.length-1,idx+2);j++){lo+=rows[j].lo;hi+=rows[j].hi;cnt++;}
+  out.push({a:rows[idx].a,lo:lo/cnt,hi:hi/cnt});}
+ // Three [1,2,3,2,1] passes over the sampled bands. A photo mask edge carries residue and steps;
+ // traced literally it reads as noise rather than as a designed member, and a shape whose
+ // segmentation was mediocre produces a jagged frame instead of an obviously wrong one.
+ for(let pass=0;pass<3;pass++)for(const key of ['lo','hi']){
+  const v=out.map(p=>p[key]);
+  for(let i=0;i<out.length;i++){let sum=0,wt=0;
+   for(let j=-2;j<=2;j++){const q=v[i+j];if(q===undefined)continue;const w=3-Math.abs(j);sum+=q*w;wt+=w;}
+   out[i][key]=sum/wt;}}
+ return out;
+}

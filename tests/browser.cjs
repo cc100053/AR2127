@@ -76,9 +76,25 @@ for(const [sample,recipe,title] of [['bottle','bottle','一口茶'],['bottle-b',
  await page.locator('#lab-reset').click();assert(await page.locator('#lab-evolution').isHidden());
 }
 results.push({preparedMaskEvolution:true,rejectRetainsEditor:true,editsHideStalePreview:true});
-for(const object of ['bottle','bottle-b','cup','suica']){
+for(const object of ['bottle','bottle-b','cup','banana','suica']){
  await page.goto(BASE+'/studies.html?object='+object+'&test=1');await page.waitForFunction(()=>document.querySelector('#checks').textContent.length>0);const checks=await page.locator('#checks').innerText();assert(!checks.includes('FAIL'));results.push({baseline:object,checks});
 }
+// The demo promise: any photo that segments produces an evolution. These three are outside every
+// authored class and must land on the generic recipe rather than on a rejection or a wrong class.
+await page.goto(BASE+'/studies.html?object=banana');
+await page.waitForFunction(()=>!document.querySelector('#replay').disabled);
+const generic={};
+for(const f of ['toy.jpeg','starwberry.jpeg','water.jpg']){
+ await page.locator('#file').setInputFiles('assets/segmentation/'+f);
+ await page.waitForFunction(()=>document.querySelector('#phase').textContent.includes('完成'));
+ generic[f]=await page.evaluate(()=>recipe);assert.equal(generic[f],'generic');
+ const alive=await page.evaluate(()=>{const d=future.getContext('2d').getImageData(0,0,1456,970).data;
+  let n=0;for(let i=3;i<d.length;i+=4)if(d[i]>180)n++;return n;});
+ assert(alive>40000);
+}
+await page.screenshot({path:'previews/input-tests/generic-water.png',fullPage:true});
+results.push({genericFallback:generic});
+
 // Each recipe has its own supported proportions: picking the wrong one must be rejected with
 // the reason and the recipe that does fit, not drawn as if it were that class.
 await page.goto(BASE+'/studies.html?object=cup');
