@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "checks": "PASS default retains existing fill\nPASS open concavity remains transparent without fill\nPASS object remains solid\nPASS outer background is transparent\nPASS bounds unchanged by fill toggle\nPASS erase enclosed region without crossing coloured wall\nPASS transparent seed makes no change\nPASS out-of-bounds seed makes no change"
+    },
+    {
+      "erase": "已清除 5530 個像素 · 可還原上一步",
+      "changed": true
+    },
+    {
+      "undoExact": true
+    },
+    {
+      "click": "已清除 5530 個像素 · 可還原上一步",
+      "x": "349",
+      "y": "47"
+    },
+    {
+      "switchClearsUndo": true
+    },
+    {
+      "mobileNoOverflow": true
+    },
+    {
+      "baseline": "bottle",
+      "checks": "PASS background actually removed, not merely plausible geometry\nPASS anchors measured from this photo, not hardcoded\nPASS calibrated fixture still lands on its authored placement\nPASS source background is transparent\nPASS original solid area physically removed\nPASS new structures extend beyond source\nPASS former body contains actual transparent negative space\nPASS final composite removes old body\nPASS controls enabled\nPASS build() is re-runnable without drift"
+    },
+    {
+      "baseline": "bottle-b",
+      "checks": "PASS background actually removed, not merely plausible geometry\nPASS anchors measured from this photo, not hardcoded\nPASS source background is transparent\nPASS original solid area physically removed\nPASS new structures extend beyond source\nPASS former body contains actual transparent negative space\nPASS final composite removes old body\nPASS controls enabled\nPASS build() is re-runnable without drift\nPASS elevation 0 redraw is idempotent (no transform accumulation)\nPASS returning to elevation 0 leaves no residue 0\nPASS raising the camera reprojects the geometry"
+    },
+    {
+      "baseline": "suica",
+      "checks": "PASS calibrated source dimensions\nPASS source background is transparent\nPASS original solid area physically removed\nPASS open cuff has solid band and credential mount, clear side gap\nPASS former body contains actual transparent negative space\nPASS final composite removes old body\nPASS controls enabled"
+    }
+  ],
+  "errors": []
+}

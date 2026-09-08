@@ -1,0 +1,45 @@
+{
+  "results": [
+    {
+      "lab": "PASS default retains existing fill\nPASS open concavity remains transparent without fill\nPASS object remains solid\nPASS outer background is transparent\nPASS bounds unchanged by fill toggle\nPASS erase enclosed region without crossing coloured wall\nPASS transparent seed makes no change\nPASS out-of-bounds seed makes no change\nPASS enclosed removal is opt-in\nPASS input alpha and enclosed transparent holes survive\nPASS generic mode preserves a wide foot instead of trimming it as shadow\nPASS one-pixel-wide analysis does not invent a foreground"
+    },
+    {
+      "name": "toy.jpeg",
+      "info": "原圖\n576 × 432\n原有樽專用去背\n保留像素 57.7%（非準確率）\n實驗去背・保留凹位\n保留像素 57.0%（非準確率） · 分析 576×432"
+    },
+    {
+      "name": "starwberry.jpeg",
+      "info": "原圖\n400 × 335\n原有樽專用去背\n保留像素 50.6%（非準確率）\n實驗去背・保留凹位\n保留像素 49.9%（非準確率） · 分析 400×335"
+    },
+    {
+      "name": "water.jpg",
+      "info": "原圖\n459 × 612\n原有樽專用去背\n保留像素 21.8%（非準確率）\n實驗去背・保留凹位\n保留像素 21.9%（非準確率） · 分析 459×612"
+    },
+    {
+      "name": "banana.jpeg",
+      "info": "原圖\n620 × 322\n原有樽專用去背\n保留像素 51.2%（非準確率）\n實驗去背・保留凹位\n保留像素 32.9%（非準確率） · 分析 620×322"
+    },
+    {
+      "background": "rgb(0, 0, 0)"
+    },
+    {
+      "invalid": "圖片解碼失敗，請揀另一張相片"
+    },
+    {
+      "mobileNoOverflow": true
+    },
+    {
+      "baseline": "bottle",
+      "checks": "PASS background actually removed, not merely plausible geometry\nPASS anchors measured from this photo, not hardcoded\nPASS calibrated fixture still lands on its authored placement\nPASS source background is transparent\nPASS original solid area physically removed\nPASS new structures extend beyond source\nPASS former body contains actual transparent negative space\nPASS final composite removes old body\nPASS controls enabled\nPASS build() is re-runnable without drift"
+    },
+    {
+      "baseline": "bottle-b",
+      "checks": "PASS background actually removed, not merely plausible geometry\nPASS anchors measured from this photo, not hardcoded\nPASS source background is transparent\nPASS original solid area physically removed\nPASS new structures extend beyond source\nPASS former body contains actual transparent negative space\nPASS final composite removes old body\nPASS controls enabled\nPASS build() is re-runnable without drift\nPASS elevation 0 redraw is idempotent (no transform accumulation)\nPASS returning to elevation 0 leaves no residue 0\nPASS raising the camera reprojects the geometry"
+    },
+    {
+      "baseline": "suica",
+      "checks": "PASS calibrated source dimensions\nPASS source background is transparent\nPASS original solid area physically removed\nPASS open cuff has solid band and credential mount, clear side gap\nPASS former body contains actual transparent negative space\nPASS final composite removes old body\nPASS controls enabled"
+    }
+  ],
+  "errors": []
+}

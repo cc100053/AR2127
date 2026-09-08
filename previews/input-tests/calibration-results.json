@@ -1,0 +1,21 @@
+{
+  "results": [
+    {
+      "file": "phone.html",
+      "translationInvariant": 1,
+      "projectiveRoundtrip": 2.7755575615628914e-17,
+      "calibrationApplied": true,
+      "restorePass": true,
+      "mobileNoOverflow": true
+    },
+    {
+      "file": "studies.html?object=suica",
+      "translationInvariant": 1,
+      "projectiveRoundtrip": 0,
+      "calibrationApplied": true,
+      "restorePass": true,
+      "mobileNoOverflow": true
+    }
+  ],
+  "errors": []
+}

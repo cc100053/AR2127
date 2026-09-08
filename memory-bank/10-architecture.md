@@ -1,5 +1,15 @@
 # 10 · 架構
 
+## 現行靜態流程（2026-09-08）
+
+- `studies.html?lab=1`：檔案 → 縮至最長邊 1200px → `segment()` 比較 → 編輯 alpha／撤回 → PNG 匯出，或 `maskGeometry()` → `build(prepared)` → 原型／未來比較。
+- `segmentation.js` 共用背景估算、可選填行／陰影裁切／封閉同色清除，以及依實際 alpha 量錨點。預設舊樽行為保留；Lab 預設關閉填行和陰影裁切。
+- `phone.html`／Suica：檔案 → 人工四角或本地候選 → `warpPhoto()` 對齊既有造型座標 → 現有 renderer。`calibration.js` 共用 `project()` 及逆映射，驗證凸四邊形並以 premultiplied-alpha 雙線性取樣。
+- 載入／校準有 request revision，舊解碼不能覆蓋新相；編輯遮罩會使既有演化預覽失效。自訂卡片不再套用固定「企鵝」文案。
+- 沒有外部模型、API 或建置依賴。測試需要既有 Playwright + Chrome，見 `tests/README.md`。
+
+下方是 **legacy `index.html` 旋轉原型** 的架構，不能當成目前靜態流程或已驗證的展場能力。
+
 ## 資料流
 
 ```

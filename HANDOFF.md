@@ -1,8 +1,23 @@
 # item2127 — Agent handoff
 
-Updated: 2026-09-06 · Workspace: `/Users/fatboy/item2127`
+Updated: 2026-09-08 · Workspace: `/Users/fatboy/item2127`
 
-This document describes the inspected working tree, the decisions made with the user, and a **proposed** route to the remaining work. It does not authorize new implementation, purchases, deployment, external uploads, or provider calls. The latest request was to write a detailed handoff. No implementation was changed for that request.
+## Current handoff — read this first
+
+The user authorized continued implementation, chose **a few everyday-object classes** rather than arbitrary food/toy evolution, and chose **offline-first operation**. No physical hardware exists for this exploration. All runtime assets are local; no model or cloud API was added.
+
+- `studies.html?lab=1`: compare original / bottle-specific segmentation / editable generic segmentation. Configurable colour tolerance, opt-in enclosed-region removal, optional bottle-shadow trim, eight-step undo, reset, drag/drop, transparent PNG and grayscale-mask export. Working/export resolution is capped at 1200px on the longest side. Existing input alpha is preserved.
+- Edited masks can feed the existing tea-bottle or steel-flask renderer directly. Unsupported geometry keeps the editor available. Editing or replacing the mask hides stale evolution results. Recipe selection also updates the narrative.
+- `phone.html` and `studies.html?object=suica`: upload a photo, mark four corners by pointer or coordinates, apply the existing artwork, or restore the original fixture. `calibration.js` shares the phone's projective map and inverse, alpha-aware resampling, validation and UI. `calibration.css` styles the shared controls.
+- `segmentation.js`: shared segmentation and mask geometry. Local convex-outline corner proposals work on the card fixture; the phone fixture and banana are rejected rather than weakening the quadrilateral fit check. Proposals require human inspection and do not recognize object identity.
+- Validation: **117 page self-checks**, plus the real UI workflow in `tests/browser.cjs`. See `tests/README.md` for prerequisites and invocation. Latest evidence: `previews/input-tests/workflow-results.json`, calibrated phone/card screenshots, mask exports and bottle bridge screenshots.
+- Evidence limits: calibration was tested with translated/padded original fixtures, not a new physical phone/card. Glass bright regions are incorrectly removed by aggressive colour-keying. This is reusable local preparation and authored evolution, not arbitrary-object generation or exhibition validation.
+
+Next work should improve robustness within these four authored directions using additional in-class photos. Keep manual correction and explicit rejection until automated geometry is supported by evidence. Camera capture, printing, exhibition cycling and second-view capture remain unimplemented or unvalidated; do not revive rotation work before the still-image flow is ready.
+
+## Historical planning context (2026-09-06)
+
+The sections below preserve the earlier handoff and proposed roadmap. Their counts, file inventory, implementation status and authorization statements describe that earlier date; the current summary above and `memory-bank/20-status.md` supersede them. They are not instructions to repeat completed work or seek authorization already given by the user.
 
 ## 1. The goal and the current gap
 

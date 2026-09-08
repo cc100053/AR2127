@@ -5,10 +5,15 @@
 <title>2127 物件演化測試</title>
 <style>
 :root{color-scheme:dark;font-family:Inter,-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;color:#edf5f5;background:#080c10}*{box-sizing:border-box}body{margin:0;min-height:100svh;background:radial-gradient(ellipse at 55% 45%,#15262c 0,transparent 60%)}main{max-width:1240px;margin:auto;padding:32px 48px}header,footer,.controls,.labels{display:flex;align-items:center;justify-content:space-between;gap:24px}header{border-bottom:1px solid #263238;padding-bottom:20px}a{color:#a6babf;text-decoration:none;font-size:12px}a:hover{color:#7bf6e4}.mark{font-size:20px;letter-spacing:-1px}.mark span{color:#70858d;font-size:11px;letter-spacing:2px;margin-left:14px}.hero{display:grid;grid-template-columns:260px minmax(0,1fr);align-items:center;gap:24px;min-height:570px}.eyebrow{font:10px ui-monospace,monospace;letter-spacing:3px;color:#6fd9d3}h1{font-size:42px;font-weight:450;line-height:1.25;letter-spacing:-2px;margin:24px 0 18px}.intro{font-size:14px;color:#8da1a8;line-height:1.9;max-width:245px}.specs{margin-top:42px;display:grid;gap:16px;font-size:11px;color:#b9c9cd}.specs span{color:#5f757e;margin-right:15px;font:10px ui-monospace,monospace}figure{margin:0;min-width:0}canvas{display:block;width:100%;height:auto}figcaption{font:10px ui-monospace,monospace;letter-spacing:2px;color:#63808a;text-align:center}.controls{max-width:650px;margin:0 auto 48px}.compare{flex:1}.labels{font-size:11px;color:#9eafb5;gap:10px}input{width:100%;accent-color:#77e5d7;margin:14px 0 0;cursor:ew-resize}button{background:#132729;border:1px solid #36565b;color:#b7f5e8;padding:13px 19px;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap}button:hover{background:#1e3b3c}button:disabled{opacity:.45;cursor:wait}:focus-visible{outline:2px solid #a6fff0;outline-offset:5px}footer{border-top:1px solid #263238;padding-top:22px;font-size:11px;color:#617981}footer p{margin:0;line-height:1.8}.kept{color:#a4babe;font-size:13px}.error{color:#ffaaaa}.filebtn{background:#132729;border:1px solid #36565b;color:#b7f5e8;padding:11px 17px;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap}.filebtn:hover{background:#1e3b3c}.rbtn{background:transparent;border:1px solid #2c4a4e;color:#7f979d;padding:8px 13px;font-size:11px;border-radius:3px;cursor:pointer}.rbtn[aria-pressed=true]{background:#16302f;border-color:#4d7a76;color:#9ef4de}.hint{font:10px ui-monospace,monospace;color:#5f757e}body.drag{outline:2px dashed #4d7a76;outline-offset:-10px}#checks{white-space:pre-wrap;font:12px/1.8 ui-monospace,monospace;color:#8af0bb} @media(max-width:800px){main{padding:22px}.hero{grid-template-columns:1fr;gap:0;min-height:0}.copy{padding-top:35px}h1{font-size:32px;margin:15px 0}.intro{max-width:none}.specs{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}.hero figure{margin:10px -20px 30px}.controls{gap:15px;margin-bottom:32px}footer{align-items:flex-start;flex-direction:column;gap:15px}.mark span{display:none}}
+
+[hidden]{display:none!important}
+.lab-settings{border:1px solid #36565b;border-radius:6px;padding:16px;display:flex;align-items:center;flex-wrap:wrap;gap:16px;margin:20px 0}.lab-settings label{font-size:13px;color:#b9c9cd}.lab-settings legend,.lab-settings summary{font-size:13px;color:#b9c9cd}.lab-settings summary{cursor:pointer}.lab-settings select{max-width:100%;padding:9px;background:#132729;color:#edf5f5;border:1px solid #36565b;border-radius:4px}.lab-settings label{max-width:100%}.lab-settings input[type=number]{width:70px}.lab-settings input[type=checkbox]{width:auto;margin:0 6px 0 0;vertical-align:middle}.lab-settings .lab-note{margin:0}.checker .lab-grid canvas{background-color:#777;background-image:conic-gradient(#999 25%,transparent 0 50%,#999 0 75%,transparent 0);background-size:20px 20px}
+.lab-tools{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:24px 0}.lab-tools label{font-size:13px;color:#b9c9cd}.lab-tools select{font:inherit;padding:10px;background:#132729;color:#edf5f5;border:1px solid #36565b;border-radius:4px}.lab-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.lab-grid figure{border:1px solid #36565b;border-radius:6px;overflow:hidden}.lab-grid canvas{aspect-ratio:4/5;object-fit:contain;background:var(--mask-bg,#777)}.lab-grid figcaption{padding:16px 10px;line-height:1.7;letter-spacing:0;color:#bfd3d5}.lab-note{color:#9eafb5;font-size:14px;line-height:1.8}.lab-file{max-width:100%;font-size:12px}.lab-file input{cursor:pointer;margin:8px 0}.lab-grid small{display:block;color:#849ca4}#lab-status{min-height:2em}#lab-checks{white-space:pre-wrap;overflow-wrap:anywhere}@media(max-width:800px){.lab-grid{grid-template-columns:1fr}.lab-grid canvas{aspect-ratio:4/3}header{flex-wrap:wrap}}
 </style>
+<link rel="stylesheet" href="calibration.css">
 </head>
 <body><main>
-<header><div class="mark">2127<span>100 YEARS LATER</span></div><nav aria-label="物件測試" style="display:flex;gap:20px;flex-wrap:wrap"><a href="phone.html">手機</a><a href="studies.html?object=bottle" id="nav-bottle">茶瓶</a><a href="studies.html?object=bottle-b" id="nav-bottle-b">茶瓶 B</a><a href="studies.html?object=suica" id="nav-suica">交通卡</a></nav></header>
+<header><div class="mark">2127<span>100 YEARS LATER</span></div><nav aria-label="物件測試" style="display:flex;gap:20px;flex-wrap:wrap"><a href="phone.html">手機</a><a href="studies.html?object=bottle" id="nav-bottle">茶瓶</a><a href="studies.html?object=bottle-b" id="nav-bottle-b">保溫樽</a><a href="studies.html?object=suica" id="nav-suica">交通卡</a><a href="studies.html?lab=1" id="nav-lab">去背實驗</a></nav></header>
 <section class="hero"><div class="copy"><div class="eyebrow">FORM STUDY / <span id="number">003</span></div><h1 id="title"></h1><p class="intro" id="intro"></p><div class="specs" id="specs"></div></div>
 <figure><canvas id="view" width="1456" height="970" role="img" aria-label="原物件與未來形態比較"></canvas><figcaption id="phase" aria-live="polite">準備形態推演</figcaption></figure></section>
 <div class="controls"><div class="compare"><div class="labels"><label for="evolution">原始物件</label><span>2127 形態</span></div><input id="evolution" aria-label="原始物件與 2127 形態比較" type="range" min="0" max="100" value="100" disabled></div><button id="replay" disabled>重新推演 ↗</button></div>
@@ -18,18 +23,23 @@
 <span class="hint" id="loadhint">或直接將相片拖入頁面・單一直立物件・乾淨漸層背景</span></div>
 <div class="controls" id="elevwrap" hidden><div class="compare"><div class="labels"><label for="elevation">鏡頭：正面</label><span>斜視 45°</span></div><input id="elevation" aria-label="鏡頭仰角" type="range" min="0" max="100" value="0"></div><span style="font:10px ui-monospace,monospace;color:#5f757e;white-space:nowrap">原型・程序幾何重新投影</span></div>
 <footer><p class="kept" id="kept"></p><p>靜態相片・本地程序生成<br>單張相片校準測試，未包含旋轉追蹤。</p></footer><pre id="checks" hidden></pre>
-</main><script>
+</main><script src="segmentation.js"></script><script src="calibration.js"></script><script>
 'use strict';
 const SRC={bottle:'assets/bottle-source.webp','bottle-b':'assets/bottle-b-source.jpeg',suica:'assets/suica-source.jpg'};
-const Q=new URLSearchParams(location.search),kind=SRC[Q.get('object')]?Q.get('object'):'bottle',family=kind==='suica'?'suica':'bottle';
-const copy=kind==='bottle-b'?{number:'005',title:'水，<br>由空氣嚟。',intro:'保溫層退場。真空夾層外露成冷凝鰭，樽身自己由空氣抽水；你只需要帶住佢。',specs:['外露冷凝鰭層','底部進氣與集水','保留鋼蓋與樽身輪廓'],kept:'一百年後，還是想隨時有一口水。'}:family==='bottle'?{number:'003',title:'一口茶，<br>一個循環。',intro:'拋棄式瓶身退場。保留瓶口與茶液，讓培養、過濾與補水成為同一件容器。',specs:['循環培養艙','相連過濾莢','保留瓶口與茶液'],kept:'一百年後，還是為了那一口茶。'}:{number:'004',title:'通行，<br>隨身而行。',intro:'卡片縮成腕上的通行核心。玉色帶體環抱手腕，熟悉的企鵝陪你走過下一道門。',specs:['開口式腕環','無接觸感應端','保留企鵝識別面'],kept:'一百年後，還是想順利回家。'};
+const Q=new URLSearchParams(location.search),kind=!Q.has('lab')&&SRC[Q.get('object')]?Q.get('object'):'bottle',family=kind==='suica'?'suica':'bottle';
+const COPY={flask:{number:'005',title:'水，<br>由空氣嚟。',intro:'保溫層退場。真空夾層外露成冷凝鰭，樽身自己由空氣抽水；你只需要帶住佢。',specs:['外露冷凝鰭層','底部進氣與集水','保留鋼蓋與樽身輪廓'],kept:'一百年後，還是想隨時有一口水。'},bottle:{number:'003',title:'一口茶，<br>一個循環。',intro:'拋棄式瓶身退場。保留瓶口與茶液，讓培養、過濾與補水成為同一件容器。',specs:['循環培養艙','相連過濾莢','保留瓶口與茶液'],kept:'一百年後，還是為了那一口茶。'},suica:{number:'004',title:'通行，<br>隨身而行。',intro:'卡片縮成腕上的通行核心。玉色帶體環抱手腕，熟悉的識別面陪你走過下一道門。',specs:['開口式腕環','無接觸感應端','保留原卡識別面'],kept:'一百年後，還是想順利回家。'}};
+function setCopy(type){const copy=COPY[type];
 for(const id of ['number','intro','kept'])document.getElementById(id).textContent=copy[id];
 document.getElementById('title').innerHTML=copy.title;
 document.getElementById('specs').innerHTML=copy.specs.map((s,i)=>`<div><span>0${i+1}</span>${s}</div>`).join('');
+}
+setCopy(kind==='bottle-b'?'flask':family==='bottle'?'bottle':'suica');
 document.getElementById('nav-'+kind).style.color='#9ef4de';document.getElementById('nav-'+kind).setAttribute('aria-current','page');
 const canvas=document.getElementById('view'),ctx=canvas.getContext('2d'),slider=document.getElementById('evolution'),replay=document.getElementById('replay'),phase=document.getElementById('phase');
 let photo=new Image();const source=document.createElement('canvas'),future=document.createElement('canvas');
 source.width=future.width=1456;source.height=future.height=970;
+// Keep repeated mask readback and resampling on one raster backend.
+source.getContext('2d',{willReadFrequently:true});
 // ponytail: source crops, geometry and depth are calibrated for these two photos only.
 // This tests a creative grammar; add an evolution-spec renderer only after more categories validate it.
 const P=s=>new Path2D(s);
@@ -38,56 +48,6 @@ function line(c,d,color,width=1,glow=0){c.save();c.shadowBlur=glow;c.shadowColor
 function oval(c,x,y,rx,ry,fill,stroke,width=1){const p=new Path2D();p.ellipse(x,y,rx,ry,0,0,Math.PI*2);shape(c,p,fill,stroke,width);}
 function grad(c,x0,y0,x1,y1,stops){const g=c.createLinearGradient(x0,y0,x1,y1);stops.forEach(([p,col])=>g.addColorStop(p,col));return g;}
 function tube(c,d,width=8){line(c,d,'#172b2d',width+3);line(c,d,'#97b6a6',width);line(c,d,'#d7ede0',1.1);}
-// ponytail: one upright opaque object, plain and smoothly lit, fully inside frame.
-// Background is estimated per row by blending that row's left and right edge colour, so a studio
-// gradient is tracked where a single near-white threshold reads the whole frame as foreground.
-// Busy, cropped-through or reflective backgrounds are out of scope and fail the sanity gate below.
-function segment(img){
- const w=img.naturalWidth,h=img.naturalHeight,m=document.createElement('canvas');
- m.width=w;m.height=h;const x=m.getContext('2d');x.drawImage(img,0,0);
- const id=x.getImageData(0,0,w,h),d=id.data,N=w*h,tol=32;
- const med=a=>{a.sort((p,q)=>p-q);return(a[2]+a[3])/2;};
- const edge=(y,x0)=>{const r=[],g=[],b=[];for(let i=0;i<6;i++){const j=(y*w+x0+i)*4;r.push(d[j]);g.push(d[j+1]);b.push(d[j+2]);}return[med(r),med(g),med(b)];};
- const ok=new Uint8Array(N);
- for(let y=0;y<h;y++){const L=edge(y,0),R=edge(y,w-6);
-  for(let px=0;px<w;px++){const t=px/(w-1),j=(y*w+px)*4;
-   ok[y*w+px]=Math.max(Math.abs(d[j]-(L[0]*(1-t)+R[0]*t)),Math.abs(d[j+1]-(L[1]*(1-t)+R[1]*t)),Math.abs(d[j+2]-(L[2]*(1-t)+R[2]*t)))<=tol?1:0;}}
- const q=new Int32Array(N),seen=new Uint8Array(N),cleared=new Uint8Array(N);let head=0,tail=0;
- const push=i=>{if(i<0||i>=N||seen[i])return;seen[i]=1;if(!ok[i])return;cleared[i]=1;q[tail++]=i;};
- for(let i=0;i<w;i++){push(i);push((h-1)*w+i);}
- for(let y=0;y<h;y++){push(y*w);push(y*w+w-1);}
- while(head<tail){const i=q[head++];if(i%w)push(i-1);if(i%w<w-1)push(i+1);push(i-w);push(i+w);}
- // An upright bottle is horizontally convex at every height, so refilling each row's span closes
- // any low-contrast leak (here: the bottle's own reflection) that ate a channel up its middle.
- const wid=new Int32Array(h),ends=new Int32Array(h*2);
- for(let y=0;y<h;y++){let a=-1,b=-1;
-  for(let px=0;px<w;px++)if(!cleared[y*w+px]){if(a<0)a=px;b=px;}
-  if(a<0)continue;for(let px=a;px<=b;px++)cleared[y*w+px]=0;
-  wid[y]=b-a+1;ends[y*2]=a;ends[y*2+1]=b;}
- let top=-1,base=-1;for(let y=0;y<h;y++)if(wid[y]){if(top<0)top=y;base=y;}
- if(top<0)return null;
- const nz=[];for(let y=top;y<=base;y++)if(wid[y])nz.push(wid[y]);
- nz.sort((a,b)=>a-b);const body=nz[nz.length>>1];
- // The contact shadow and mirror reflection survive segmentation (they are genuinely darker
- // than the background). Below its widest point a bottle's silhouette only narrows, so the first
- // row in the lower part that flares back out is where the object ends and its shadow begins.
- // Only when the object ends inside the frame; a bottle cropped by the bottom edge has no
- // shadow below it, and trimming one there would shrink the silhouette and rescale the artwork.
- if(base<h-1){let run=1e9;
-  for(let y=top+((base-top)*.6|0);y<=base;y++){
-   if(wid[y]<run)run=wid[y];
-   if(wid[y]>run+body*.06){base=y-1;break;}}
-  for(let y=base+1;y<h;y++){for(let px=0;px<w;px++)cleared[y*w+px]=1;wid[y]=0;}}
- const cs=[];let width=0;
- for(let y=top;y<=base;y++)if(wid[y]){cs.push((ends[y*2]+ends[y*2+1])/2);if(wid[y]>width)width=wid[y];}
- cs.sort((a,b)=>a-b);
- let keptN=0;for(let i=0;i<N;i++){if(cleared[i])d[i*4+3]=0;else keptN++;}
- // A correctly segmented single object never spans to both side borders; an unsegmented frame does.
- let onL=false,onR=false;
- for(let y=0;y<h;y++){if(!cleared[y*w])onL=true;if(!cleared[y*w+w-1])onR=true;}
- x.putImageData(id,0,0);
- return{canvas:m,top,base,cx:cs[cs.length>>1],width,kept:keptN/N,bothSides:onL&&onR};
-}
 function bottle(){
  const c=future.getContext('2d');c.scale(2,2);
  const pearl=grad(c,280,0,450,0,[[0,'#728c7a'],[.3,'#e3ecce'],[.55,'#97af91'],[1,'#344d48']]);
@@ -232,13 +192,13 @@ function flask(elev){
  line(c,'M311 388 Q365 399 419 388','#c8e6f0',1.7,3);
  oval(c,365,95,29,RY(29,6),'#243b43','#c8dae2',1);
 }
-function build(){
+function build(prepared=null){
  // Re-runnable: a second load must not inherit the first one's transform or pixels.
  // build() used to run exactly once, so the scale(2,2) below would compound silently (gotcha #9).
  const c=source.getContext('2d');
  c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,1456,970);c.scale(2,2);
  if(family==='bottle'){
-  const s=segment(photo);if(!s)return false;
+  const s=prepared||segment(photo);if(!s)return false;
   // Reject anything that is not one upright bottle-shaped silhouette rather than rendering nonsense.
   // The shape tests alone are geometric and cannot tell a good mask from none at all: a cluttered
   // background survives segmentation whole and can still land inside them. Area alone is no better —
@@ -341,13 +301,13 @@ function loadFile(file){
  img.onerror=()=>{URL.revokeObjectURL(url);fail('圖片解碼失敗');};
  img.src=url;
 }
-if(family==='bottle'){
+if(family==='bottle'&&!Q.has('lab')){
  const wrap=document.getElementById('loadwrap');wrap.hidden=false;
  document.getElementById('file').addEventListener('change',e=>{loadFile(e.target.files[0]);e.target.value='';});
  for(const b of wrap.querySelectorAll('.rbtn')){
   b.setAttribute('aria-pressed',String(b.dataset.r===recipe));
   b.addEventListener('click',()=>{
-   recipe=b.dataset.r;
+   recipe=b.dataset.r;setCopy(recipe);
    for(const o of wrap.querySelectorAll('.rbtn'))o.setAttribute('aria-pressed',String(o.dataset.r===recipe));
    if(anchors){renderFuture();evolve();}});
  }
@@ -358,8 +318,185 @@ if(family==='bottle'){
  addEventListener('drop',e=>{e.preventDefault();depth=0;document.body.classList.remove('drag');
   loadFile(e.dataTransfer.files[0]);});
 }
-photo.onload=()=>{
+
+// Seed-relative RGB tolerance avoids gradual colour drift into neighbouring material.
+function eraseRegion(pixels,x,y,tolerance=32){
+ const {width:w,height:h,data:d}=pixels;x=Math.floor(x);y=Math.floor(y);
+ if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||y<0||x>=w||y>=h)return 0;
+ const seed=y*w+x,j=seed*4;if(!d[j+3])return 0;
+ const r=d[j],green=d[j+1],b=d[j+2],queue=new Int32Array(w*h);let head=0,tail=0;
+ const visit=i=>{const k=i*4;if(!d[k+3]||Math.max(Math.abs(d[k]-r),Math.abs(d[k+1]-green),Math.abs(d[k+2]-b))>tolerance)return;
+  d[k+3]=0;queue[tail++]=i;};
+ visit(seed);
+ while(head<tail){const i=queue[head++];if(i%w)visit(i-1);if(i%w<w-1)visit(i+1);if(i>=w)visit(i-w);if(i<w*(h-1))visit(i+w);}
+ return tail;
+}
+function startLab(){
+ document.title='2127 去背實驗';
+ for(const el of document.querySelector('main').children)if(el.tagName!=='HEADER')el.hidden=true;
+ const active=document.querySelector('[aria-current]');if(active){active.removeAttribute('aria-current');active.style.color='';}
+ document.getElementById('nav-lab').style.color='#9ef4de';document.getElementById('nav-lab').setAttribute('aria-current','page');
+ const lab=document.createElement('section');lab.id='lab';
+ lab.innerHTML=`<p class="eyebrow" style="margin-top:36px">SEGMENTATION LAB / 02</p><h1>保留物件，清走背景。</h1>
+ <p class="lab-note">載入相片 → 比較去背 → 修正空隙 → 匯出透明素材。全程本地處理；樽形素材修好後可繼續試演化。</p>
+ <div class="lab-tools"><label>測試素材 <select id="lab-sample"><option value="toy.jpeg">算盤</option><option value="starwberry.jpeg">士多啤梨</option><option value="water.jpg">水杯</option><option value="banana.jpeg">香蕉</option><option value="bottle">茶瓶（演化測試）</option><option value="bottle-b">保溫樽（演化測試）</option><option value="" disabled>自選相片</option></select></label>
+ <label>預覽底色 <select id="lab-bg"><option value="#777">灰</option><option value="#fff">白</option><option value="#000">黑</option><option value="checker">棋盤格</option></select></label>
+ <label class="lab-file">載入相片／拖入頁面<input id="lab-file" type="file" accept="image/jpeg,image/png,image/webp"></label></div>
+ <fieldset class="lab-settings"><legend>實驗去背設定</legend>
+ <label>背景容差 <input id="lab-bg-tolerance" type="number" required min="0" max="100" value="32"></label>
+ <label><input id="lab-enclosed" type="checkbox"> 同時清除封閉同色區域</label>
+ <label><input id="lab-shadow" type="checkbox"> 樽形底部陰影裁切</label>
+ <button id="lab-apply" disabled>套用設定</button><span class="lab-note">封閉同色區域亦可能係白色物件；可撤回比較。</span></fieldset>
+ <p class="lab-note" id="lab-status" role="status"></p><div class="lab-grid">
+ ${['原圖','原有樽專用去背','實驗去背・保留凹位'].map((label,i)=>`<figure><canvas id="lab-view-${i}" role="img" aria-label="${label}"></canvas><figcaption>${label}<small id="lab-info-${i}"></small></figcaption></figure>`).join('')}</div>
+ <div class="lab-tools"><button id="lab-undo" disabled>還原上一步</button><button id="lab-reset" disabled>重設去背</button>
+ <button id="lab-export" disabled>匯出透明 PNG</button><button id="lab-mask" disabled>匯出黑白遮罩</button></div>
+ <details class="lab-settings"><summary>手動修正：點實驗圖清除背景</summary><div class="lab-tools">
+ <label>點選容差 <input id="lab-tolerance" type="number" required min="0" max="100" value="32"></label>
+ <label>X <input id="lab-x" type="number" required min="0" value="0"></label><label>Y <input id="lab-y" type="number" required min="0" value="0"></label><button id="lab-erase" disabled>清除座標位置</button></div>
+ <p class="lab-note" id="lab-help">點實驗圖內嘅背景，清除同色連通區域；鍵盤亦可輸入分析圖嘅像素座標。容差越高範圍可能越大。保留最近 8 步還原；重設可回到初次去背。</p></details>
+ <p class="lab-note">預覽底色唔會影響去背或匯出，亦唔係模擬換背景拍攝。透明玻璃同白色物件未能單靠顏色可靠分辨；黑白遮罩係保留範圍，唔係深度圖。</p><div class="lab-settings"><label>演化配方 <select id="lab-recipe"><option value="bottle">即棄茶瓶 → 循環培養</option><option value="flask">保溫樽 → 大氣取水</option></select></label><button id="lab-evolve" disabled>用此遮罩試演化</button><span class="lab-note">只適用於直立樽形，配方由你選擇。其他物件仍可修圖及匯出。</span></div><section id="lab-evolution" hidden aria-label="樽形演化預覽"></section><pre id="lab-checks" hidden></pre>`;
+ document.querySelector('main').append(lab);
+ const get=id=>document.getElementById('lab-'+id),status=get('status'),sample=get('sample'),editable=get('view-2'),g=editable.getContext('2d');
+ const xInput=get('x'),yInput=get('y'),tolerance=get('tolerance'),bgTolerance=get('bg-tolerance'),enclosed=get('enclosed'),shadow=get('shadow');
+ editable.style.cursor='crosshair';editable.setAttribute('aria-describedby','lab-help');
+ let revision=0;
+ const preview=get('evolution'),hero=document.querySelector('.hero'),comparison=hero.nextElementSibling,footer=document.querySelector('footer');
+ for(const el of [hero,comparison,footer]){el.hidden=false;preview.append(el);}
+ function invalidate(){revision++;preview.hidden=true;cancelAnimationFrame(raf);raf=0;}
+ let request=0,input=null,initial=null,history=[],filename='object',settings={tolerance:32,trimShadow:false,clearEnclosed:false};
+ const pixels=()=>g.getImageData(0,0,editable.width,editable.height);
+ function controls(){for(const id of ['apply','erase','reset','export','mask','evolve'])get(id).disabled=!input;get('undo').disabled=!history.length;}
+ function info(){const d=pixels().data;let n=0;for(let i=3;i<d.length;i+=4)if(d[i])n++;
+  get('info-2').textContent=`保留像素 ${(100*n/(d.length/4)).toFixed(1)}%（非準確率） · 分析 ${editable.width}×${editable.height}`;}
+ function message(text,error=false){status.textContent=text;status.classList.toggle('error',error);}
+ function syncSettings(){bgTolerance.value=settings.tolerance;shadow.checked=settings.trimShadow;enclosed.checked=settings.clearEnclosed;}
+ function remember(){
+  invalidate();
+  // ponytail: 8 full masks at <=1200px (~46MB worst case); use alpha deltas for a longer edit history.
+  history.push({pixels:pixels(),settings:{...settings}});if(history.length>8)history.shift();
+ }
+ function showMask(mask){g.clearRect(0,0,editable.width,editable.height);if(mask)g.drawImage(mask.canvas,0,0);info();controls();}
+ function remove(x,y){
+  if(!input)return;
+  if(!tolerance.checkValidity()||!xInput.checkValidity()||!yInput.checkValidity()){message('請輸入有效座標同 0–100 容差',true);return;}
+  const edited=pixels(),count=eraseRegion(edited,x,y,+tolerance.value);
+  if(!count){message('呢個位置已經透明，冇改動');return;}
+  remember();g.putImageData(edited,0,0);info();controls();message(`已清除 ${count} 個像素 · 可還原上一步`);
+ }
+ editable.addEventListener('click',e=>{
+  if(!input)return;
+  const r=editable.getBoundingClientRect(),scale=Math.min(r.width/editable.width,r.height/editable.height);
+  const x=Math.floor((e.clientX-r.left-(r.width-editable.width*scale)/2)/scale),y=Math.floor((e.clientY-r.top-(r.height-editable.height*scale)/2)/scale);
+  if(x<0||y<0||x>=editable.width||y>=editable.height)return;
+  xInput.value=x;yInput.value=y;remove(x,y);
+ });
+ get('erase').addEventListener('click',()=>remove(+xInput.value,+yInput.value));
+ get('undo').addEventListener('click',()=>{const last=history.pop();if(!last)return;invalidate();g.putImageData(last.pixels,0,0);settings=last.settings;syncSettings();info();controls();message(`已還原 · 仲可撤回 ${history.length} 步`);});
+ get('reset').addEventListener('click',()=>{if(!input)return;remember();g.putImageData(initial,0,0);settings={tolerance:32,trimShadow:false,clearEnclosed:false};syncSettings();info();controls();message('已回到初次去背 · 可還原上一步');});
+ get('apply').addEventListener('click',()=>{
+  if(!input)return;if(!bgTolerance.checkValidity()){message('背景容差需要係 0–100',true);return;}
+  const next={tolerance:+bgTolerance.value,trimShadow:shadow.checked,clearEnclosed:enclosed.checked};
+  const result=segment(input,false,next);remember();settings=next;showMask(result);
+  message(result?'已由原圖重新去背 · 之前嘅手動修改可透過還原取回':'未找到前景 · 可降低容差或還原');
+ });
+ async function download(maskOnly){
+  if(!input)return;
+  const output=document.createElement('canvas');output.width=editable.width;output.height=editable.height;
+  const p=pixels();if(maskOnly)for(let i=0;i<p.data.length;i+=4){const a=p.data[i+3];p.data[i]=p.data[i+1]=p.data[i+2]=a;p.data[i+3]=255;}
+  output.getContext('2d').putImageData(p,0,0);
+  const name=filename.replace(/\.[^.]+$/,'').replace(/[^\p{L}\p{N}_-]/gu,'-')||'object';
+  const blob=await new Promise(resolve=>output.toBlob(resolve,'image/png'));if(!blob){message('匯出失敗，請重試',true);return;}
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${name}-${maskOnly?'mask':'cutout'}.png`;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);message(`已匯出 ${output.width}×${output.height} ${maskOnly?'黑白遮罩':'透明 PNG'}`);
+ }
+ get('export').addEventListener('click',()=>download(false));get('mask').addEventListener('click',()=>download(true));
+ function clear(){invalidate();input=null;initial=null;history=[];controls();for(const c of lab.querySelectorAll('.lab-grid canvas')){c.width=1;c.height=1;}for(let i=0;i<3;i++)get('info-'+i).textContent='';}
+ async function load(url,name){
+  const id=++request;clear();message('載入中…');const img=new Image();
+  try{
+   img.src=url;await img.decode();if(id!==request)return;
+   if(img.naturalWidth<200||img.naturalHeight<200)throw Error('解像度太低（每邊至少 200px）');
+   if(img.naturalWidth*img.naturalHeight>40e6)throw Error('像素太多（上限 4000 萬）');
+   // ponytail: bounded synchronous flood-fill at 1200px; use a worker if full-resolution editing becomes necessary.
+   const scale=Math.min(1,1200/Math.max(img.naturalWidth,img.naturalHeight));
+   const work=document.createElement('canvas');work.width=Math.max(1,Math.round(img.naturalWidth*scale));work.height=Math.max(1,Math.round(img.naturalHeight*scale));
+   work.getContext('2d').drawImage(img,0,0,work.width,work.height);
+   const decoded=new Image();decoded.src=work.toDataURL();await decoded.decode();if(id!==request)return;
+   settings={tolerance:32,trimShadow:false,clearEnclosed:false};syncSettings();
+   const rgba=work.getContext('2d').getImageData(0,0,work.width,work.height).data;let hasAlpha=false,kept=0;
+   for(let i=3;i<rgba.length;i+=4){if(rgba[i]<255)hasAlpha=true;if(rgba[i])kept++;}
+   // Imported cutouts already carry a mask: preserve it until the user explicitly reapplies segmentation.
+   const masks=[segment(decoded),hasAlpha?{canvas:work,kept:kept/(work.width*work.height)}:segment(decoded,false,settings)];
+   [decoded,...masks.map(m=>m?.canvas)].forEach((image,i)=>{const c=get('view-'+i);c.width=decoded.naturalWidth;c.height=decoded.naturalHeight;if(image)c.getContext('2d').drawImage(image,0,0);
+    get('info-'+i).textContent=i?(masks[i-1]?`保留像素 ${(masks[i-1].kept*100).toFixed(1)}%（非準確率）`:'未找到前景'):`${img.naturalWidth} × ${img.naturalHeight}`;});
+   input=decoded;filename=name;initial=pixels();info();controls();xInput.max=input.naturalWidth-1;yInput.max=input.naturalHeight-1;xInput.value=yInput.value=0;
+   message(`${name} · 比較完成${hasAlpha?' · 已保留來源透明遮罩':''}${scale<1?' · 分析及匯出縮至最長邊 1200px':''}`);
+  }catch(e){if(id===request){clear();message(e.name==='EncodingError'?'圖片解碼失敗，請揀另一張相片':e.message||'圖片載入失敗',true);}}
+  finally{if(url.startsWith('blob:'))URL.revokeObjectURL(url);}
+ }
+ function useFile(file){
+  if(!file)return;
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>20*1024*1024){++request;clear();message('請選擇 20MB 以內嘅 JPEG / PNG / WebP',true);return;}
+  sample.value='';load(URL.createObjectURL(file),file.name);
+ }
+ sample.addEventListener('change',()=>load(SRC[sample.value]||'assets/segmentation/'+sample.value,sample.value));
+ get('recipe').addEventListener('change',invalidate);
+ get('evolve').addEventListener('click',async()=>{
+  if(!input)return;const version=revision,name=filename,img=new Image();img.src=editable.toDataURL();
+  try{await img.decode();if(version!==revision)return;
+   const geometry=maskGeometry(editable);
+   photo=img;recipe=get('recipe').value;setCopy(recipe);
+   if(!geometry||!build(geometry)){fail(UNSUPPORTED);message('此遮罩未符合直立樽形比例；請繼續修圖或匯出，毋須套用樽配方',true);preview.hidden=true;return;}
+   preview.hidden=false;show();message(`${name} · 已用目前遮罩試演化（手動選配方，非自動辨識）`);
+   preview.scrollIntoView({behavior:'instant',block:'start'});
+  }catch(e){if(version===revision){preview.hidden=true;message('演化預覽失敗，遮罩仍然保留，可繼續編輯',true);}}
+ });
+ get('bg').addEventListener('change',e=>{lab.style.setProperty('--mask-bg',e.target.value==='checker'?'#777':e.target.value);lab.classList.toggle('checker',e.target.value==='checker');});
+ get('file').addEventListener('change',e=>{useFile(e.target.files[0]);e.target.value='';});
+ let dragDepth=0;
+ addEventListener('dragenter',e=>{e.preventDefault();if(!dragDepth++)document.body.classList.add('drag');});
+ addEventListener('dragover',e=>e.preventDefault());
+ addEventListener('dragleave',()=>{dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)document.body.classList.remove('drag');});
+ addEventListener('drop',e=>{e.preventDefault();dragDepth=0;document.body.classList.remove('drag');useFile(e.dataTransfer.files[0]);});
+ load('assets/segmentation/'+sample.value,sample.value);if(Q.has('test'))labTest();
+}
+async function labTest(){
+ const c=document.createElement('canvas');c.width=c.height=200;const g=c.getContext('2d');
+ g.fillStyle='white';g.fillRect(0,0,200,200);g.fillStyle='red';g.fillRect(40,30,20,140);g.fillRect(140,30,20,140);g.fillRect(40,150,120,20);
+ const img=new Image();img.src=c.toDataURL();await img.decode();
+ const old=segment(img),filled=segment(img,true),open=segment(img,false);
+ const alpha=(s,x,y)=>s.canvas.getContext('2d').getImageData(x,y,1,1).data[3];
+ const rows=[['default retains existing fill',old.kept===filled.kept&&alpha(old,100,80)===255],['open concavity remains transparent without fill',alpha(open,100,80)===0],['object remains solid',alpha(open,50,80)===255&&alpha(open,100,160)===255],['outer background is transparent',alpha(open,10,10)===0],['bounds unchanged by fill toggle',old.top===open.top&&old.base===open.base&&old.width===open.width]];
+ g.fillStyle='white';g.fillRect(0,0,200,200);g.strokeStyle='red';g.lineWidth=10;g.strokeRect(40,40,120,120);
+ const pixels=g.getImageData(0,0,200,200),n=eraseRegion(pixels,100,100);
+ rows.push(['erase enclosed region without crossing coloured wall',n>0&&pixels.data[(100*200+100)*4+3]===0&&pixels.data[(40*200+40)*4+3]===255&&pixels.data[3]===255],['transparent seed makes no change',eraseRegion(pixels,100,100)===0],['out-of-bounds seed makes no change',eraseRegion(pixels,-1,100)===0]);
+ const ring=new Image();ring.src=c.toDataURL();await ring.decode();
+ const conservative=segment(ring,false,{trimShadow:false}),keyed=segment(ring,false,{trimShadow:false,clearEnclosed:true});
+ rows.push(['enclosed removal is opt-in',alpha(conservative,100,100)===255&&alpha(keyed,100,100)===0&&alpha(keyed,40,100)===255]);
+ g.clearRect(0,0,200,200);g.fillStyle='white';g.fillRect(40,40,120,120);g.clearRect(80,80,40,40);
+ const transparent=new Image();transparent.src=c.toDataURL();await transparent.decode();
+ const preserved=segment(transparent);
+ rows.push(['input alpha and enclosed transparent holes survive',!!preserved&&alpha(preserved,100,100)===0&&alpha(preserved,50,50)===255&&Math.abs(preserved.kept-.32)<.0001]);
+ g.fillStyle='white';g.fillRect(0,0,200,200);g.fillStyle='red';g.fillRect(80,20,40,150);g.fillRect(40,145,120,30);
+ const foot=new Image();foot.src=c.toDataURL();await foot.decode();
+ rows.push(['generic mode preserves a wide foot instead of trimming it as shadow',alpha(segment(foot,false,{trimShadow:false}),50,160)===255&&alpha(segment(foot,false),50,160)===0]);
+ const thin=document.createElement('canvas');thin.width=1;thin.height=20;const tg=thin.getContext('2d');tg.fillStyle='white';tg.fillRect(0,0,1,20);tg.fillStyle='red';tg.fillRect(0,8,1,4);
+ const narrow=new Image();narrow.src=thin.toDataURL();await narrow.decode();
+ rows.push(['one-pixel-wide analysis does not invent a foreground',segment(narrow,false,{trimShadow:false})===null]);
+ const out=document.getElementById('lab-checks');out.hidden=false;out.textContent=rows.map(([n,ok])=>`${ok?'PASS':'FAIL'} ${n}`).join('\n');
+}
+
+if(Q.has('lab'))startLab();else {
+function loadDefault(){photo=new Image();const current=photo;
+photo.onload=()=>{if(photo!==current)return;
  if(family==='suica'&&(photo.naturalWidth!==1280||photo.naturalHeight!==961)){fail('圖片尺寸與校準不符');return;}
  if(!build()){fail(UNSUPPORTED);if(Q.has('test'))selfTest();return;}
- show();if(Q.has('test'))selfTest();};photo.onerror=()=>fail('圖片載入失敗，請用本地預覽網址開啟');photo.src=SRC[kind];
+ show();if(Q.has('test'))selfTest();};photo.onerror=()=>{if(photo===current)fail('圖片載入失敗，請用本地預覽網址開啟');};photo.src=SRC[kind];
+}
+loadDefault();
+if(family==='suica')mountCalibration({parent:document.querySelector('main'),kind:'交通卡',target:[[155,190],[1093,190],[1093,778],[155,778]],width:1280,height:961,onRestore:loadDefault,onReady:img=>{
+ cancelAnimationFrame(raf);photo=img;build();document.getElementById('checks').hidden=true;show();
+}});
+}
 </script></body></html>

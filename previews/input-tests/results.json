@@ -1,0 +1,84 @@
+{
+  "results": [
+    {
+      "file": "toy.jpeg",
+      "width": 576,
+      "height": 432,
+      "phase": "此相片不在支援範圍：需要單一直立物件、乾淨漸層背景、完整入鏡",
+      "disabled": true,
+      "mask": {
+        "top": 2,
+        "base": 431,
+        "width": 416,
+        "cx": 293,
+        "kept": 0.5771524562757202,
+        "bothSides": false,
+        "aspect": 0.9696969696969697
+      }
+    },
+    {
+      "file": "starwberry.jpeg",
+      "width": 400,
+      "height": 335,
+      "phase": "此相片不在支援範圍：需要單一直立物件、乾淨漸層背景、完整入鏡",
+      "disabled": true,
+      "mask": {
+        "top": 0,
+        "base": 334,
+        "width": 305,
+        "cx": 191.5,
+        "kept": 0.5059029850746268,
+        "bothSides": false,
+        "aspect": 0.9131736526946108
+      }
+    },
+    {
+      "file": "water.jpg",
+      "width": 459,
+      "height": 612,
+      "phase": "此相片不在支援範圍：需要單一直立物件、乾淨漸層背景、完整入鏡",
+      "disabled": true,
+      "mask": {
+        "top": 181,
+        "base": 500,
+        "width": 232,
+        "cx": 232,
+        "kept": 0.21753741438478078,
+        "bothSides": false,
+        "aspect": 0.7272727272727273
+      }
+    },
+    {
+      "file": "banana.jpeg",
+      "width": 620,
+      "height": 322,
+      "phase": "此相片不在支援範圍：需要單一直立物件、乾淨漸層背景、完整入鏡",
+      "disabled": true,
+      "mask": {
+        "top": 29,
+        "base": 301,
+        "width": 556,
+        "cx": 301.5,
+        "kept": 0.5116659987978361,
+        "bothSides": false,
+        "aspect": 2.0441176470588234
+      }
+    },
+    {
+      "recovery": "2127 / 形態完成"
+    },
+    {
+      "baseline": "bottle",
+      "checks": "PASS background actually removed, not merely plausible geometry\nPASS anchors measured from this photo, not hardcoded\nPASS calibrated fixture still lands on its authored placement\nPASS source background is transparent\nPASS original solid area physically removed\nPASS new structures extend beyond source\nPASS former body contains actual transparent negative space\nPASS final composite removes old body\nPASS controls enabled\nPASS build() is re-runnable without drift"
+    },
+    {
+      "baseline": "bottle-b",
+      "checks": "PASS background actually removed, not merely plausible geometry\nPASS anchors measured from this photo, not hardcoded\nPASS source background is transparent\nPASS original solid area physically removed\nPASS new structures extend beyond source\nPASS former body contains actual transparent negative space\nPASS final composite removes old body\nPASS controls enabled\nPASS build() is re-runnable without drift\nPASS elevation 0 redraw is idempotent (no transform accumulation)\nPASS returning to elevation 0 leaves no residue 0\nPASS raising the camera reprojects the geometry"
+    },
+    {
+      "baseline": "suica",
+      "checks": "PASS calibrated source dimensions\nPASS source background is transparent\nPASS original solid area physically removed\nPASS open cuff has solid band and credential mount, clear side gap\nPASS former body contains actual transparent negative space\nPASS final composite removes old body\nPASS controls enabled"
+    }
+  ],
+  "errors": []
+}

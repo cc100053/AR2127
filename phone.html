@@ -6,28 +6,23 @@
 <style>
 :root{color-scheme:dark;font-family:Inter,-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;color:#edf5f5;background:#080c10}*{box-sizing:border-box}body{margin:0;min-height:100svh;background:radial-gradient(ellipse at 55% 45%,#15262c 0,transparent 60%)}main{max-width:1240px;margin:auto;padding:32px 48px}header,footer,.controls,.labels{display:flex;align-items:center;justify-content:space-between;gap:24px}header{border-bottom:1px solid #263238;padding-bottom:20px}a{color:#a6babf;text-decoration:none;font-size:12px}a:hover{color:#7bf6e4}.mark{font-size:20px;letter-spacing:-1px}.mark span{color:#70858d;font-size:11px;letter-spacing:2px;margin-left:14px}.hero{display:grid;grid-template-columns:260px minmax(0,1fr);align-items:center;gap:24px;min-height:570px}.eyebrow{font:10px ui-monospace,monospace;letter-spacing:3px;color:#6fd9d3}h1{font-size:42px;font-weight:450;line-height:1.25;letter-spacing:-2px;margin:24px 0 18px}.intro{font-size:14px;color:#8da1a8;line-height:1.9;max-width:245px}.specs{margin-top:42px;display:grid;gap:16px;font-size:11px;color:#b9c9cd}.specs span{color:#5f757e;margin-right:15px;font:10px ui-monospace,monospace}figure{margin:0;min-width:0}canvas{display:block;width:100%;height:auto}figcaption{font:10px ui-monospace,monospace;letter-spacing:2px;color:#63808a;text-align:center}.controls{max-width:650px;margin:0 auto 48px}.compare{flex:1}.labels{font-size:11px;color:#9eafb5;gap:10px}input{width:100%;accent-color:#77e5d7;margin:14px 0 0;cursor:ew-resize}button{background:#132729;border:1px solid #36565b;color:#b7f5e8;padding:13px 19px;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap}button:hover{background:#1e3b3c}button:disabled{opacity:.45;cursor:wait}:focus-visible{outline:2px solid #a6fff0;outline-offset:5px}footer{border-top:1px solid #263238;padding-top:22px;font-size:11px;color:#617981}footer p{margin:0;line-height:1.8}.kept{color:#a4babe;font-size:13px}.error{color:#ffaaaa}#checks{white-space:pre-wrap;font:12px/1.8 ui-monospace,monospace;color:#8af0bb} @media(max-width:800px){main{padding:22px}.hero{grid-template-columns:1fr;gap:0;min-height:0}.copy{padding-top:35px}h1{font-size:32px;margin:15px 0}.intro{max-width:none}.specs{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}.hero figure{margin:10px -20px 30px}.controls{gap:15px;margin-bottom:32px}footer{align-items:flex-start;flex-direction:column;gap:15px}.mark span{display:none}}
 </style>
+<link rel="stylesheet" href="calibration.css">
 </head>
 <body><main>
-<header><div class="mark">2127<span>100 YEARS LATER</span></div><nav aria-label="物件測試" style="display:flex;gap:20px;flex-wrap:wrap"><a href="studies.html?object=bottle">茶瓶</a><a href="studies.html?object=suica">交通卡</a><a href="index.html">旋轉影片 ↗</a></nav></header>
+<header><div class="mark">2127<span>100 YEARS LATER</span></div><nav aria-label="物件測試" style="display:flex;gap:20px;flex-wrap:wrap"><a href="studies.html?object=bottle">茶瓶</a><a href="studies.html?object=suica">交通卡</a><a href="studies.html?lab=1">去背實驗</a><a href="index.html">旋轉影片 ↗</a></nav></header>
 <section class="hero"><div class="copy"><div class="eyebrow">FORM STUDY / 002</div><h1>隨身介面，<br>下一個世紀。</h1><p class="intro">螢幕退場，機身展開。三片陶瓷感知翼連接光導脊柱，只留下熟悉的掌心握座。</p><div class="specs"><div><span>01</span>可展開感知翼</div><div><span>02</span>外露光導脊柱</div><div><span>03</span>保留掌心握座</div></div></div>
 <figure><canvas id="view" width="1456" height="970" role="img" aria-label="手機的螢幕與上半機身消失，演化成連接三片陶瓷感知翼的光導脊柱，下端保留原有握座及按鍵"></canvas><figcaption id="phase" aria-live="polite">準備形態推演</figcaption></figure></section>
 <div class="controls"><div class="compare"><div class="labels"><label for="evolution">原始手機</label><span>2127 形態</span></div><input id="evolution" aria-label="原始手機與 2127 形態比較" type="range" min="0" max="100" value="100" disabled></div><button id="replay" disabled>重新推演 ↗</button></div>
 <footer><p class="kept">一百年後，仍然把世界握在手裡。</p><p>靜態相片・本地程序生成<br>單張相片校準測試，未包含旋轉追蹤。</p></footer><pre id="checks" hidden></pre>
-</main><script>
+</main><script src="segmentation.js"></script><script src="calibration.js"></script><script>
 'use strict';
 const canvas=document.getElementById('view'), ctx=canvas.getContext('2d');
 const slider=document.getElementById('evolution'), replay=document.getElementById('replay'), phase=document.getElementById('phase');
-const photo=new Image(), original=document.createElement('canvas'), future=document.createElement('canvas');
+let photo=new Image();const original=document.createElement('canvas'), future=document.createElement('canvas');
 original.width=future.width=1456;original.height=future.height=970;
 // ponytail: screen cutout and planar corners calibrated only for this 728×485 photo.
 // Add corner selection / segmentation when testing other objects; this is not automatic reconstruction.
 // Projective map: unit rectangle → photographed plane. All seams and panel details use this map.
-function project(quad){
- const [[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=quad;
- const dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3;
- const det=dx1*dy2-dx2*dy1,g=(dx3*dy2-dx2*dy3)/det,h=(dx1*dy3-dx3*dy1)/det;
- return (u,v)=>{const d=g*u+h*v+1;return [( (x1-x0+g*x1)*u+(x3-x0+h*x3)*v+x0)/d,((y1-y0+g*y1)*u+(y3-y0+h*y3)*v+y0)/d];};
-}
 const corners=[[421,65],[662,108],[329,408],[61,329]], at=project(corners);
 function path(points,closed=true){const p=new Path2D();points.forEach(([u,v,z=0],i)=>{const q=at(u,v);q[1]-=z;i?p.lineTo(...q):p.moveTo(...q);});if(closed)p.closePath();return p;}
 function polygon(c,points,fill,stroke,width=.7){const p=path(points);if(fill){c.fillStyle=fill;c.fill(p);}if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke(p);}}
@@ -116,7 +111,8 @@ function selfTest(){
  check('final composite does not retain removed screen',ctx.getImageData(0,0,1456,970).data[visibleHole]<15);
  const out=document.getElementById('checks');out.hidden=false;out.textContent=rows.join('\n');return rows;
 }
-photo.onload=()=>{if(photo.naturalWidth!==728||photo.naturalHeight!==485){phase.textContent='相片尺寸與校準不符';return;}
+function loadDefault(){photo=new Image();const current=photo;
+photo.onload=()=>{if(photo!==current)return;if(photo.naturalWidth!==728||photo.naturalHeight!==485){phase.textContent='相片尺寸與校準不符';return;}
  // Remove only near-white pixels connected to image borders: the white phone remains enclosed.
  const mask=document.createElement('canvas');mask.width=728;mask.height=485;
  const m=mask.getContext('2d');m.drawImage(photo,0,0);const pixels=m.getImageData(0,0,728,485),d=pixels.data;
@@ -126,9 +122,15 @@ photo.onload=()=>{if(photo.naturalWidth!==728||photo.naturalHeight!==485){phase.
   queue[tail++]=i;d[j+3]=0;}
  for(let x=0;x<728;x++){enqueue(x);enqueue(484*728+x);}for(let y=0;y<485;y++){enqueue(y*728);enqueue(y*728+727);}
  while(head<tail){const i=queue[head++];if(i%728)enqueue(i-1);if(i%728<727)enqueue(i+1);enqueue(i-728);enqueue(i+728);}
- m.putImageData(pixels,0,0);original.getContext('2d').drawImage(mask,0,0,1456,970);
- makeFuture();slider.disabled=replay.disabled=false;evolve();
+ m.putImageData(pixels,0,0);const oc=original.getContext('2d');oc.clearRect(0,0,1456,970);oc.drawImage(mask,0,0,1456,970);
+ makeFuture();phase.classList.remove('error');slider.disabled=replay.disabled=false;evolve();
  if(new URLSearchParams(location.search).has('test'))selfTest();};
-photo.onerror=()=>{phase.textContent='相片載入失敗，請用本地 HTTP 伺服器開啟';phase.classList.add('error');};
+photo.onerror=()=>{if(photo!==current)return;phase.textContent='相片載入失敗，請用本地 HTTP 伺服器開啟';phase.classList.add('error');};
 photo.src='assets/phone-source.jpg';
+}
+loadDefault();
+mountCalibration({parent:document.querySelector('main'),kind:'手機',target:corners,width:728,height:485,onRestore:loadDefault,onReady:(img,mask)=>{
+ cancelAnimationFrame(raf);photo=img;const c=original.getContext('2d');c.clearRect(0,0,1456,970);c.drawImage(mask,0,0,1456,970);
+ makeFuture();slider.disabled=replay.disabled=false;phase.classList.remove('error');document.getElementById('checks').hidden=true;evolve();
+}});
 </script></body></html>
