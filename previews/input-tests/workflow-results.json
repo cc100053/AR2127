@@ -67,6 +67,9 @@
       }
     },
     {
+      "busyBackgroundRefused": "不在支援範圍——保留範圍達 74%：背景大部分未清走"
+    },
+    {
       "cupRecipeMismatch": "不在支援範圍——闊高比 0.73 唔喺「茶瓶」配方範圍（0.15–0.6）；比較接近「闊身容器」配方，可以喺配方揀返",
       "recoveredByReselecting": true
     },

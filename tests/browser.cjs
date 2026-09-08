@@ -95,6 +95,19 @@ for(const f of ['toy.jpeg','starwberry.jpeg','water.jpg']){
 await page.screenshot({path:'previews/input-tests/generic-water.png',fullPage:true});
 results.push({genericFallback:generic});
 
+// A photo whose background cannot be removed is still refused, and the refusal points at the lab,
+// which is where a mask gets fixed by hand. Built here rather than committed as a fixture.
+const noisy=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=c.height=420;
+ const g=c.getContext('2d');
+ for(let i=0;i<900;i++){g.fillStyle=`hsl(${(i*37)%360} 70% ${25+(i*13)%50}%)`;
+  g.fillRect((i*97)%420,(i*61)%420,18+(i%29),14+(i%23));}
+ return c.toDataURL();});
+await page.locator('#file').setInputFiles({name:'noisy.png',mimeType:'image/png',buffer:Buffer.from(noisy.split(',')[1],'base64')});
+await page.waitForFunction(()=>document.querySelector('#phase').classList.contains('error'));
+const refusal=await page.locator('#phase').innerText();
+assert(await page.locator('#loadhint a[href*="lab=1"]').count()===1);
+results.push({busyBackgroundRefused:refusal});
+
 // Each recipe has its own supported proportions: picking the wrong one must be rejected with
 // the reason and the recipe that does fit, not drawn as if it were that class.
 await page.goto(BASE+'/studies.html?object=cup');

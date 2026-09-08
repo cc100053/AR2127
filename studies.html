@@ -431,7 +431,11 @@ function loadFile(file){
   if(img.naturalWidth*img.naturalHeight>40e6)return fail('像素太多（上限 4000 萬）');
   photo=img;autoRecipe=true;
   const t=performance.now();
-  const why=build();if(why!==true)return fail('不在支援範圍——'+why);
+  const why=build();
+  if(why!==true){
+   // A rejection here means segmentation failed, and the lab is where that gets fixed by hand.
+   document.getElementById('loadhint').innerHTML='去背唔掂，所以未推演到。可以去 <a href="studies.html?lab=1">去背實驗</a> 手動修圖，喺嗰度直接試演化。';
+   return fail('不在支援範圍——'+why);}
   document.getElementById('loadhint').textContent=
    `已載入 ${img.naturalWidth}×${img.naturalHeight}・分割 ${Math.round(performance.now()-t)}ms`;
   show();
