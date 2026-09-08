@@ -385,6 +385,7 @@ if(kind==='bottle-b'){const wrap=document.getElementById('elevwrap'),el=document
   slider.value=100;draw(1);
   phase.textContent=+el.value?`カメラ仰角 ${Math.round(e*180/Math.PI)}°（プロトタイプ・近似）`:'2127 / 形態完成';});}
 slider.addEventListener('input',()=>{cancelAnimationFrame(raf);raf=0;draw(+slider.value/100);phase.textContent=+slider.value===0?'現在のモノ':+slider.value===100?'2127 / 形態完成':'現在 ↔ 2127 形態';});replay.addEventListener('click',evolve);
+mountSnapshot(canvas,replay,()=>{cancelAnimationFrame(raf);raf=0;});
 function selfTest(){const rows=[],check=(n,ok)=>rows.push(`${ok?'PASS':'FAIL'} ${n}`),a=source.getContext('2d').getImageData(0,0,1456,970).data,b=future.getContext('2d').getImageData(0,0,1456,970).data;let count=0,removed=0,added=0;for(let i=3;i<a.length;i+=4){if(a[i]>200){count++;if(b[i]<30)removed++;}else if(a[i]<10&&b[i]>180)added++;}
  if(family==='bottle'){check('background actually removed, not merely plausible geometry',!!anchors&&!anchors.bothSides&&anchors.kept<.6);
   check('rejection names the failing condition and the recipe that fits',/左右の画面端/.test(bottleGate({bothSides:true,kept:.2,top:0,base:100,width:30},200,recipe))&&/広口の容器/.test(bottleGate({bothSides:false,kept:.2,top:0,base:100,width:90},200,'bottle'))&&bottleGate(anchors,photo.naturalHeight,recipe)===null);
@@ -457,14 +458,23 @@ function loadFile(file){
  if(!/^image\/(jpeg|png|webp)$/.test(file.type))return fail('JPEG / PNG / WebP のみ対応');
  if(file.size>20*1024*1024)return fail('ファイルが大きすぎます（上限 20MB）');
  const url=URL.createObjectURL(file),img=new Image();
- img.onload=()=>{
+ img.onload=async()=>{
   URL.revokeObjectURL(url);
   if(revision!==inputRevision)return;
   try {
   if(img.naturalWidth<200||img.naturalHeight<200)return fail('解像度が低すぎます（各辺 200px 以上）');
   if(img.naturalWidth*img.naturalHeight>40e6)return fail('画素数が多すぎます（上限 4000 万）');
-  photo=img;autoRecipe=true;
   const t=performance.now();
+  // 與 Lab 一樣限制分析尺寸；保留原 File 給失敗修正，避免高像素 flood-fill 佔滿記憶體。
+  let analysis=img;
+  if(Math.max(img.naturalWidth,img.naturalHeight)>1200){
+   const scale=1200/Math.max(img.naturalWidth,img.naturalHeight),work=document.createElement('canvas');
+   work.width=Math.round(img.naturalWidth*scale);work.height=Math.round(img.naturalHeight*scale);
+   work.getContext('2d').drawImage(img,0,0,work.width,work.height);
+   analysis=new Image();analysis.src=work.toDataURL('image/png');await analysis.decode();
+   if(revision!==inputRevision)return;
+  }
+  photo=analysis;autoRecipe=true;
   const why=build();
   if(why!==true){
    // A rejection here means segmentation failed, and the lab is where that gets fixed by hand.
@@ -475,9 +485,9 @@ function loadFile(file){
    hint.append(repair);
    return fail('対応範囲外 —— '+why);}
   document.getElementById('loadhint').textContent=
-   `読み込み ${img.naturalWidth}×${img.naturalHeight}・分離 ${Math.round(performance.now()-t)}ms`;
+   `読み込み ${img.naturalWidth}×${img.naturalHeight}・解析 ${analysis.naturalWidth}×${analysis.naturalHeight}・処理 ${Math.round(performance.now()-t)}ms${analysis!==img?'（長辺 1200px に縮小）':''}`;
   show();
-  }catch{fail('写真の処理に失敗しました。別の写真でもう一度お試しください');}
+  }catch{if(revision===inputRevision)fail('写真の処理に失敗しました。別の写真でもう一度お試しください');}
  };
  img.onerror=()=>{URL.revokeObjectURL(url);if(revision===inputRevision)fail('画像のデコードに失敗しました');};
  img.src=url;

@@ -75,6 +75,15 @@ for(const [sample,recipe,title,name] of [['bottle','bottle','ひと口のお茶'
  await page.screenshot({path:'previews/input-tests/bridge-'+name+'.png',fullPage:true});
  await page.locator('#lab-reset').click();assert(await page.locator('#lab-evolution').isHidden());
 }
+// Export the exact current comparison, including prepared-mask evolution.
+await page.locator('#lab-evolve').click();await page.waitForFunction(()=>!document.querySelector('#lab-evolution').hidden);
+await page.locator('#evolution').fill('37');await page.locator('#evolution').dispatchEvent('input');
+const expectedSnapshot=await page.locator('#view').evaluate(c=>c.toDataURL());
+const [snapshot]=await Promise.all([page.waitForEvent('download'),page.locator('#save-view').click()]);
+await snapshot.saveAs('/tmp/2127-view-test.png');
+assert.equal('data:image/png;base64,'+fs.readFileSync('/tmp/2127-view-test.png').toString('base64'),expectedSnapshot);
+await page.locator('#lab-reset').click();assert(await page.locator('#lab-evolution').isHidden());
+results.push({comparisonExportExact:true});
 results.push({preparedMaskEvolution:true,rejectRetainsEditor:true,editsHideStalePreview:true});
 for(const object of ['bottle','bottle-b','cup','banana','suica']){
  await page.goto(BASE+'/studies.html?object='+object+'&test=1');await page.waitForFunction(()=>document.querySelector('#checks').textContent.length>0);const checks=await page.locator('#checks').innerText();assert(!checks.includes('FAIL'));results.push({baseline:object,checks});
@@ -123,6 +132,16 @@ for(const f of ['toy.jpeg','starwberry.jpeg','water.jpg']){
 }
 await page.screenshot({path:'previews/input-tests/generic-water.png',fullPage:true});
 results.push({genericFallback:generic});
+
+// Large uploads are bounded before segmentation, including subsequent recipe changes.
+const large=await page.evaluate(async()=>{const img=new Image();img.src='assets/segmentation/banana.jpeg';await img.decode();
+ const c=document.createElement('canvas');c.width=3720;c.height=1932;c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c.toDataURL();});
+await page.locator('#file').setInputFiles({name:'large.png',mimeType:'image/png',buffer:Buffer.from(large.split(',')[1],'base64')});
+await page.waitForFunction(()=>document.querySelector('#loadhint').textContent.includes('長辺 1200px'));
+assert((await page.locator('#loadhint').innerText()).includes('解析 1200×623'));
+assert(!(await page.locator('#replay').isDisabled()));
+await page.locator('[data-r="generic"]').click();assert(!(await page.locator('#replay').isDisabled()));
+results.push({largeUploadAnalysis:'1200x623',originalUpload:'3720x1932'});
 
 // A photo whose background cannot be removed is still refused, and the refusal points at the lab,
 // which is where a mask gets fixed by hand. Built here rather than committed as a fixture.

@@ -93,6 +93,7 @@ function evolve(){cancelAnimationFrame(raf);slider.value=100;started=performance
 }
 slider.addEventListener('input',()=>{cancelAnimationFrame(raf);raf=0;draw(slider.value/100);phase.textContent=+slider.value===0?'現在のスマホ':+slider.value===100?'2127 / 形態完成':'現在 ↔ 2127 形態';});
 replay.addEventListener('click',evolve);
+mountSnapshot(canvas,replay,()=>{cancelAnimationFrame(raf);raf=0;});
 function selfTest(){
  const rows=[],check=(name,ok)=>{rows.push(`${ok?'PASS':'FAIL'} ${name}`);};
  check('four projective corners match the photo',[[0,0],[1,0],[1,1],[0,1]].every(([u,v],i)=>Math.hypot(...at(u,v).map((n,j)=>n-corners[i][j]))<1e-6));

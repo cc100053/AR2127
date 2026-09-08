@@ -35,6 +35,9 @@
       "invalidInput": true
     },
     {
+      "comparisonExportExact": true
+    },
+    {
       "preparedMaskEvolution": true,
       "rejectRetainsEditor": true,
       "editsHideStalePreview": true
@@ -70,6 +73,10 @@
         "starwberry.jpeg": "generic",
         "water.jpg": "generic"
       }
+    },
+    {
+      "largeUploadAnalysis": "1200x623",
+      "originalUpload": "3720x1932"
     },
     {
       "failedPhotoTransferredExactly": true,

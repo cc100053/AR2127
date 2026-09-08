@@ -81,3 +81,26 @@ function maskProfile(canvas,long='y',n=40){
    out[i][key]=sum/wt;}}
  return out;
 }
+
+// 保存目前比較位置；兩個形態頁共用，Lab 移動控制列時一併帶入。
+function mountSnapshot(canvas,replay,pause){
+ const button=document.createElement('button');button.id='save-view';button.textContent='今の画面を保存 ↓';
+ const note=document.createElement('span');note.id='save-status';note.setAttribute('role','status');note.style.cssText='font-size:12px;line-height:1.6;color:#b9c9cd';
+ replay.parentElement.style.flexWrap='wrap';replay.after(button,note);
+ let saving=false;
+ const sync=()=>{button.disabled=saving||replay.disabled;};
+ new MutationObserver(sync).observe(replay,{attributes:true,attributeFilter:['disabled']});sync();
+ button.onclick=async()=>{
+  if(button.disabled)return;
+  pause();saving=true;sync();note.textContent='PNG を準備中…';
+  try{
+   // toBlob captures pixels at invocation, before another upload or slider event can change them.
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!blob)throw Error('empty export');
+   const url=URL.createObjectURL(blob),a=document.createElement('a');
+   a.download='2127-view.png';a.href=url;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);
+   note.textContent='透過 PNG を保存しました · '+canvas.width+' × '+canvas.height;
+  }catch{note.textContent='保存できませんでした。もう一度お試しください。';}
+  finally{saving=false;sync();}
+ };
+}
