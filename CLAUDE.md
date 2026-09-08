@@ -24,6 +24,11 @@ open http://localhost:8127/?test=1 # 67 項自我檢查
 
 `?cam=1` 真攝影機 ｜ `?synth=1` 合成物件 ｜ `?src=xx.mp4` ｜ 影片可直接拖入頁面
 
+**要試「放張相入去睇一百年後」嘅 demo，開 `studies.html?object=banana`**，拖相入去即推演。
+專屬配方：`?object=bottle` 茶瓶 ｜ `?object=bottle-b` 保溫樽 ｜ `?object=cup` 水杯 ｜
+`?object=suica` 交通卡 ｜ `phone.html` 手機 ｜ `?lab=1` 去背實驗（手動修遮罩再試演化）。
+每頁加 `&test=1` 跑該頁自我檢查；完整操作回歸 `node tests/browser.cjs`（見 `tests/README.md`）。
+
 ## 改完之後
 
 `?test=1` 必須全綠。改咗幾何、模組或形態推演就要補檢查落 `selfTest()`。

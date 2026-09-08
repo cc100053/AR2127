@@ -64,7 +64,7 @@ assert.equal(await page.locator('#lab-view-2').evaluate(c=>c.width),620);
 results.push({rapidSelection:true,mobileNoOverflow:true,invalidInput:true});
 // Unsupported masks stay editable; supported prepared masks reach the existing renderer.
 await page.locator('#lab-evolve').click();await page.waitForFunction(()=>document.querySelector('#lab-status').classList.contains('error'));assert(await page.locator('#lab-evolution').isHidden());assert(!(await page.locator('#lab-export').isDisabled()));
-for(const [sample,recipe,title] of [['bottle','bottle','一口茶'],['bottle-b','flask','水，']]){
+for(const [sample,recipe,title,name] of [['bottle','bottle','一口茶','bottle'],['bottle-b','flask','水，','bottle-b'],['banana.jpeg','generic','冇專屬配方','generic']]){
  await page.locator('#lab-sample').selectOption(sample);await page.waitForFunction(()=>document.querySelector('#lab-status').textContent.includes('比較完成'));
  await page.locator('#lab-recipe').selectOption(recipe);await page.locator('#lab-evolve').click();
  await page.waitForFunction(()=>!document.querySelector('#lab-evolution').hidden);
@@ -72,7 +72,7 @@ for(const [sample,recipe,title] of [['bottle','bottle','一口茶'],['bottle-b',
  assert.equal(await page.locator('#view').evaluate(c=>c.width),1456);
  await page.locator('#evolution').fill('0');await page.locator('#evolution').dispatchEvent('input');assert.equal(await page.locator('#phase').innerText(),'原始物件');
  await page.locator('#replay').click();
- await page.screenshot({path:'previews/input-tests/bridge-'+sample+'.png',fullPage:true});
+ await page.screenshot({path:'previews/input-tests/bridge-'+name+'.png',fullPage:true});
  await page.locator('#lab-reset').click();assert(await page.locator('#lab-evolution').isHidden());
 }
 results.push({preparedMaskEvolution:true,rejectRetainsEditor:true,editsHideStalePreview:true});

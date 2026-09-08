@@ -1,12 +1,20 @@
 # 2127 形態推演 — 100 Years Later
 
+> **試 demo（2026-09-08）**：`python3 -m http.server 8127` 之後開
+> [`通用・試自己相`](studies.html?object=banana) —— 㩒「放一張新相片入嚟」或者直接將相拖入頁面，
+> **任何成功去背嘅相都會即場推演出一個一百年後嘅形態**：兩端保留原件、中間外殼退場、
+> 沿住量到嘅輪廓長出承力骨架同縮細內核，光色由物件自己嘅像素量出。
+> 想要專屬造型就自己㩒配方（茶瓶／保溫樽／闊身容器）。去背失敗會講明邊個條件唔過，
+> 並帶你去 [`去背實驗`](studies.html?lab=1) 手動修圖，喺嗰度一樣可以直接試演化。
+> 目前只有五個造型方向，通用配方係「未分類物件」嘅統一造型語言，**唔係辨識到件嘢係乜**。
+>
 > **最新全離線流程（2026-09-08）**：[`去背實驗`](studies.html?lab=1) → 修正遮罩 → 匯出，或用目前遮罩試茶瓶／保溫樽演化。支援封閉同色區域試驗、8 步還原、重設、透明 PNG／黑白遮罩；玻璃同色清除仍會誤刪亮面。
 >
 > [`手機`](phone.html)／[`交通卡`](studies.html?object=suica) 現可載入新相並人工標記四角，套用現有造型；可試本地四角提議，輪廓不可靠時退回手動。這是可重用的人工校準流程，不是任意物件自動生成；已驗證原相移位／加邊框，不代表另一款真實物件已驗證。
 >
-> 自我檢查：`studies.html?lab=1&test=1` 12 項；所有既有頁面連同 lab 共 117 項。完整操作回歸見 [`tests/README.md`](tests/README.md)。
+> 自我檢查：`studies.html?lab=1&test=1` 12 項；所有既有頁面連同 lab 共 139 項。完整操作回歸見 [`tests/README.md`](tests/README.md)。
 
-> **四種演化方向**：[`手機`](phone.html) · [`茶瓶`](studies.html?object=bottle) · [`保溫樽`](studies.html?object=bottle-b) · [`交通卡`](studies.html?object=suica)。手機保留握座、生成感知翼；茶瓶走循環培養；保溫樽走大氣取水；交通卡變成開口腕環。各自沿用已寫好的造型，未包含任意新造型生成。
+> **五種演化方向**：[`手機`](phone.html) · [`茶瓶`](studies.html?object=bottle) · [`保溫樽`](studies.html?object=bottle-b) · [`水杯`](studies.html?object=cup) · [`交通卡`](studies.html?object=suica)，另加[`通用`](studies.html?object=banana)（由剪影推，冇專屬造型時用）。手機保留握座、生成感知翼；茶瓶走循環培養；保溫樽走大氣取水；交通卡變成開口腕環。各自沿用已寫好的造型，未包含任意新造型生成。
 >
 > 下方規劃保留舊旋轉方案作參考；當前方向、能力及驗證以本頁頂部和 `memory-bank/20-status.md` 為準。
 

@@ -280,7 +280,8 @@ function generic(){
  const pr=raw.map(p=>long==='y'?{a:p.a*k+dy,lo:p.lo*k+dx,hi:p.hi*k+dx}:{a:p.a*k+dx,lo:p.lo*k+dy,hi:p.hi*k+dy});
  const A0=pr[0].a,A1=pr[pr.length-1].a,band=Math.max(20,(A1-A0)*.15),span=A1-A0;
  const XY=(a,b)=>long==='y'?[b,a]:[a,b];
- const shrink=vary(1,.42,.6),mid=p=>(p.lo+p.hi)/2,half=p=>Math.max(3,(p.hi-p.lo)/2*shrink);
+ const shrink=vary(1,.42,.6);place.shrink=shrink;
+ const mid=p=>(p.lo+p.hi)/2,half=p=>Math.max(3,(p.hi-p.lo)/2*shrink);
  const pearl=grad(c,150,90,590,410,[[0,'#2b3a44'],[.26,'#e2edf1'],[.58,'#93a9b4'],[1,'#25313a']]);
  const skin=grad(c,150,90,590,410,[[0,'#1d2c34'],[.3,'#9fbcc6'],[.7,'#54707c'],[1,'#182329']]);
  const strut=(d,w=7)=>{line(c,d,'#16232a',w+3);line(c,d,'#8ea7b3',w);line(c,d,'#dcecf2',1.1);};
@@ -363,6 +364,11 @@ function build(prepared=null){
   c.drawImage(s.canvas,dx,dy,s.canvas.width*k,s.canvas.height*k);
   place={k,dx,dy,top:s.top*k+dy,base:s.base*k+dy,hw:s.width*k/2,accent:accentOf(s.canvas)};
   anchors=s;renderFuture();
+  // The generic copy names what was actually measured, so the page never claims to know more
+  // about this object than the silhouette it read off it.
+  if(recipe==='generic')document.getElementById('specs').innerHTML=[
+   `由輪廓量出嘅骨架 · 闊高比 ${(s.width/(s.base-s.top)).toFixed(2)}`,'保留兩端原件',
+   `內核收窄至橫切面 ${Math.round(place.shrink*100)}%`].map((t,i)=>`<div><span>0${i+1}</span>${t}</div>`).join('');
  }else{
   c.save();const clip=new Path2D();clip.roundRect(83,85,562,352,19);c.clip(clip);c.drawImage(photo,155,190,938,588,83,85,562,352);c.restore();renderFuture();
  }
