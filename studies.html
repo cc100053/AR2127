@@ -38,6 +38,7 @@ document.getElementById('nav-'+kind).style.color='#9ef4de';document.getElementBy
 const canvas=document.getElementById('view'),ctx=canvas.getContext('2d'),slider=document.getElementById('evolution'),replay=document.getElementById('replay'),phase=document.getElementById('phase');
 let photo=new Image();const source=document.createElement('canvas'),future=document.createElement('canvas');
 source.width=future.width=1456;source.height=future.height=970;
+const scratch=document.createElement('canvas');scratch.width=1456;scratch.height=970;
 // Keep repeated mask readback and resampling on one raster backend.
 source.getContext('2d',{willReadFrequently:true});
 // ponytail: source crops, geometry and depth are calibrated for these two photos only.
@@ -282,48 +283,78 @@ function generic(){
  const XY=(a,b)=>long==='y'?[b,a]:[a,b];
  const shrink=vary(1,.42,.6);place.shrink=shrink;
  const mid=p=>(p.lo+p.hi)/2,half=p=>Math.max(3,(p.hi-p.lo)/2*shrink);
- const pearl=grad(c,150,90,590,410,[[0,'#2b3a44'],[.26,'#e2edf1'],[.58,'#93a9b4'],[1,'#25313a']]);
- const skin=grad(c,150,90,590,410,[[0,'#1d2c34'],[.3,'#9fbcc6'],[.7,'#54707c'],[1,'#182329']]);
- const strut=(d,w=7)=>{line(c,d,'#16232a',w+3);line(c,d,'#8ea7b3',w);line(c,d,'#dcecf2',1.1);};
+ // Every painted surface borrows the photo's own hue at low saturation, so the new members read as
+ // metal standing in the same light as the object instead of a cool grey collage pasted over it.
+ // The frame is metal, not paint: it only *reflects* the object, so it takes the same hue rolled
+ // 24 deg and desaturated hard, then spends its contrast on value instead. Matching the object's
+ // colour outright (tried first) collapsed frame and core into one flat mud.
+ const M=(l,f=.5,a='')=>`hsl(${(A.h+24).toFixed(1)} ${(A.s*f*22).toFixed(0)}% ${l}%${a})`;
+ const pearl=grad(c,150,90,590,410,[[0,M(13)],[.26,M(97,.35)],[.58,M(49)],[1,M(10)]]);
+ const skin=grad(c,150,90,590,410,[[0,M(9)],[.3,M(66,.4)],[.7,M(28)],[1,M(7)]]);
+ const strut=(d,w=7)=>{line(c,d,M(7),w+3);line(c,d,M(55),w);line(c,d,M(95,.3),1.1);};
  const poly=(pts)=>{const p=new Path2D();pts.forEach(([x,y],i)=>i?p.lineTo(x,y):p.moveTo(x,y));p.closePath();return p;};
  // Exo-frame: two ribbons following the measured outline, standing just outside where the old
  // shell used to be. They run the full length, so the surviving ends hold them at both extremes.
  const off=Math.min(14,Math.max(5,span*vary(6,.018,.028)));
+ // The ribbon's standoff fairs to zero at both ends, so it closes to a point on the surviving
+ // body instead of stopping mid-air on a blunt cut — and it reads as grown out of the old ends.
+ const N=pr.length,taper=i=>{const u=Math.min(1,Math.max(0,Math.min(i,N-1-i)/((N-1)*.16)));return u*u*(3-2*u);};
  for(const sgn of [-1,1]){
-  const outer=pr.map(p=>XY(p.a,(sgn<0?p.lo:p.hi)+sgn*off*2.4));
-  const inner=pr.map(p=>XY(p.a,(sgn<0?p.lo:p.hi)+sgn*off*.4)).reverse();
-  shape(c,poly(outer.concat(inner)),pearl,'#cfe3ea',.8);
-  const glow=new Path2D();pr.forEach((p,i)=>{const[x,y]=XY(p.a,(sgn<0?p.lo:p.hi)+sgn*off*1.5);i?glow.lineTo(x,y):glow.moveTo(x,y);});
+  const outer=pr.map((p,i)=>XY(p.a,(sgn<0?p.lo:p.hi)+sgn*off*2.4*taper(i)));
+  const inner=pr.map((p,i)=>XY(p.a,(sgn<0?p.lo:p.hi)+sgn*off*.4*taper(i))).reverse();
+  shape(c,poly(outer.concat(inner)),pearl,M(88,.35),.8);
+  const glow=new Path2D();pr.forEach((p,i)=>{const[x,y]=XY(p.a,(sgn<0?p.lo:p.hi)+sgn*off*1.5*taper(i));i?glow.lineTo(x,y):glow.moveTo(x,y);});
   line(c,glow,glowC,1.2,3);
  }
+ // Hoisted above the cross members: they have to land on the *tapered* core edge, not on the
+ // untapered half-width, or the outermost struts end in mid-air short of the spindle.
+ const inner=pr.filter(p=>p.a>=A0+band*.55&&p.a<=A1-band*.55),IN=inner.length,i0=IN?pr.indexOf(inner[0]):0;
+ const ct=i=>{if(IN<3)return 1;const u=Math.min(1,Math.max(0,Math.min(i,IN-1-i)/((IN-1)*.2)));return .28+.72*u*u*(3-2*u);};
+ const hw=(p,i)=>half(p)*ct(i-i0);
  // Cross members tie the frame to the core, so nothing in the new structure floats free.
  for(let i=3;i<pr.length-3;i+=Math.round(vary(0,4,8))){const p=pr[i];
-  for(const sgn of [-1,1]){const e=sgn<0?p.lo:p.hi,m=mid(p)+sgn*half(p);
-   strut(`M${XY(p.a,e+sgn*off*1.2).join(' ')} L${XY(p.a,m).join(' ')}`,5);}}
+  for(const sgn of [-1,1]){const e=sgn<0?p.lo:p.hi,m=mid(p)+sgn*hw(p,i);
+   strut(`M${XY(p.a,e+sgn*off*1.2*taper(i)).join(' ')} L${XY(p.a,m).join(' ')}`,5);}}
  // Two unequal modules seated on the frame at measured stations.
  for(const[t,sgn,f]of [[vary(2,.24,.4),-1,vary(4,.8,1.05)],[vary(3,.58,.74),1,vary(5,1.05,1.4)]]){
   const p=pr[Math.round(t*(pr.length-1))],e=sgn<0?p.lo:p.hi,r=Math.min(26,Math.max(9,span*.038))*f;
   const[x,y]=XY(p.a,e+sgn*(off*2.4+r*.85));
   strut(`M${XY(p.a,e+sgn*8).join(' ')} L${x} ${y}`,6);
   const pod=new Path2D();pod.roundRect(x-r,y-r*.78,r*2,r*1.56,r*.45);
-  shape(c,pod,pearl,'#c3dae3',.9);
-  const ins=new Path2D();ins.roundRect(x-r*.66,y-r*.46,r*1.32,r*.92,r*.28);shape(c,ins,skin,'#cfe9f0',.7);
-  for(let j=0;j<3;j++)line(c,`M${x-r*.5} ${y-r*.22+j*r*.22} L${x+r*.5} ${y-r*.22+j*r*.22}`,'#2c4652',1.4);}
+  // A short contact shadow: without it the pod hovers as a decal instead of being mounted.
+  c.save();c.shadowColor='#0009';c.shadowBlur=7;c.shadowOffsetY=4;shape(c,pod,pearl,M(85,.35),.9);c.restore();
+  const ins=new Path2D();ins.roundRect(x-r*.66,y-r*.46,r*1.32,r*.92,r*.28);shape(c,ins,skin,M(90,.4),.7);
+  for(let j=0;j<3;j++)line(c,`M${x-r*.5} ${y-r*.22+j*r*.22} L${x+r*.5} ${y-r*.22+j*r*.22}`,M(24,.5),1.4);}
  // The core: the same object, kept but reduced to half its cross-section. Its surface is the
  // photograph itself, so the lineage stays visible instead of being replaced by invented material.
- const inner=pr.filter(p=>p.a>=A0+band*.55&&p.a<=A1-band*.55);
- if(inner.length>2){
-  const core=poly(inner.map(p=>XY(p.a,mid(p)-half(p))).concat(inner.map(p=>XY(p.a,mid(p)+half(p))).reverse()));
-  c.save();c.clip(core);c.drawImage(source,0,0,728,485);c.fillStyle='#12303ea6';c.fillRect(0,0,728,485);c.restore();
+ // Spindle, not slab: the core's section eases in from both ends (ct above). A constant
+ // half-width left a flat bar with two guillotine edges, the dullest mass in the frame.
+ if(IN>2){
+  const core=poly(inner.map((p,i)=>XY(p.a,mid(p)-half(p)*ct(i))).concat(inner.map((p,i)=>XY(p.a,mid(p)+half(p)*ct(i))).reverse()));
+  // The wash sinks the core behind the new members. Keep it in the object's own hue and light:
+  // a fixed teal at a6 turned every warm object to mud, which is what made this look cheap.
+  c.save();c.clip(core);c.drawImage(source,0,0,728,485);c.fillStyle=`hsl(${A.h.toFixed(1)} ${(A.s*45).toFixed(0)}% 14% / .72)`;c.fillRect(0,0,728,485);
+  // Same light axis as pearl, so the core turns under the same lamp as the frame around it.
+  c.fillStyle=grad(c,150,90,590,410,[[0,'#0000'],[.3,M(97,.3,' / .17')],[.62,'#0000'],[1,'#00000055']]);c.fillRect(0,0,728,485);c.restore();
   shape(c,core,null,rimC,1.3);
   for(let i=2;i<inner.length-2;i+=Math.round(vary(7,2,4))){const p=inner[i];
-   line(c,`M${XY(p.a,mid(p)-half(p)*.86).join(' ')} L${XY(p.a,mid(p)+half(p)*.86).join(' ')}`,'#8fc9d980',1.4);}
+   line(c,`M${XY(p.a,mid(p)-half(p)*ct(i)*.86).join(' ')} L${XY(p.a,mid(p)+half(p)*ct(i)*.86).join(' ')}`,M(70,.4,' / .45'),1.4);}
   const spine=new Path2D();inner.forEach((p,i)=>{const[x,y]=XY(p.a,mid(p));i?spine.lineTo(x,y):spine.moveTo(x,y);});
   line(c,spine,glowC,1.6,4);}
  // The two surviving ends, drawn last so every new member reads as seated into them.
- const keep=(a0,a1)=>{c.save();c.beginPath();long==='y'?c.rect(0,a0,728,a1-a0):c.rect(a0,0,a1-a0,485);
-  c.clip();c.drawImage(source,0,0,728,485);c.restore();};
- keep(A0-12,A0+band);keep(A1-band,A1+12);
+ // Feathered on the inner edge only. A straight clip left a guillotine cut across the object, which
+ // read as a paste-up; the fade makes old body dissolve into new frame. Composited off-screen
+ // because destination-out applied on `c` would punch the same hole through the frame underneath.
+ const keep=(a0,a1,dir)=>{const s=scratch.getContext('2d');
+  s.setTransform(2,0,0,2,0,0);s.clearRect(0,0,728,485);
+  s.save();s.beginPath();long==='y'?s.rect(0,a0,728,a1-a0):s.rect(a0,0,a1-a0,485);
+  s.clip();s.drawImage(source,0,0,728,485);
+  s.globalCompositeOperation='destination-out';
+  const e=dir>0?a1:a0,f=e-dir*Math.min(26,band*.55);
+  const g=s.createLinearGradient(...XY(f,0),...XY(e,0));g.addColorStop(0,'#0000');g.addColorStop(1,'#000');
+  s.fillStyle=g;s.fillRect(0,0,728,485);s.restore();
+  c.drawImage(scratch,0,0,728,485);};
+ keep(A0-12,A0+band,1);keep(A1-band,A1+12,-1);
  for(const a of [A0+band,A1-band]){const p=pr.reduce((m,q)=>Math.abs(q.a-a)<Math.abs(m.a-a)?q:m,pr[0]);
   line(c,`M${XY(a,p.lo-4).join(' ')} L${XY(a,p.hi+4).join(' ')}`,rimC,2,3);}
 }
@@ -359,7 +390,7 @@ function build(prepared=null){
   // Placing any measured bottle onto those anchors reuses that artwork without re-authoring it.
   // The generic renderer has no authored proportions to hit, so it fits the frame both ways
   // instead: a wide object scaled to full height would run off the canvas.
-  const wide=recipe==='generic',k=wide?Math.min(366/(s.base-s.top),524/s.width):428.2/(s.base-s.top);
+  const wide=recipe==='generic',k=wide?Math.min(352/(s.base-s.top),470/s.width):428.2/(s.base-s.top);
   const dx=364.8-s.cx*k,dy=wide?236.4-(s.top+s.base)/2*k:22.3-s.top*k;
   c.drawImage(s.canvas,dx,dy,s.canvas.width*k,s.canvas.height*k);
   place={k,dx,dy,top:s.top*k+dy,base:s.base*k+dy,hw:s.width*k/2,accent:accentOf(s.canvas)};
@@ -396,11 +427,14 @@ function selfTest(){const rows=[],check=(n,ok)=>rows.push(`${ok?'PASS':'FAIL'} $
  // The generic form has no authored coordinate to probe, so probe the first pixel it removed.
  const hole=kind==='bottle-b'?[314,160]:kind==='cup'?[250,300]:family==='bottle'?[309,280]:[365,228];
  let k=(hole[1]*2*1456+hole[0]*2)*4+3;
- // Clearance of 32px, because draw() casts a 15px-blurred shadow offset 14px down: a hole
- // narrower than that is filled by the shadow of its own frame in the final composite.
+ // draw() casts a 15px-blurred shadow offset 14px down, so a narrow hole is filled by the shadow
+ // of its own frame. The probe used to approximate that with a 32px clearance test; it screened
+ // holes the composite still closes, so it now reads the composite itself.
+ draw();const comp=ctx.getImageData(0,0,1456,970).data;
  if(recipe==='generic'){const at=(x,y)=>(y*1456+x)*4+3;
-  search:for(let y=36;y<934;y+=4)for(let x=36;x<1420;x+=4){const i=at(x,y);
-   if(a[i]>200&&!b[i]&&!b[at(x-32,y)]&&!b[at(x+32,y)]&&!b[at(x,y-32)]&&!b[at(x,y+32)]){k=i;break search;}}}check('former body contains actual transparent negative space',a[k]>200&&b[k]===0);draw();check('final composite removes old body',ctx.getImageData(0,0,1456,970).data[k]<30);check('controls enabled',!slider.disabled&&!replay.disabled);
+  search:for(let y=16;y<954;y+=4)for(let x=16;x<1440;x+=4){const i=at(x,y);
+   if(a[i]>200&&!b[i]&&comp[i]<30){k=i;break search;}}}
+ check('former body contains actual transparent negative space',a[k]>200&&b[k]===0);check('final composite removes old body',comp[k]<30);check('controls enabled',!slider.disabled&&!replay.disabled);
  if(family==='bottle'){
   // build() is now re-entrant (file input can load repeatedly). It applies scale(2,2), so without
   // the reset at its head a second load would draw the source at half size and every anchor-driven
