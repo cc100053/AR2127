@@ -49,49 +49,142 @@ function line(c,d,color,width=1,glow=0){c.save();c.shadowBlur=glow;c.shadowColor
 function oval(c,x,y,rx,ry,fill,stroke,width=1){const p=new Path2D();p.ellipse(x,y,rx,ry,0,0,Math.PI*2);shape(c,p,fill,stroke,width);}
 function grad(c,x0,y0,x1,y1,stops){const g=c.createLinearGradient(x0,y0,x1,y1);stops.forEach(([p,col])=>g.addColorStop(p,col));return g;}
 function tube(c,d,width=8){line(c,d,'#172b2d',width+3);line(c,d,'#97b6a6',width);line(c,d,'#d7ede0',1.1);}
+const rr=(x,y,w,h,r)=>{const p=new Path2D();p.roundRect(x,y,w,h,r);return p;};
+// --- Material ---------------------------------------------------------------------------------
+// A part is shaded across ITS OWN extent. The bottle's two pods (x 235-279 and 459-510) both sat
+// past the ends of one canvas-wide 280->450 ramp, so both filled with a single clamped colour.
+// Flat fills on curved parts — not the geometry — are what made the assembly read as clip art.
+// Lightness track of a side-lit cylinder: dark rim, narrow specular, body, bounce off the far
+// wall, dark rim. Stored as fractions so one track serves every material.
+const CONVEX=[[0,.14],[.08,.30],[.26,.94],[.45,.60],[.73,.27],[.90,.44],[1,.12]];
+// A recess is that same wall seen from inside: the light crosses to the far side and the near lip
+// shades the front of it, so the track runs backwards and darker.
+const CONCAVE=[[0,.09],[.13,.19],[.5,.33],[.80,.64],[.94,.38],[1,.11]];
+// Where the specular actually lands, as alpha. A highlight of constant width running the whole
+// length of a part is the strongest "drawn in a vector editor" tell there is.
+const SPEC=[[0,0],[.15,0],[.26,.85],[.38,0],[.68,0],[.82,.3],[.92,0],[1,0]];
+const gstops=(c,a0,a1,vert,stops)=>grad(c,vert?0:a0,vert?a0:0,vert?0:a1,vert?a1:0,stops);
+const axisL=(c,a0,a1,vert,track,h,s,mul=1)=>gstops(c,a0,a1,vert,
+ track.map(([p,l])=>[p,`hsl(${h} ${s}% ${Math.min(97,l*100*mul).toFixed(1)}%)`]));
+const axisA=(c,a0,a1,vert,track,h,s,l)=>gstops(c,a0,a1,vert,
+ track.map(([p,a])=>[p,`hsl(${h} ${s}% ${l}% / ${a})`]));
+const metal=(c,a0,a1,h,s,vert=false,mul=1)=>axisL(c,a0,a1,vert,CONVEX,h,s,mul);
+const recess=(c,a0,a1,h,s,vert=false,mul=1)=>axisL(c,a0,a1,vert,CONCAVE,h,s,mul);
+// Soft dark pool where one part sits on another. Every junction here used to be a butt joint;
+// contact shading is the cue that reads "seated into" instead of "laid on top of".
+function ao(c,x,y,rx,ry,a=.5){c.save();c.translate(x,y);c.scale(1,ry/rx);
+ const g=c.createRadialGradient(0,0,0,0,0,rx);
+ g.addColorStop(0,`rgb(5 14 12 / ${a})`);g.addColorStop(.5,`rgb(5 14 12 / ${a*.42})`);g.addColorStop(1,'rgb(5 14 12 / 0)');
+ c.fillStyle=g;c.beginPath();c.arc(0,0,rx,0,7);c.fill();c.restore();}
+// A machined boss around a pipe entry: contact pool, collar, lip highlight. Two ellipses and a
+// band, but it is what turns a pipe pushed through a wall into a pipe bolted onto one.
+function boss(c,x,y,w,h,hue,sat){
+ ao(c,x,y+h*.3,w*.85,h*.75,.5);
+ shape(c,rr(x-w/2,y-h/2,w,h,h*.42),metal(c,x-w/2,x+w/2,hue,sat),`hsl(${hue} ${sat}% 80% / .5)`,.8);
+ shape(c,`M${x-w*.32} ${y-h*.15} L${x+w*.32} ${y-h*.15}`,null,axisA(c,x-w/2,x+w/2,false,SPEC,hue,sat,96),1);}
+// A pipe: dark casing, body, rounded core, then a specular that fades ALONG the run.
+// A curved pipe cannot take a cylindrical gradient — a linear ramp sized to its 20px diameter
+// clamps to the end stop as soon as the path bends away, which painted the upper elbows solid
+// black. Cross-section shading here has to come from stacked strokes, and only the highlight
+// may be positional.
+function pipe(c,d,w,hue,sat,bx0,by0,bx1,by1){
+ line(c,d,`hsl(${hue} ${sat+8}% 8%)`,w+3.2);
+ line(c,d,`hsl(${hue} ${sat}% 42%)`,w);
+ line(c,d,`hsl(${hue} ${sat-3}% 62%)`,w*.5);
+ shape(c,d,null,grad(c,bx0,by0,bx1,by1,
+  [[0,`hsl(${hue} ${sat}% 96% / 0)`],[.2,`hsl(${hue} ${sat}% 96% / .8)`],[.5,`hsl(${hue} ${sat}% 96% / .2)`],
+   [.78,`hsl(${hue} ${sat}% 96% / .55)`],[1,`hsl(${hue} ${sat}% 96% / 0)`]]),w*.2);}
+// Four bolts on a face. Nothing says "manufactured object" faster, and they cost eight ellipses.
+function bolts(c,x0,y0,x1,y1,r,hue,sat){for(const[x,y]of [[x0,y0],[x1,y0],[x0,y1],[x1,y1]]){
+ ao(c,x,y+r*.4,r*2,r*1.5,.45);
+ oval(c,x,y,r,r,metal(c,x-r,x+r,hue,sat),`hsl(${hue} ${sat}% 84% / .5)`,.6);
+ line(c,`M${x-r*.5} ${y-r*.15} L${x+r*.5} ${y-r*.15}`,`hsl(${hue} ${sat+10}% 12% / .8)`,.9);}}
 function bottle(){
  const c=future.getContext('2d');c.scale(2,2);
- const pearl=grad(c,280,0,450,0,[[0,'#728c7a'],[.3,'#e3ecce'],[.55,'#97af91'],[1,'#344d48']]);
- const green=grad(c,0,180,0,375,[[0,'#527e50'],[.45,'#a3c37e'],[1,'#294c40']]);
+ const H=96,S=15,GH=104,GS=32;  // shell metal, and the cultivation green
  // The same photographed cap/mouth and amber lower reservoir anchor the new vessel's lineage.
  c.save();c.beginPath();c.rect(0,0,728,90);c.clip();c.drawImage(source,0,0,728,485);c.restore();
  c.save();c.beginPath();c.rect(0,397,728,88);c.clip();c.drawImage(source,0,0,728,485);c.restore();
  // Rear plumbing: rooted at the neck manifold and original base, behind the chamber and pods.
- tube(c,'M347 87 C318 118 259 118 254 177 L254 320 Q254 380 323 408',10);
- tube(c,'M382 87 C415 118 475 118 479 177 L479 320 Q479 380 407 408',10);
+ // The highlight fades along each riser's own run.
+ pipe(c,'M347 87 C318 118 259 118 254 177 L254 320 Q254 380 323 408',10,H,S,347,87,254,408);
+ pipe(c,'M382 87 C415 118 475 118 479 177 L479 320 Q479 380 407 408',10,H,S,382,87,479,408);
+ // Both risers are bossed where they leave the surviving neck and where they re-enter the base.
+ for(const[x,y,w,h]of [[347,90,26,11],[382,90,26,11],[326,405,24,10],[404,405,24,10]])boss(c,x,y,w,h,H,S);
  // A narrow transparent amber chamber leaves real open gaps where the disposable label used to be.
  const chamber=grad(c,327,0,404,0,[[0,'#365d5940'],[.12,'#d0e3b356'],[.36,'#658e6140'],[.68,'#b8d39838'],[1,'#233e3966']]);
  shape(c,'M329 125 Q364 111 400 125 L405 383 Q365 403 324 383 Z',chamber,'#8fae90',1.2);
  const tea=grad(c,330,287,407,390,[[0,'#b5a947aa'],[.4,'#b48628bd'],[1,'#704e1adc']]);
  shape(c,'M326 285 Q365 305 403 285 L405 382 Q365 401 325 383 Z',tea,'#b2a768',.8);
  oval(c,365,285,39,9,'#c8c776b0','#ddd89d',1);
- line(c,'M335 143 L332 366','#c9dfbb90',2.3);
- line(c,'M397 150 L400 373','#d0e5b780',1);
+ // Fresnel: glass goes bright at grazing angles, which is what separates a glass wall from a
+ // tinted rectangle. Two narrow bands hugging the silhouette, brightest on the key side.
+ shape(c,'M329 125 L324 383',null,axisA(c,120,390,true,[[0,.7],[.45,.25],[1,.5]],GH,18,94),2.4);
+ shape(c,'M400 125 L405 383',null,axisA(c,120,390,true,[[0,.45],[.5,.12],[1,.3]],GH,18,90),1.6);
+ line(c,'M335 143 L332 366','#c9dfbb70',1.6);
  // Cultivation membranes and a capillary stem are inside the chamber, never outside its skin.
  line(c,'M365 378 C358 315 375 257 362 184','#b1cf73',2);
- for(let i=0;i<7;i++){const y=205+i*21,dir=i%2?1:-1;shape(c,`M365 ${y+12} Q${365+dir*29} ${y+5} ${365+dir*23} ${y-10} Q366 ${y-7} 365 ${y+12}`,i%2?'#82a763bd':'#a8c177b0','#b5ce8e70',.6);}
+ for(let i=0;i<7;i++){const y=205+i*21,dir=i%2?1:-1,d=`M365 ${y+12} Q${365+dir*29} ${y+5} ${365+dir*23} ${y-10} Q366 ${y-7} 365 ${y+12}`;
+  shape(c,d,recess(c,365,365+dir*29,GH,GS,false,i%2?1.12:.95),null);
+  // Each leaf gets a lit upper edge and a shaded underside, so they stack instead of overlapping.
+  shape(c,`M365 ${y+11} Q${365+dir*27} ${y+4} ${365+dir*22} ${y-9}`,null,`hsl(${GH} ${GS}% 78% / .55)`,.8);
+  shape(c,`M366 ${y-6} Q${365+dir*20} ${y-4} ${365+dir*22} ${y-9}`,null,`hsl(${GH} ${GS+8}% 14% / .5)`,1);}
  // Two non-identical pods are mechanically and hydraulically seated on the rear branches.
  for(const p of [{x:235,y:190,w:44,h:131},{x:459,y:168,w:51,h:162}]){
-  const{x,y,w,h}=p;
-  tube(c,`M${x+w/2} ${y-10} L${x+w/2} ${y+18}`,9);
-  const pod=new Path2D();pod.roundRect(x,y,w,h,18);
-  c.save();c.shadowColor='#0008';c.shadowBlur=8;c.shadowOffsetY=5;shape(c,pod,pearl,'#b0c5a2',.9);c.restore();
-  const inset=new Path2D();inset.roundRect(x+9,y+15,w-18,h-30,10);shape(c,inset,green,'#c4ddb0',.7);
-  for(let j=0;j<7;j++){const yy=y+28+j*(h-55)/6;line(c,`M${x+13} ${yy} Q${x+w/2} ${yy+7} ${x+w-13} ${yy}`,'#344f42',2);}
-  line(c,`M${x+12} ${y+24} L${x+12} ${y+h-23}`,'#d3f0b5',1.2,2);
-  oval(c,x+w/2,y+h-8,9,3,'#223e35','#a9cda4',1);
+  const{x,y,w,h}=p,xm=x+w/2,x1=x+w;
+  // Stem in the pod's own metal, then the boss that seats it: a pipe that simply stops at a wall
+  // is the joint that made the whole assembly read as stacked shapes.
+  pipe(c,`M${xm} ${y-14} L${xm} ${y+18}`,9,H,S,xm,y-14,xm,y+18);
+  const pod=rr(x,y,w,h,18);
+  c.save();c.shadowColor='#0008';c.shadowBlur=9;c.shadowOffsetY=6;
+  shape(c,pod,metal(c,x,x1,H,S),`hsl(${H} ${S}% 80% / .55)`,.9);c.restore();
+  // Moulded end caps. A rounded rectangle has no ends; a manufactured housing does, and the two
+  // seams are where the eye reads wall thickness.
+  for(const[yy,hh]of [[y+3,15],[y+h-18,15]]){
+   shape(c,rr(x+2.5,yy,w-5,hh,7),metal(c,x+2.5,x1-2.5,H,S,false,1.1),null);
+   shape(c,`M${x+4} ${yy+hh} L${x1-4} ${yy+hh}`,null,`hsl(${H} ${S+6}% 13% / .55)`,1.1);}
+  boss(c,xm,y+9,w*.46,11,H,S);
+  bolts(c,x+9,y+11,x1-9,y+h-10,2.6,H,S);
+  // The cultivation window: a recess, so its shading runs opposite to the housing around it.
+  const win=rr(x+9,y+22,w-18,h-44,9);
+  ao(c,xm,y+22,w*.55,9,.5);
+  shape(c,win,recess(c,x+9,x1-9,GH,GS),`hsl(${H} ${S}% 12% / .7)`,1.2);
+  for(let j=0;j<7;j++){const yy=y+32+j*(h-70)/6;
+   shape(c,`M${x+13} ${yy} Q${xm} ${yy+7} ${x1-13} ${yy}`,null,axisA(c,x+13,x1-13,false,[[0,0],[.2,.55],[.5,.75],[.8,.55],[1,0]],GH,GS+10,17),2);
+   shape(c,`M${x+13} ${yy+2.2} Q${xm} ${yy+9.2} ${x1-13} ${yy+2.2}`,null,axisA(c,x+13,x1-13,false,[[0,0],[.3,.4],[.6,.25],[1,0]],GH,GS,72),.9);}
+  // Cover glass over the window: one raking streak, clipped so it cannot leave the pane.
+  c.save();c.clip(win);
+  shape(c,`M${x+4} ${y+h-30} L${x+w*.75} ${y+10}`,null,axisA(c,y+22,y+h-22,true,[[0,.34],[.55,.10],[1,.22]],GH,12,96),7);
+  c.restore();
+  shape(c,win,null,`hsl(${GH} ${GS}% 88% / .35)`,.7);
+  ao(c,xm,y+18,w*.6,10,.45);
+  oval(c,xm,y+h-8,9,3,'#223e35','#a9cda4',1);
  }
  // Foreground cage ribs load into the original neck/base collars; open sides remain unfilled.
  for(const side of [-1,1]){
   const x=365+side*44;
-  shape(c,`M${365+side*20} 88 Q${365+side*62} 116 ${x} 188 L${x+side*8} 351 Q${x+side*10} 383 ${365+side*59} 409 L${365+side*44} 414 Q${x-side*8} 380 ${x-side*3} 350 L${x-side*12} 185 Q${365+side*42} 125 ${365+side*9} 95 Z`,pearl,'#c7d9bb',.7);
-  line(c,`M${365+side*17} 99 Q${365+side*53} 120 ${x-side*6} 187 L${x+side*2} 347`,'#9cd9a3',1.4,2);
+  const outer=`M${365+side*20} 88 Q${365+side*62} 116 ${x} 188 L${x+side*8} 351 Q${x+side*10} 383 ${365+side*59} 409`;
+  const inner=`M${365+side*9} 95 Q${365+side*42} 125 ${x-side*12} 185 L${x-side*3} 350 Q${x-side*8} 380 ${365+side*44} 414`;
+  // A curved band cannot take a cross-section gradient either — same clamp that blackened the
+  // risers. It is shaded at its two edges instead: bright on the key side, dark on the other,
+  // flat mid tone between them. That is how a band reads as turning, and it costs two strokes.
+  shape(c,outer+` L${365+side*44} 414 Q${x-side*8} 380 ${x-side*3} 350 L${x-side*12} 185 Q${365+side*42} 125 ${365+side*9} 95 Z`,`hsl(${H} ${S}% 43%)`,null);
+  const key=side<0?outer:inner,off=side<0?inner:outer;
+  shape(c,off,null,`hsl(${H} ${S+8}% 12% / .85)`,1.8);
+  shape(c,key,null,axisA(c,90,412,true,[[0,.25],[.2,.9],[.5,.5],[.78,.8],[1,.3]],H,S,88),2.4);
+  // A second, tighter gleam inboard of the key edge: the band has thickness, so its lit face has
+  // a highlight of its own that is not the edge itself.
+  shape(c,`M${365+side*17} 99 Q${365+side*53} 120 ${x-side*6} 187 L${x+side*2} 347`,null,
+   axisA(c,95,350,true,[[0,0],[.18,.7],[.45,.15],[.72,.42],[1,0]],H,S+8,96),1.3);
+  ao(c,365+side*22,93,26,9,.55);ao(c,365+side*50,408,26,9,.5);
  }
- oval(c,365,408,66,13,'#45634a','#a4ba88',1);
- shape(c,'M300 407 Q365 427 430 407 L428 419 Q364 438 302 419 Z',pearl,'#577b5f',1);
- oval(c,365,405,52,9,'#29463c','#c0dca4',1);
- line(c,'M319 409 Q365 420 411 409','#bcdf93',1.7,3);
- oval(c,365,91,29,6,'#273e36','#c5d6ae',1);
+ // Base collar: seat, band, throat. The old flat ring gave the ribs nothing to land on.
+ ao(c,365,404,74,15,.5);
+ oval(c,365,408,66,13,metal(c,299,431,H,S),`hsl(${H} ${S}% 74% / .6)`,1);
+ shape(c,'M300 407 Q365 427 430 407 L428 419 Q364 438 302 419 Z',metal(c,300,430,H,S,false,.85),`hsl(${H} ${S}% 40%)`,1);
+ oval(c,365,405,52,9,recess(c,313,417,H,S),`hsl(${H} ${S}% 86% / .7)`,1);
+ shape(c,'M319 409 Q365 420 411 409',null,axisA(c,319,411,false,SPEC,H,S+10,96),1.8);
+ oval(c,365,91,29,6,recess(c,336,394,H,S),`hsl(${H} ${S}% 84% / .8)`,1);
 }
 function cuff(){
  const c=future.getContext('2d');c.scale(2,2);
@@ -140,15 +233,24 @@ function renderFuture(elev=E0){
  if(family!=='bottle')cuff();else if(recipe==='generic')generic();else if(recipe==='cup')cup();else if(recipe==='flask')flask(elev);else bottle();
  // Staging is object-agnostic on purpose: every recipe is lit by the same lamp, so the pages read
  // as one series instead of five separate illustrations.
- stageAccent=place?place.accent:accentOf(source);paintStage();paintRim();paintHolo();
+ stageAccent=place?place.accent:accentOf(source);paintStage();paintRim();paintHolo();paintGrain();
 }
 // --- Card staging --------------------------------------------------------------------------
 // The evolved form used to be a cutout floating on flat black. Hand-painted card art is not
 // mostly detail, it is mostly *staging*: a lit backdrop, a rim light picking the silhouette off
 // it, and a foil sheen. All three are procedural and cost one paint per build, so they cost the
 // live demo nothing — which is why the polish budget goes here and not into more geometry.
-const stage=document.createElement('canvas'),rim=document.createElement('canvas'),holo=document.createElement('canvas');
-for(const cv of [stage,rim,holo]){cv.width=1456;cv.height=970;}
+const stage=document.createElement('canvas'),rim=document.createElement('canvas'),holo=document.createElement('canvas'),grain=document.createElement('canvas');
+for(const cv of [stage,rim,holo,grain]){cv.width=1456;cv.height=970;}
+// Perfectly smooth gradients are the last thing that still says "vector". Real surfaces carry a
+// little noise, and a few percent of it is enough for the eye to stop reading the shading as a
+// fill. xorshift rather than Math.random: build() re-runs, and the same photo must land on the
+// same future every time.
+const GRAIN=(()=>{const cv=document.createElement('canvas');cv.width=cv.height=96;
+ const g=cv.getContext('2d'),im=g.createImageData(96,96);let x=0x2127;
+ for(let i=0;i<im.data.length;i+=4){x^=x<<13;x^=x>>>17;x^=x<<5;x>>>=0;
+  const v=114+x%29;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255;}
+ g.putImageData(im,0,0);return cv;})();
 let stageAccent={h:190,s:.55};
 const layer=cv=>{const c=cv.getContext('2d');c.setTransform(2,0,0,2,0,0);c.globalCompositeOperation='source-over';c.globalAlpha=1;c.clearRect(0,0,728,485);return c;};
 // Silhouette of the evolved form, flooded with one colour. Both the rim and the sheen are just
@@ -186,18 +288,21 @@ function paintRim(){const c=silhouette(rim,c=>{c.fillStyle=`hsl(${stageAccent.h.
  c.fillStyle=g;c.fillRect(0,0,728,485);}
 // Foil: bands alternating between the object's hue and its complement, so the sheen shifts colour
 // across the form the way a holographic card does under a tilt.
-function paintHolo(){silhouette(holo,c=>{const h=stageAccent.h,g=c.createLinearGradient(110,440,650,30);
- for(let i=0;i<=10;i++)g.addColorStop(i/10,i%2?`hsl(${(h+160)%360} 80% 62% / .5)`:`hsl(${h} 85% 60% / .22)`);
+// The hue swing follows how saturated the object is. On stainless a full complementary band reads
+// as chromatic aberration, not foil, so a near-neutral object gets a value-only shimmer instead.
+function paintHolo(){silhouette(holo,c=>{const h=stageAccent.h,off=170*stageAccent.s,g=c.createLinearGradient(110,440,650,30);
+ for(let i=0;i<=10;i++)g.addColorStop(i/10,i%2?`hsl(${(h+off)%360} 80% 62% / .5)`:`hsl(${h} 85% 60% / .22)`);
  c.fillStyle=g;c.fillRect(0,0,728,485);});}
+function paintGrain(){silhouette(grain,c=>{c.fillStyle=c.createPattern(GRAIN,'repeat');c.fillRect(0,0,728,485);});}
 // Photo B is a vacuum steel flask: it has already solved the disposable bottle's problem, so it
 // gets its own evolution rather than the tea recipe. Its defining property is holding a state
 // against the environment; pushed a century on, it stops being filled and starts harvesting.
 function flask(elev){
  const c=future.getContext('2d');c.scale(2,2);const cx=365;
- const steel=grad(c,261,0,469,0,[[0,'#33434c'],[.22,'#e2ecf0'],[.5,'#93a8b3'],[.78,'#c3d4db'],[1,'#26333b']]);
+ const H=203,S=13;  // stainless: almost no hue, all of the character is in the value track
  const glass=grad(c,466,0,510,0,[[0,'#22383f60'],[.35,'#bfe4ee55'],[1,'#1b2d3670']]);
  const water=grad(c,0,286,0,392,[[0,'#8fdcecb0'],[1,'#2d6d84d0']]);
- const stube=(d,w=8)=>{line(c,d,'#16242b',w+3);line(c,d,'#8ea7b3',w);line(c,d,'#dcecf2',1.1);};
+ const stube=(d,w,x0,y0,x1,y1)=>pipe(c,d,w,H,S,x0,y0,x1,y1);
  // Elevation reprojection. A horizontal ring of radius r projects to semi-minor r*sin(elev), and
  // vertical extent foreshortens by cos(elev). This artwork was authored at e0 = asin(.085) ~= 4.9deg,
  // so squashing vertically by k and growing every authored ring radius by g keeps elev === e0
@@ -216,14 +321,33 @@ function flask(elev){
  c.save();c.beginPath();c.rect(0,404,728,81);c.clip();c.drawImage(source,0,0,728,485);c.restore();
  // Rear riser lifts harvested water from the base trough to the neck. Both ends are seated on
  // the surviving vessel with a visible collar, so it reads as plumbing, not a floating ornament.
- stube('M347 126 L324 130 Q286 156 282 204 L282 330 Q284 374 332 397',9);
+ stube('M347 126 L324 130 Q286 156 282 204 L282 330 Q284 374 332 397',9,347,126,282,397);
+ boss(c,340,127,22,10,H,S);boss(c,335,398,22,10,H,S);
  oval(c,349,126,7,RY(7,5),'#26333b','#cfe3ea',1.1);
  const fins=[];for(let i=0;i<9;i++)fins.push([180+i*24,58+Math.sin(i/8*Math.PI)*38]);
  // Open rings spaced wider than they are thick, so air (and the background) passes between them.
  // No drop shadow here: its alpha would fill the very gaps that make the negative space real.
- for(const[y,r]of fins){const p=new Path2D();
-  p.ellipse(cx,y,r,RY(r,r*.085),0,0,Math.PI*2);p.ellipse(cx,y,34,RY(34,34*.085),0,Math.PI*2,0,true);
-  shape(c,p,steel,'#c2d6de',.7);}
+ // Each fin is shaded across ITS OWN diameter and drawn as a plate with an underside, a top face
+ // and machined radial grooves. Nine identical annuli sharing one canvas-wide ramp is exactly the
+ // "drawn with the circle tool" read: flat rings, no thickness, no contact with what they wrap.
+ const ring=(y,r,inset)=>{const p=new Path2D();
+  p.ellipse(cx,y,r,RY(r,r*.085),0,0,Math.PI*2);
+  p.ellipse(cx,y,inset,RY(inset,inset*.085),0,Math.PI*2,0,true);return p;};
+ for(const[y,r]of fins){
+  // Underside first, offset by the plate's own thickness. This one 2px offset is what turns a
+  // flat annulus into something that has a top and a bottom.
+  shape(c,ring(y+2.4,r,34),`hsl(${H} ${S+4}% 15%)`,null);
+  shape(c,ring(y,r,34),metal(c,cx-r,cx+r,H,S,false,1.28),`hsl(${H} ${S}% 84% / .5)`,.7);
+  // These plates face upward, so on top of the left-right specular they take a little sky.
+  shape(c,ring(y,r,34),axisA(c,y-RY(r,r*.085),y+RY(r,r*.085),true,[[0,.5],[.45,.18],[1,0]],H,S,92),null);
+  // Machined grooves radiating out from the boss. Only on the front half, where a nearly
+  // edge-on disc actually shows its face.
+  const ry=RY(r,r*.085),iy=RY(34,34*.085);
+  for(let a=0;a<12;a++){const t=Math.PI*(.08+a*.84/11);
+   shape(c,`M${cx+Math.cos(t)*34} ${y+Math.sin(t)*iy} L${cx+Math.cos(t)*r} ${y+Math.sin(t)*ry}`,
+    null,`hsl(${H} ${S+4}% 20% / .35)`,.7);}
+  // Contact shading against the core it is threaded onto.
+  shape(c,ring(y,38,34),`hsl(${H} ${S+4}% 13% / .55)`,null);}
  // The surviving inner vessel, now visible, with the water it has pulled out of the air.
  shape(c,'M345 98 Q365 92 385 98 L387 390 Q365 402 343 390 Z',grad(c,343,0,387,0,[[0,'#26343c'],[.22,'#a6cbd680'],[.55,'#5c7c8a70'],[1,'#1d2a33']]),'#a4c2cc',1.2);
  shape(c,'M344 286 Q365 296 386 286 L387 384 Q365 396 343 384 Z',water,'#93e0ef',.8);
@@ -232,18 +356,20 @@ function flask(elev){
  for(const[y,r]of fins){const a=new Path2D();a.ellipse(cx,y,r,RY(r,r*.085),0,.15,Math.PI-.15);line(c,a,'#cfe3ea',1.3);
   const b=new Path2D();b.ellipse(cx,y,34,RY(34,34*.085),0,.2,Math.PI-.2);line(c,b,'#7d99a5',1);}
  // Collection column, bracketed onto the fin stack where the water is visible without opening it.
- stube('M428 214 L472 210',7);stube('M428 332 L472 336',7);
+ stube('M428 214 L472 210',7,428,214,472,210);stube('M428 332 L472 336',7,428,332,472,336);
+ boss(c,470,211,14,9,H,S);boss(c,470,335,14,9,H,S);
  shape(c,'M470 198 Q490 192 510 198 L510 344 Q490 352 470 344 Z',glass,'#a7cbd6',1.1);
  shape(c,'M471 300 Q490 308 509 300 L510 343 Q490 351 470 343 Z',water,'#93e0ef',.8);
  oval(c,490,300,19,RY(19,5),'#a9e9f5c0','#d2f4fb',1);
  oval(c,490,197,20,RY(20,6),'#243b43','#bcd6df',1);
  for(let i=0;i<4;i++)line(c,`M474 ${222+i*18} L482 ${222+i*18}`,'#9dc4d0',1.2);
  // Intake: air is drawn in at the base ring, condenses on the fins, drains to the trough.
- oval(c,365,392,58,RY(58,12),'#16242b','#93aab6',1);
- for(let i=-2;i<=2;i++)line(c,`M${365+i*19} 385 L${365+i*19} 399`,'#8fb0bd',1.5);
- oval(c,365,386,58,RY(58,11),'#1d3038','#c4dbe4',1);
- line(c,'M311 388 Q365 399 419 388','#c8e6f0',1.7,3);
- oval(c,365,95,29,RY(29,6),'#243b43','#c8dae2',1);
+ ao(c,365,393,72,16,.5);
+ oval(c,365,392,58,RY(58,12),metal(c,307,423,H,S,false,.6),'#93aab6',1);
+ for(let i=-2;i<=2;i++)shape(c,`M${365+i*19} 385 L${365+i*19} 399`,null,metal(c,307,423,H,S),1.6);
+ oval(c,365,386,58,RY(58,11),recess(c,307,423,H,S),`hsl(${H} ${S}% 86% / .7)`,1);
+ shape(c,'M311 388 Q365 399 419 388',null,axisA(c,311,419,false,SPEC,H,S+8,96),1.8);
+ oval(c,365,95,29,RY(29,6),recess(c,336,394,H,S),`hsl(${H} ${S}% 84% / .8)`,1);
 }
 // A cup is not a bottle pushed sideways: it is open at the top and meant to be drunk from
 // directly, so its century is about the drink's temperature, not about storing or harvesting.
@@ -466,7 +592,8 @@ function draw(mix=1){ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,728,485);
  ctx.globalAlpha=mix*.6;ctx.drawImage(rim,0,0,728,485);
  // Overlay, not lighter: foil shifts hue across the form without flattening its darks, which is
  // what a straight additive pass did — it washed the whole subject to one pale value.
- ctx.globalCompositeOperation='overlay';ctx.globalAlpha=mix*.75;ctx.drawImage(holo,0,0,728,485);ctx.restore();
+ ctx.globalCompositeOperation='overlay';ctx.globalAlpha=mix*(.25+.6*stageAccent.s);ctx.drawImage(holo,0,0,728,485);
+ ctx.globalAlpha=mix*.45;ctx.drawImage(grain,0,0,728,485);ctx.restore();
  ctx.restore();
  shape(ctx,card,null,`hsl(${stageAccent.h.toFixed(1)} 45% 46% / .35)`,1.2);}
 function evolve(){cancelAnimationFrame(raf);slider.value=100;phase.textContent='形態を再構成中';const start=performance.now();function tick(now){const p=Math.min(1,(now-start)/1800);draw(p*p*(3-2*p));if(p<1)raf=requestAnimationFrame(tick);else{raf=0;phase.textContent='2127 / 形態完成';}}if(matchMedia('(prefers-reduced-motion: reduce)').matches){draw();phase.textContent='2127 / 形態完成';}else raf=requestAnimationFrame(tick);}
