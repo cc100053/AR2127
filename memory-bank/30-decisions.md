@@ -208,8 +208,18 @@ D6（轉盤一圈當進度條）、D7（相機 45° 唔正俯拍）、D8（電�
 「負空間真係空」嘅檢查改為比對合成同 `stage` 嘅像素差（`bare()`），
 唔再用 alpha === 0。呢條係紅線檢查，改寫法可以，唔可以刪。
 
-**未做（有意）：** 卡牌外框 chrome（名牌、世代徽章、稀有度角標）。
-畫布外面已經有 HTML 版面講緊同樣嘅資訊，兩者要一齊設計，唔係喺畫布補多層。
+**當時未做、而家已完成：** 卡牌外框 chrome 要同 HTML 展示流程一齊設計，
+所以押後到 2026-09-10 Object Card presentation layer，見下一節。
+
+## 2127 Object Card：一張 canvas，同時服務 screen／PNG／print（2026-09-10）
+
+決定將卡片加喺 `demo.html` presentation layer，重用 iframe 現成 `#view` 同 `.kept`，
+唔改 phone／studies 幾何。750×1050 canvas 係唯一設計來源；screen tilt／glare 只係外層
+CSS enhancement，PNG 直接下載 canvas，print 只改物理尺寸做 63×88mm。
+
+功能主題係 authored demo metadata：手機 `INTERFACE`、保溫樽 `VESSEL`、交通卡
+`ACCESS`。否決用剪影自動估 type：現有通用配方明確唔理解物件功能，硬估會冒充辨識。
+亦否決另做一套 print layout，因為兩套構圖必然漂移，觀眾保存到嘅卡就唔再係畫面嗰張。
 
 ## 材質系統：位置式漸層喺曲面部件上面會 clamp（2026-09-09）
 

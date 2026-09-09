@@ -1,6 +1,6 @@
 # 20 · 現況
 
-最後整理：2026-09-09
+最後整理：2026-09-10
 
 ## 一句總結
 
@@ -10,7 +10,10 @@
 
 ### 展示及互動
 
-- `demo.html`：手機、保溫樽、交通卡三物件展示；支援自動導覽、手動前後比較及 PNG 世代卡。
+- `demo.html`：手機、保溫樽、交通卡三物件展示；支援自動導覽、手動前後比較及 2127 Object Card。
+- Object Card 係同一張 750×1050 直向 canvas：畫面預覽有輕微 tilt／glare，PNG 同
+  63×88mm browser print 使用同一個 neutral static design。三個 authored scene 分別用
+  `INTERFACE`／`VESSEL`／`ACCESS` 功能主題，各自主導底紋、角位構件同 foil 色；未知物件唔會被假裝自動分類。
 - 所有觀眾可見 UI 已改為日文；文案守住「向前推一百年」主旨。
 - 手機版 390px 版面、reduced-motion、重播及頁面隱藏停止動畫已有處理。
 
@@ -56,7 +59,7 @@
 ### 驗證
 
 - 139 項頁內自我檢查：legacy 67、Lab 12、茶瓶 11、保溫樽 13、闊身容器 10、通用 10、交通卡 7、手機 9。
-- `tests/browser.cjs` 覆蓋真實 UI 操作、輸出檔案、快速換相、失敗恢復、配方切換、校準、baseline restoration 同 390px 版面。
+- `tests/browser.cjs` 覆蓋真實 UI 操作、輸出檔案、快速換相、失敗恢復、配方切換、校準、baseline restoration、三種卡片 metadata／theme、750×1050 PNG、63×88mm print、deterministic reopen、reduced-motion 同 390px 版面。
 - 最新證據及限制見 [`../previews/input-tests/README.md`](../previews/input-tests/README.md)，重跑方法見 [`../tests/README.md`](../tests/README.md)。
 
 ## 未完成

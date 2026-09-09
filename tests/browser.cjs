@@ -220,25 +220,42 @@ const curved=await page.evaluate(async()=>{const img=new Image();img.src='assets
 assert.equal(errors.length,0);
 
 await page.goto(BASE+'/demo.html');
+await page.emulateMedia({media:'screen',reducedMotion:'no-preference'});
 await page.locator('#reveal').waitFor();await page.waitForFunction(()=>!document.querySelector('#reveal').disabled);
 assert.equal(await page.frameLocator('#scene').locator('#evolution').inputValue(),'0');
 await page.locator('#reveal').click();assert.equal(await page.frameLocator('#scene').locator('#evolution').inputValue(),'100');
-const [generation]=await Promise.all([page.waitForEvent('download'),page.locator('#card').click()]);
-assert.equal(generation.suggestedFilename(),'2127-generation-1.png');
+await page.locator('#card').click();assert(await page.locator('#card-preview').evaluate(d=>d.open));
+assert((await page.locator('#card-summary').innerText()).includes('スマートフォン、INTERFACE'));
+assert.deepEqual(await page.locator('#generation-card').evaluate(c=>[c.width,c.height,c.dataset.theme]),[750,1050,'INTERFACE']);
+const firstCard=await page.locator('#generation-card').evaluate(c=>c.toDataURL());
+await page.locator('.card-shell').evaluate(e=>{const r=e.getBoundingClientRect();e.dispatchEvent(new PointerEvent('pointermove',{clientX:r.right-2,clientY:r.top+2}));});
+assert.notEqual(await page.locator('.card-shell').evaluate(e=>e.style.getPropertyValue('--ry')),'0deg');
+assert.notEqual(await page.locator('.card-shell').evaluate(e=>getComputedStyle(e).getPropertyValue('--gx')),'50%');
+await page.locator('.card-shell').dispatchEvent('pointerleave');assert.deepEqual(await page.locator('.card-shell').evaluate(e=>[e.style.getPropertyValue('--rx'),e.style.getPropertyValue('--ry'),e.style.getPropertyValue('--gx'),e.style.getPropertyValue('--gy')]),['0deg','0deg','50%','35%']);
+await page.emulateMedia({media:'screen',reducedMotion:'reduce'});await page.locator('.card-shell').dispatchEvent('pointermove',{clientX:1,clientY:1});assert.equal(await page.locator('.card-shell').evaluate(e=>getComputedStyle(e).transform),'none');
+const [generation]=await Promise.all([page.waitForEvent('download'),page.locator('#card-save').click()]);
+assert.equal(generation.suggestedFilename(),'2127-obj-001.png');
 await generation.saveAs('/tmp/2127-generation-test.png');
-for(const i of [1,2,0]){await page.locator(`[data-scene="${i}"]`).click();await page.waitForFunction(()=>!document.querySelector('#reveal').disabled);assert.equal(await page.frameLocator('#scene').locator('#evolution').inputValue(),'0');}
+const generationPng=fs.readFileSync('/tmp/2127-generation-test.png');assert.equal(generationPng.readUInt32BE(16),750);assert.equal(generationPng.readUInt32BE(20),1050);
+await page.emulateMedia({media:'print',reducedMotion:'reduce'});assert(Math.abs(parseFloat(await page.locator('#generation-card').evaluate(c=>getComputedStyle(c).width))-238.11)<1);assert.equal(await page.locator('.card-actions').evaluate(e=>getComputedStyle(e).display),'none');await page.emulateMedia({media:'screen',reducedMotion:'no-preference'});
+await page.locator('#card-close').click();await page.locator('#card').click();assert.equal(await page.locator('#generation-card').evaluate(c=>c.toDataURL()),firstCard);await page.locator('#card-close').click();
+for(const [i,name,type] of [[1,'ステンレスボトル','VESSEL'],[2,'IC カード','ACCESS'],[0,'スマートフォン','INTERFACE']]){await page.locator(`[data-scene="${i}"]`).click();await page.waitForFunction(()=>!document.querySelector('#reveal').disabled);assert.equal(await page.frameLocator('#scene').locator('#evolution').inputValue(),'0');await page.locator('#card').click();const summary=await page.locator('#card-summary').innerText();assert(summary.includes(name)&&summary.includes(type));assert.equal(await page.locator('#generation-card').getAttribute('data-theme'),type);await page.locator('#card-close').click();}
+await page.locator('#card').click();
 await page.screenshot({path:'previews/demo-desktop.png',fullPage:true});
+await page.locator('#card-close').click();
 await page.locator('#tour').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('2127'));
 await page.locator('#tour').click();assert.equal(await page.locator('#tour').innerText(),'3 つの未来を自動で見る');
 await page.setViewportSize({width:390,height:844});
 assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
 assert(await page.frameLocator('#scene').locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+await page.locator('#card').click();assert(await page.locator('#card-preview').evaluate(d=>d.scrollWidth<=innerWidth));
 await page.screenshot({path:'previews/demo-mobile.png',fullPage:true});
+await page.locator('#card-close').click();
 await page.locator('#tour').click();
 await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('3 つの未来を体験しました'),{},{timeout:45000});
 assert.equal(await page.locator('[data-scene="2"]').getAttribute('aria-pressed'),'true');
 assert.equal(errors.length,0);
-results.push({presentation:true,cardDownload:true,mobileNoOverflow:true,completeTour:true});
+results.push({presentation:true,cardPreview:true,cardThemes:3,cardDownload:'750x1050',cardPrint:'63x88mm',cardDeterministic:true,reducedMotion:true,mobileNoOverflow:true,completeTour:true});
 await page.goto(BASE+'/index.html?test=1');const legacy=await page.locator('pre').innerText();assert(!legacy.includes('FAIL'));results.push({legacyPassed:(legacy.match(/PASS/g)||[]).length});
 fs.writeFileSync('previews/input-tests/workflow-results.json',JSON.stringify({results,errors},null,2));console.log(JSON.stringify({results,errors},null,2));await browser.close();server.close();
 })().catch(e=>{console.error(e);process.exit(1);});

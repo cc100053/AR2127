@@ -27,6 +27,8 @@ PLAYWRIGHT_MODULE=/Users/fatboy/.cache/codex-runtimes/codex-primary-runtime/depe
 
 Coverage includes the generic fallback on three out-of-class photos, the wrong-recipe rejection on the cup study, opt-in enclosed-region cleanup, reversible reset, PNG download/alpha round-trip, invalid inputs, rapid sample switching, unsupported-mask recovery, both prepared-mask bottle recipes, calibrated phone/card uploads, local card corner proposals, curved-outline rejection, baseline restoration and 390px layout. Calibration uses translated/padded fixture photos, not new physical objects. Quantitative geometry checks do not establish arbitrary-photo recognition, artistic quality or exhibition reliability.
 
-展示入口亦覆蓋三物件切換、前後比較、PNG 世代卡下載、完整單輪導覽及 390px 版面。
+展示入口亦覆蓋三物件切換、前後比較、2127 Object Card preview、三種功能主題、
+750×1050 PNG、63×88mm print CSS、重開結果一致、一般 motion tilt／glare／leave reset、reduced-motion 停用 transform、完整單輪導覽及
+390px card overlay／頁面無橫向溢出。
 
 大相片回歸：3720×1932 輸入縮至 1200×623 分析，演化及重新選配方可用。

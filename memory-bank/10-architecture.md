@@ -46,6 +46,23 @@ unclip → stroke 卡面幼邊框
 `mix` 係比較滑桿。舞台唔跟 `mix` 走（背景一直喺度），
 其餘三層跟住演化形態一齊淡入。
 
+## `demo.html` 2127 Object Card（2026-09-10）
+
+展示頁唔再直接將 `#view` 包成橫向下載圖。三個 scene 用 authored metadata
+（URL、日文名、功能 type、穩定 code），同頁 `renderGenerationCard()` 將 iframe 嘅
+`#view` 同 `.kept` 畫成唯一一張 750×1050 直向 canvas：
+
+```
+scene metadata ─┐
+iframe #view ───┼─▶ renderGenerationCard() ─▶ preview canvas ─▶ PNG
+iframe .kept ───┘                              └──────────────▶ 63×88mm print
+                                                     └───────▶ CSS tilt / glare（只限 screen）
+```
+
+canvas 係 preview、PNG 同 print 嘅單一設計來源；pointer tilt／glare 只喺 canvas 外層，
+唔會寫入輸出。功能 type 只係三個已 authored scene 嘅展示 metadata，唔係物件辨識；
+未知輸入仍然要用 `UNKNOWN`，直至真係有語意分類。
+
 ### 材質工具（`tube()` 下面嗰組）
 
 | 符號 | 做乜 |
