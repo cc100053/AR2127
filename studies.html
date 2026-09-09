@@ -138,7 +138,57 @@ function renderFuture(elev=E0){
  const c=future.getContext('2d');
  c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,1456,970);
  if(family!=='bottle')cuff();else if(recipe==='generic')generic();else if(recipe==='cup')cup();else if(recipe==='flask')flask(elev);else bottle();
+ // Staging is object-agnostic on purpose: every recipe is lit by the same lamp, so the pages read
+ // as one series instead of five separate illustrations.
+ stageAccent=place?place.accent:accentOf(source);paintStage();paintRim();paintHolo();
 }
+// --- Card staging --------------------------------------------------------------------------
+// The evolved form used to be a cutout floating on flat black. Hand-painted card art is not
+// mostly detail, it is mostly *staging*: a lit backdrop, a rim light picking the silhouette off
+// it, and a foil sheen. All three are procedural and cost one paint per build, so they cost the
+// live demo nothing — which is why the polish budget goes here and not into more geometry.
+const stage=document.createElement('canvas'),rim=document.createElement('canvas'),holo=document.createElement('canvas');
+for(const cv of [stage,rim,holo]){cv.width=1456;cv.height=970;}
+let stageAccent={h:190,s:.55};
+const layer=cv=>{const c=cv.getContext('2d');c.setTransform(2,0,0,2,0,0);c.globalCompositeOperation='source-over';c.globalAlpha=1;c.clearRect(0,0,728,485);return c;};
+// Silhouette of the evolved form, flooded with one colour. Both the rim and the sheen are just
+// this shape masked differently, so neither can drift off the artwork it decorates.
+function silhouette(cv,paint){const c=layer(cv);c.drawImage(future,0,0,728,485);
+ c.globalCompositeOperation='source-in';paint(c);c.globalCompositeOperation='source-over';return c;}
+function paintStage(){const c=layer(stage),H=stageAccent.h.toFixed(1),S=(Math.min(.62,stageAccent.s)*100).toFixed(0);
+ const hsl=(l,a='')=>`hsl(${H} ${S}% ${l}%${a})`;
+ c.fillStyle=hsl(5);c.fillRect(0,0,728,485);
+ const key=c.createRadialGradient(364,222,8,364,222,340);
+ key.addColorStop(0,hsl(27));key.addColorStop(.5,hsl(13));key.addColorStop(1,hsl(4));
+ c.fillStyle=key;c.fillRect(0,0,728,485);
+ // Nine rays, blurred hard and held at 7% alpha. Unblurred they read as a rising-sun poster —
+ // drawn spokes competing with the subject — instead of light hanging in the air behind it.
+ c.save();c.globalCompositeOperation='lighter';c.filter='blur(16px)';c.translate(364,222);
+ for(let i=0;i<9;i++){c.rotate(Math.PI*2/9);
+  const r=c.createLinearGradient(0,0,0,-380);
+  r.addColorStop(0,hsl(46,' / 0'));r.addColorStop(.40,hsl(46,' / .07'));r.addColorStop(1,hsl(46,' / 0'));
+  c.fillStyle=r;c.beginPath();c.moveTo(0,0);c.lineTo(-42,-400);c.lineTo(42,-400);c.fill();}
+ c.restore();
+ const vig=c.createRadialGradient(364,222,120,364,240,430);
+ vig.addColorStop(0,'#0000');vig.addColorStop(.62,'#00000066');vig.addColorStop(1,'#000000e6');
+ c.fillStyle=vig;c.fillRect(0,0,728,485);
+}
+// The artwork sits in a card, not in a rectangle of page background: rounded plate, thin edge.
+const CARD=()=>{const p=new Path2D();p.roundRect(1,1,726,483,16);return p;};
+// A crescent of key light along the top-left edge: the silhouette minus itself nudged 2.6px, then
+// faded out toward the bottom-right. Without that second fade the crescent closes into a ring and
+// the subject reads as a sticker with a white outline rather than a lit object.
+function paintRim(){const c=silhouette(rim,c=>{c.fillStyle=`hsl(${stageAccent.h.toFixed(1)} 92% 80%)`;c.fillRect(0,0,728,485);});
+ c.globalCompositeOperation='destination-out';c.drawImage(future,-2.6,-2.6,728,485);
+ // Same axis as pearl, so the rim agrees with the highlight already painted on the frame.
+ const g=c.createLinearGradient(150,90,590,410);
+ g.addColorStop(0,'#0000');g.addColorStop(.5,'#0007');g.addColorStop(1,'#000');
+ c.fillStyle=g;c.fillRect(0,0,728,485);}
+// Foil: bands alternating between the object's hue and its complement, so the sheen shifts colour
+// across the form the way a holographic card does under a tilt.
+function paintHolo(){silhouette(holo,c=>{const h=stageAccent.h,g=c.createLinearGradient(110,440,650,30);
+ for(let i=0;i<=10;i++)g.addColorStop(i/10,i%2?`hsl(${(h+160)%360} 80% 62% / .5)`:`hsl(${h} 85% 60% / .22)`);
+ c.fillStyle=g;c.fillRect(0,0,728,485);});}
 // Photo B is a vacuum steel flask: it has already solved the disposable bottle's problem, so it
 // gets its own evolution rather than the tea recipe. Its defining property is holding a state
 // against the environment; pushed a century on, it stops being filled and starts harvesting.
@@ -406,7 +456,19 @@ function build(prepared=null){
  return true;
 }
 let raf=0;
-function draw(mix=1){ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,728,485);ctx.save();ctx.shadowColor='#0009';ctx.shadowBlur=15;ctx.shadowOffsetY=14;ctx.globalAlpha=1-mix;ctx.drawImage(source,0,0,728,485);ctx.globalAlpha=mix;ctx.drawImage(future,0,0,728,485);ctx.restore();}
+function draw(mix=1){ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,728,485);
+ const card=CARD();ctx.save();ctx.clip(card);
+ ctx.drawImage(stage,0,0,728,485);
+ ctx.save();ctx.shadowColor='#0009';ctx.shadowBlur=15;ctx.shadowOffsetY=14;
+ ctx.globalAlpha=1-mix;ctx.drawImage(source,0,0,728,485);ctx.globalAlpha=mix;ctx.drawImage(future,0,0,728,485);ctx.restore();
+ // Rim and foil belong to the evolved form, so they arrive with it as the slider is dragged.
+ ctx.save();ctx.globalCompositeOperation='lighter';
+ ctx.globalAlpha=mix*.6;ctx.drawImage(rim,0,0,728,485);
+ // Overlay, not lighter: foil shifts hue across the form without flattening its darks, which is
+ // what a straight additive pass did — it washed the whole subject to one pale value.
+ ctx.globalCompositeOperation='overlay';ctx.globalAlpha=mix*.75;ctx.drawImage(holo,0,0,728,485);ctx.restore();
+ ctx.restore();
+ shape(ctx,card,null,`hsl(${stageAccent.h.toFixed(1)} 45% 46% / .35)`,1.2);}
 function evolve(){cancelAnimationFrame(raf);slider.value=100;phase.textContent='形態を再構成中';const start=performance.now();function tick(now){const p=Math.min(1,(now-start)/1800);draw(p*p*(3-2*p));if(p<1)raf=requestAnimationFrame(tick);else{raf=0;phase.textContent='2127 / 形態完成';}}if(matchMedia('(prefers-reduced-motion: reduce)').matches){draw();phase.textContent='2127 / 形態完成';}else raf=requestAnimationFrame(tick);}
 if(kind==='bottle-b'){const wrap=document.getElementById('elevwrap'),el=document.getElementById('elevation');
  wrap.hidden=false;
@@ -430,11 +492,14 @@ function selfTest(){const rows=[],check=(n,ok)=>rows.push(`${ok?'PASS':'FAIL'} $
  // draw() casts a 15px-blurred shadow offset 14px down, so a narrow hole is filled by the shadow
  // of its own frame. The probe used to approximate that with a 32px clearance test; it screened
  // holes the composite still closes, so it now reads the composite itself.
- draw();const comp=ctx.getImageData(0,0,1456,970).data;
+ // The composite is no longer transparent behind the object (there is a lit backdrop now), so
+ // "the old body is gone" is checked as "this pixel is untouched backdrop" rather than alpha 0.
+ draw();const comp=ctx.getImageData(0,0,1456,970).data,st=stage.getContext('2d').getImageData(0,0,1456,970).data;
+ const bare=i=>Math.abs(comp[i-3]-st[i-3])+Math.abs(comp[i-2]-st[i-2])+Math.abs(comp[i-1]-st[i-1])<30;
  if(recipe==='generic'){const at=(x,y)=>(y*1456+x)*4+3;
   search:for(let y=16;y<954;y+=4)for(let x=16;x<1440;x+=4){const i=at(x,y);
-   if(a[i]>200&&!b[i]&&comp[i]<30){k=i;break search;}}}
- check('former body contains actual transparent negative space',a[k]>200&&b[k]===0);check('final composite removes old body',comp[k]<30);check('controls enabled',!slider.disabled&&!replay.disabled);
+   if(a[i]>200&&!b[i]&&bare(i)){k=i;break search;}}}
+ check('former body contains actual transparent negative space',a[k]>200&&b[k]===0);check('final composite shows backdrop through the removed body',bare(k));check('controls enabled',!slider.disabled&&!replay.disabled);
  if(family==='bottle'){
   // build() is now re-entrant (file input can load repeatedly). It applies scale(2,2), so without
   // the reset at its head a second load would draw the source at half size and every anchor-driven
