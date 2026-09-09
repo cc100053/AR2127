@@ -22,6 +22,7 @@
 
 - 現行入口：`demo.html`、`studies.html?lab=1`、`phone.html`、`studies.html?object=suica`；全部零建置、本地運算。
 - 共用邏輯：`segmentation.js`（去背／遮罩錨點）、`calibration.js`（四角／透視對位）；流程已能接受檔案及人工修正。
+- `studies.html` 除咗各配方 renderer，仲載住**畫面管線**（舞台／輪廓光／燙金／顆粒）同**材質工具**（部件範圍漸層、疊描邊管、接觸陰影）。改美術之前睇 `10-architecture.md` 嗰節同 `40-gotchas.md` 嘅漸層 clamp 陷阱。
 - `index.html` 是保留的旋轉原型。後端、Gemini、印表機及實體展場驗證仍未完成；不要將舊規劃當成已實作功能。
 
 ## 維護呢個 memory bank

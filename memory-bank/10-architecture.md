@@ -8,6 +8,63 @@
 - 載入／校準有 request revision，舊解碼不能覆蓋新相；編輯遮罩會使既有演化預覽失效。自訂卡片不再套用固定「企鵝」文案。
 - 沒有外部模型、API 或建置依賴。測試需要既有 Playwright + Chrome，見 `tests/README.md`。
 
+## `studies.html` 畫面管線（2026-09-09）
+
+五塊離屏畫布，全部 1456×970，`ctx` 一律 `scale(2,2)` 之後用 728×485 邏輯座標。
+
+```
+photo ──segment()──▶ source   原相去背後嘅像素（保留段、比較用嘅「現在」）
+                       │
+                       ▼
+                    future    演化形態。renderFuture() 揀 renderer：
+                       │        cuff / generic / cup / flask / bottle
+                       │
+      ┌────────────────┼────────────────┬──────────────┐
+      ▼                ▼                ▼              ▼
+   stage            rim              holo           grain
+   舞台背景        輪廓光            燙金           顆粒
+   （唔靠 future） （future 剪影生成，見下）
+```
+
+`renderFuture()` 尾段固定跑
+`stageAccent = place?.accent ?? accentOf(source)` → `paintStage/Rim/Holo/Grain()`。
+**加新 renderer 唔使理呢四層**，佢哋由剪影推出嚟，自動跟得上。
+
+### `draw(mix)` 合成次序
+
+```js
+clip(圓角卡面)
+  stage                                   // 背景，唔受 mix 影響
+  drop shadow ┐ source × (1-mix)
+              └ future × mix
+  lighter  rim   × mix·0.6
+  overlay  holo  × mix·(.25+.6·accent.s)
+  overlay  grain × mix·0.45
+unclip → stroke 卡面幼邊框
+```
+
+`mix` 係比較滑桿。舞台唔跟 `mix` 走（背景一直喺度），
+其餘三層跟住演化形態一齊淡入。
+
+### 材質工具（`tube()` 下面嗰組）
+
+| 符號 | 做乜 |
+|---|---|
+| `CONVEX` `CONCAVE` `SPEC` | 明暗軌：凸面／凹面／高光落點。凹面嘅光走去對面 |
+| `metal()` `recess()` | 開**部件自己範圍**嘅漸層（`axisL`／`axisA` 包裝） |
+| `pipe()` | 疊描邊管：外殼 → 本體 → 圓芯 → 沿走向淡出高光 |
+| `ao()` `boss()` `bolts()` | 接觸陰影、管座、螺絲 |
+| `rr()` | roundRect 捷徑 |
+
+**唔可以將 `metal()` 用喺彎管彎肋。** 位置式漸層一離開部件範圍就 clamp 成單色 ——
+見 `40-gotchas.md`。曲面用 `pipe()`（管）或者邊緣上色（彎帶）。
+
+### 呢層改動要留意嘅檢查
+
+合成畫布**唔再係透明底**（有舞台）。所以「負空間真係空」由
+`alpha === 0` 改成 `bare()`：比對合成同 `stage` 嘅 RGB 差 < 30。
+呢條係 `00-intent.md` 嘅紅線檢查，改量度方法可以，**唔可以刪**。
+
 ## Legacy `index.html` 旋轉原型
 
 下方只係保留原型架構，不能當成目前靜態流程或已驗證的展場能力。
