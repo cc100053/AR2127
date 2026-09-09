@@ -1,50 +1,6 @@
-# item2127 — 給接手的 AI agent
+# item2127
 
-**開工前先讀 `memory-bank/`**，由 `memory-bank/README.md` 入手。
+Agent 開工規則喺 **[`AGENTS.md`](AGENTS.md)** —— **開工前讀嗮佢。**
 
-## 一條唔可以破嘅規矩
-
-呢個 project 係將一件現代物品**向前推一百年**，畀人睇到「你呢件嘢 2127 年會變成點」。
-
-**唔係**「2127 年嘅考古學家點樣誤讀一件古代遺物」。
-
-呢個偏離已經發生過一次，改返嗮好貴。所有文案、視覺、狀態命名、Gemini prompt
-都必須係**前向**嘅：世代、演化路徑、保留咗乜、變成乜。
-唔可以出現：遺物、古代人、考古、鑑定、歸檔、ANCIENT、RELIC、ARTIFACT。
-
-詳情見 `memory-bank/00-intent.md`。
-
-## 跑起佢
-
-```bash
-python3 -m http.server 8127 --bind 127.0.0.1  # 一定要 HTTP，file:// 會令 canvas 跨來源污染
-open http://127.0.0.1:8127/demo.html           # 組員展示入口
-open 'http://127.0.0.1:8127/?test=1'           # legacy 67 項自我檢查
-```
-
-`?cam=1` 真攝影機 ｜ `?synth=1` 合成物件 ｜ `?src=xx.mp4` ｜ 影片可直接拖入頁面
-
-**要試「放張相入去睇一百年後」嘅 demo，開 `studies.html?object=banana`**，拖相入去即推演。
-專屬配方：`?object=bottle` 茶瓶 ｜ `?object=bottle-b` 保溫樽 ｜ `?object=cup` 水杯 ｜
-`?object=suica` 交通卡 ｜ `phone.html` 手機 ｜ `?lab=1` 去背實驗（手動修遮罩再試演化）。
-每頁加 `&test=1` 跑該頁自我檢查；完整操作回歸 `node tests/browser.cjs`（見 `tests/README.md`）。
-
-## 介面語言
-
-**所有觀眾睇到嘅字一律日文**（`lang="ja"`）。新加嘅 UI 文案要用日文，而且照樣守前向原則：
-用「次の世代」「継承」「推定」，唔可以出現遺物／考古／鑑定／ANCIENT／RELIC／ARTIFACT。
-repo 文檔同程式碼註解維持中文；`index.html?test=1` 嗰 67 條檢查名亦保留中文（`memory-bank/` 用名引用緊）。
-
-## 改完之後
-
-`?test=1` 必須全綠。改咗幾何、模組或形態推演就要補檢查落 `selfTest()`。
-
-## 檔案
-
-| 檔 | 係乜 |
-|---|---|
-| `index.html` | 成個前端，單檔，~1540 行 |
-| `README.md` | 專案簡介、依賴、setup、入口、文檔索引 |
-| `docs/exhibition-plan.md` | 未落地嘅展場硬件、營運要求同風險 |
-| `memory-bank/` | 交接用：主旨、架構圖、進度、決策、陷阱 |
-| `demo.mp4` | 綠幕旋轉籃球，測試素材（H.264） |
+呢一頁刻意唔重複內容：同一套規矩擺兩個檔一定會走樣，
+而「文檔同 code 分家」正正就係呢個 repo 要防嘅債。

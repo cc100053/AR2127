@@ -54,7 +54,7 @@ http://127.0.0.1:8127/phone.html?test=1
 | [`memory-bank/README.md`](memory-bank/README.md) | 開發交接入口；再分主旨、架構、現況、決策、陷阱 |
 | [`tests/README.md`](tests/README.md) | 測試方法、依賴及覆蓋範圍 |
 | [`previews/input-tests/README.md`](previews/input-tests/README.md) | 圖像測試證據同限制 |
-| [`CLAUDE.md`](CLAUDE.md) | AI agent 開工規則 |
+| [`AGENTS.md`](AGENTS.md) | AI agent 開工規則（`CLAUDE.md` 只係指過嚟） |
 
 ## 現有限制
 
@@ -62,3 +62,5 @@ http://127.0.0.1:8127/phone.html?test=1
 - 手機同卡片需要人工確認四角；現有檢查未證明任意實物都能自動校準。
 - 透明、鏡面、亮色物件仍可能去背失敗，應轉入 Lab 手動修正。
 - 後端、Gemini、相機擷取、第二視角、實體印刷及展場連續運作仍未實作或未驗證。
+- `phone.html` 有自己一套繪圖流程，未跟 `studies.html` 嘅畫面管線；兩者外觀唔一致。
+- `previews/*-future.png` 係手動快照，可能落後於現時畫面；由測試產生嘅係 `previews/input-tests/` 同 `previews/demo-*.png`。
