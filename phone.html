@@ -14,7 +14,7 @@
 <figure><canvas id="view" width="1456" height="970" role="img" aria-label="画面と上半分の筐体が消え、三枚のセラミック製センシングウィングをつなぐ光導スパインへ。下端は元のグリップとボタンを残す"></canvas><figcaption id="phase" aria-live="polite">形態推定の準備中</figcaption></figure></section>
 <div class="controls"><div class="compare"><div class="labels"><label for="evolution">現在のスマホ</label><span>2127 形態</span></div><input id="evolution" aria-label="現在のスマホと 2127 形態の比較" type="range" min="0" max="100" value="100" disabled></div><button id="replay" disabled>推定をやり直す ↗</button></div>
 <footer><p class="kept">百年後も、世界は手のなかにある。</p><p>静止画・ローカル生成<br>1 枚の写真によるキャリブレーション試験。回転追跡は含みません。</p></footer><pre id="checks" hidden></pre>
-</main><script src="segmentation.js"></script><script src="calibration.js"></script><script>
+</main><script src="segmentation.js"></script><script src="calibration.js"></script><script src="stage.js"></script><script>
 'use strict';
 const canvas=document.getElementById('view'), ctx=canvas.getContext('2d');
 const slider=document.getElementById('evolution'), replay=document.getElementById('replay'), phase=document.getElementById('phase');
@@ -76,16 +76,25 @@ function makeFuture(){
  trace(c,[[.48,-.045,33],[.536,-.045,33]],'#e6acd6',1.4,4);
  // Original physical home button remains legible in the retained grip.
  c.save();c.strokeStyle='#599c9a';c.lineWidth=.8;c.beginPath();c.ellipse(184,355,32,8.7,.24,0,Math.PI*2);c.stroke();c.restore();
+ // Same lamp as the five studies entries: backdrop, rim light, foil and grain are all derived
+ // from this silhouette, so this page finally reads as part of the same series.
+ stageBuild(future,accentOf(original));
 }
 let raf=0, started=0;
 function draw(amount=1,progress=1){
  ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,728,485);
  // Crossfade the whole source away, including its alpha: removed structure must reveal the background.
  const mix=amount*(progress*progress*(3-2*progress));
+ ctx.save();ctx.clip(CARD());
+ stageBackdrop(ctx);
+ // The subject is drawn at .84, so the rim and foil have to ride the same transform or they would
+ // sit beside the form they belong to.
  ctx.save();ctx.translate(364,242);ctx.scale(.84,.84);ctx.translate(-364,-242);
- ctx.shadowColor='#0009';ctx.shadowBlur=18;ctx.shadowOffsetY=15;
+ ctx.save();ctx.shadowColor='#0009';ctx.shadowBlur=18;ctx.shadowOffsetY=15;
  ctx.globalAlpha=1-mix;ctx.drawImage(original,0,0,728,485);
  ctx.globalAlpha=mix;ctx.drawImage(future,0,0,728,485);ctx.restore();
+ stageOverlay(ctx,mix);ctx.restore();
+ ctx.restore();stageEdge(ctx);
 }
 function evolve(){cancelAnimationFrame(raf);slider.value=100;started=performance.now();phase.textContent='筐体を展開中';
  const tick=now=>{const p=Math.min(1,(now-started)/1800);draw(1,p);if(p<1)raf=requestAnimationFrame(tick);else{raf=0;phase.textContent='2127 / 形態完成';}};
@@ -109,7 +118,11 @@ function selfTest(){
  const [hx,hy]=at(.8,.7),hole=(Math.round(hy*2)*1456+Math.round(hx*2))*4+3;
  check('former screen has true transparent negative space',a[hole]>200&&b[hole]===0);
  draw(1);const visibleHole=(Math.round((242+(hy-242)*.84)*2)*1456+Math.round((364+(hx-364)*.84)*2))*4+3;
- check('final composite does not retain removed screen',ctx.getImageData(0,0,1456,970).data[visibleHole]<15);
+ // There is a lit backdrop behind the object now, so "the screen is gone" cannot be alpha 0 any
+ // more: the removed area must show untouched backdrop instead (same test as studies.html).
+ const comp=ctx.getImageData(0,0,1456,970).data,st=stage.getContext('2d').getImageData(0,0,1456,970).data;
+ check('final composite shows backdrop where the screen was',
+  Math.abs(comp[visibleHole-3]-st[visibleHole-3])+Math.abs(comp[visibleHole-2]-st[visibleHole-2])+Math.abs(comp[visibleHole-1]-st[visibleHole-1])<30);
  const out=document.getElementById('checks');out.hidden=false;out.textContent=rows.join('\n');return rows;
 }
 function loadDefault(){photo=new Image();const current=photo;

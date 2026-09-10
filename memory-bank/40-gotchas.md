@@ -188,3 +188,17 @@ shape(c, podB, pearl);   // 全部喺 ramp 之後 → clamp 成最後一個 stop
 
 **同類已知案例**：`cup()` 冇中招，因為佢一開始就係 `grad(c, cx-hw, 0, cx+hw, 0, …)`，
 跟住部件半寬開。呢個先係啱嘅寫法。
+
+### 舞台層同主體唔喺同一個 transform
+
+**症狀**：輪廓光／燙金／顆粒睇落離開咗物件，或者大細唔啱。
+
+**成因**：`rim`／`holo`／`grain` 係由 `future` 剪影生成，坐標同 `future` 一樣。
+邊個 transform 之下畫佢哋，佢哋就跟邊個。`phone.html` 嘅 `draw()` 將主體縮 .84，
+如果 `stageOverlay(ctx, mix)` 喺 `restore()` 之後先畫，就會用返原尺寸，即刻錯位。
+
+**修法**：主體同 `stageOverlay()` 一定要喺同一個 `save()/restore()` 之內。
+`stageBackdrop()` 相反 —— 佢係背景，要喺 transform 之外、卡面 clip 之內。
+
+**一眼認出**：光暈同物件同形但唔同大細／偏位，而唔係亂咁一忽。
+

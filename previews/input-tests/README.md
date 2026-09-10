@@ -33,3 +33,11 @@ Each rejection clears the displayed canvases and disables evolution/replay. Same
 Evidence: `results.json`, each `*-mask.png` (transparent pixels outside retained mask), and each `*-page.png` (actual rejected UI). No manual ground-truth masks, so no numerical segmentation accuracy claim.
 
 Next: separate generic segmentation from bottle-specific row filling and shadow trimming before supporting concave or open objects; do not merely relax the aspect gate. Each new object also needs an appropriate evolution recipe.
+
+## 2026-09-10 · 舞台層抽做 `stage.js`
+
+`studies.html` 同 `phone.html` 改用共用舞台層之後全套重跑：`tests/browser.cjs` 全綠、
+`errors: []`，`calibrated-phone.png` 同 `bridge-*.png` 已重新產生。
+`studies.html?object=bottle-b` 嘅 `#view` 輸出同重構之前 byte 相同。
+`phone.html?test=1` 9/9（其中一項改成同背景比對，因為合成底下有舞台）。
+

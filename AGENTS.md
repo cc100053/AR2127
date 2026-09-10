@@ -37,8 +37,9 @@ repo 文檔同程式碼註解維持中文；`index.html?test=1` 嗰 67 條檢查
 
 ## 畫面美術
 
-`studies.html` 有一層卡牌式舞台（背光／輪廓光／燙金／顆粒），由 `future` 剪影自動生成 ——
-**加新 renderer 唔使理呢層**。物件本身用材質工具畫：部件範圍漸層、疊描邊管、接觸陰影、
+卡牌式舞台（背光／輪廓光／燙金／顆粒）喺共用檔 `stage.js`，由 `future` 剪影自動生成 ——
+**加新 renderer 唔使理呢層**。`studies.html` 五個入口同 `phone.html` 共用同一盞燈。
+自己寫 `draw()` 嘅頁要記住：主體同 `stageOverlay()` 必須喺同一個 transform 之內（見 gotchas）。物件本身用材質工具畫：部件範圍漸層、疊描邊管、接觸陰影、
 管座、螺絲。管線圖見 `memory-bank/10-architecture.md`。
 
 **動手改美術之前一定要睇 `memory-bank/40-gotchas.md` 嘅漸層 clamp 條目。**
@@ -82,8 +83,9 @@ repo 文檔同程式碼註解維持中文；`index.html?test=1` 嗰 67 條檢查
 | 檔 | 係乜 |
 |---|---|
 | `studies.html` | 現行主頁：各配方 renderer、畫面管線、材質工具、Lab（~920 行） |
-| `phone.html` | 手機四角校準頁。**有自己嘅 `draw()`，未跟 studies 管線** |
+| `phone.html` | 手機四角校準頁。**有自己嘅 `draw()`**，但美術已共用 `stage.js` |
 | `demo.html` | 組員展示入口 |
+| `stage.js` | 共用舞台層：背光／輪廓光／燙金／顆粒／卡面。studies + phone 一齊用 |
 | `segmentation.js` | 共用去背、遮罩處理、幾何錨點 |
 | `calibration.js` / `calibration.css` | 共用四角校準、透視映射 |
 | `index.html` | legacy 旋轉／攝影機原型，單檔，~1540 行 |

@@ -8,7 +8,19 @@
 - 載入／校準有 request revision，舊解碼不能覆蓋新相；編輯遮罩會使既有演化預覽失效。自訂卡片不再套用固定「企鵝」文案。
 - 沒有外部模型、API 或建置依賴。測試需要既有 Playwright + Chrome，見 `tests/README.md`。
 
-## `studies.html` 畫面管線（2026-09-09）
+## 畫面管線（2026-09-10：`stage.js` 共用）
+
+舞台四層抽咗做共用檔 `stage.js`，`studies.html`（五個入口）同 `phone.html` 一齊用。
+呢個檔淨係識一張 1456×970 嘅 `future` 畫布，唔識任何 renderer。
+
+對外四個入口：
+
+```js
+stageBuild(future, accentOf(source))   // 量色溫、畫四層，renderFuture() 尾段跑
+stageBackdrop(ctx)                     // 畫背景（唔受 mix 影響）
+stageOverlay(ctx, mix)                 // rim / holo / grain，跟住形態淡入
+stageEdge(ctx)                         // 卡面幼邊框；CARD() 係圓角卡面 path
+```
 
 五塊離屏畫布，全部 1456×970，`ctx` 一律 `scale(2,2)` 之後用 728×485 邏輯座標。
 
@@ -26,9 +38,11 @@ photo ──segment()──▶ source   原相去背後嘅像素（保留段、�
    （唔靠 future） （future 剪影生成，見下）
 ```
 
-`renderFuture()` 尾段固定跑
-`stageAccent = place?.accent ?? accentOf(source)` → `paintStage/Rim/Holo/Grain()`。
+`renderFuture()` 尾段固定跑 `stageBuild(future, place?.accent ?? accentOf(source))`。
 **加新 renderer 唔使理呢四層**，佢哋由剪影推出嚟，自動跟得上。
+
+`phone.html` 有自己一個 `draw()`（主體整體縮 .84），但用同一個 `stage.js`：
+主體同 `stageOverlay()` 要喺同一個 transform 之內畫，否則輪廓光同燙金會離開佢裝飾緊嘅形態。
 
 ### `draw(mix)` 合成次序
 

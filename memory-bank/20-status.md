@@ -41,13 +41,13 @@
 - 材質工具：部件範圍漸層（凸／凹明暗軌）、疊描邊管、接觸陰影、管座、螺絲、顆粒。
   茶瓶 pod 同保溫樽鰭片已重畫；水杯本身寫法就啱，只補全域顆粒；
   手機同交通卡幾何未動。
+- 舞台層已抽做共用檔 `stage.js`（`stageBuild` / `stageBackdrop` / `stageOverlay` / `stageEdge`），
+  `studies.html` 同 `phone.html` 一齊用；`studies.html` 嘅輸出前後 byte 相同，純重構。
 - `renderFuture()` 實測 5ms，即時生成負擔不變。
 - 手法、取捨同陷阱見 `30-decisions.md` 同 `40-gotchas.md`；管線圖見 `10-architecture.md`。
-- ⚠️ **`phone.html` 冇跟上。** 佢有自己一個 `draw()`，唔經 `studies.html` 嘅管線，
-  所以冇舞台、冇輪廓光、冇燙金、冇顆粒 —— 同五個 studies 入口而家**唔同一家人**。
-  使用者當時話手機畫面 OK 所以冇動；要統一就要將管線抽出共用檔，或者喺 `phone.html` 複製一份。
-- ⚠️ `previews/*-future.png` 係 2026-09-08 嘅手動快照，**早過呢次美術改動**，
-  已經唔代表現時畫面。要更新就開對應頁面撳「今の画面を保存」。
+- `phone.html`（2026-09-10）已經接上同一個舞台層。佢仍然有自己一個 `draw()`（主體整體縮 .84），
+  但四層打光同卡面同五個 studies 入口一致 —— 而家係同一家人。幾何本身未動。
+- `previews/*-future.png` 已於 2026-09-10 用現行畫面重新產生（1456×970，同「今の画面を保存」同一路徑）。
   `previews/demo-*.png` 同 `previews/input-tests/` 由 `tests/browser.cjs` 重跑產生。
 
 ### 校準
@@ -59,6 +59,7 @@
 ### 驗證
 
 - 139 項頁內自我檢查：legacy 67、Lab 12、茶瓶 11、保溫樽 13、闊身容器 10、通用 10、交通卡 7、手機 9。
+  手機嗰 9 項有一項改咗寫法：合成底下有舞台，所以「螢幕真係冇咗」由 alpha 0 改成同背景比對（同 studies 一致）。
 - `tests/browser.cjs` 覆蓋真實 UI 操作、輸出檔案、快速換相、失敗恢復、配方切換、校準、baseline restoration、三種卡片 metadata／theme、750×1050 PNG、63×88mm print、deterministic reopen、reduced-motion 同 390px 版面。
 - 最新證據及限制見 [`../previews/input-tests/README.md`](../previews/input-tests/README.md)，重跑方法見 [`../tests/README.md`](../tests/README.md)。
 

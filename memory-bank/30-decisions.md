@@ -270,3 +270,19 @@ draw() 嘅 alpha 改為 `.25+.6*s`：低飽和物件只得明度閃爍（拉絲�
 
 `cup()` 一開始就用部件範圍漸層（`clay`/`shell` 都係跟 hw 開），所以冇中招，
 只補咗全域顆粒。手機同 IC 卡使用者話 OK，冇郁幾何。
+
+## D-2026-09-10 · 舞台層抽做 `stage.js`，唔複製一份落 `phone.html`
+
+`phone.html` 有自己一個 `draw()`，一直冇舞台／輪廓光／燙金／顆粒，而佢就係 `demo.html` 第一幕 ——
+觀眾第一眼睇到嘅畫面同之後兩幕唔同一家人。
+
+**否決咗「喺 `phone.html` 複製一份舞台程式碼」**：呢個 repo 最想防嘅債就係同一套嘢擺兩個地方走樣，
+複製 60 行美術程式碼一定會走樣（改咗 studies 嘅光就冇人記得改手機嗰份）。
+
+抽做 `stage.js` 之所以抵：舞台層本身淨係依賴一張 1456×970 `future` 畫布，唔識任何 renderer，
+所以抽出嚟唔使做任何抽象化 —— 四個 top-level function 就完。
+驗證：抽完之後 `studies.html?object=bottle-b` 嘅 `#view` 輸出同抽之前 **byte 相同**。
+
+同場否決：**唔統一 `phone.html` 嘅 `draw()`**。佢主體要整體縮 .84，studies 唔使，
+夾硬夾埋一個 `draw()` 要開參數；而家淨係要求主體同 `stageOverlay()` 喺同一個 transform 入面畫。
+
